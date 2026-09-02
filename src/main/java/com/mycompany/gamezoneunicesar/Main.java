@@ -3,12 +3,11 @@
 package com.mycompany.gamezoneunicesar;
 
 /**
- *
- * @author 57300
+   @author Merlin Landero
  */
-public class GameZoneUnicesar {
+public class Main {
 
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+        
     }
 }
