@@ -13,11 +13,18 @@ import java.util.List;
 
 
 
+/**
+ * Manages the file-based persistence of products.
+ */
 public class ProductRepository {
 
     private static final String FILE_PATH = "data/products.dat";
 
-    
+    /**
+     * Saves all products to the data file.
+     *
+     * @param products the list of products to save
+     */
     public void saveALL(List<Product> products){
         File dataDirectory = new File("data"); 
         
@@ -35,7 +42,11 @@ public class ProductRepository {
         }
     }
     
-    
+     /**
+     * Loads all products from the data file.
+     *
+     * @return a list containing all loaded products
+     */
     @SuppressWarnings("unchecked")
     public List<Product> loadAll(){
         File dataFile = new File(FILE_PATH); 
