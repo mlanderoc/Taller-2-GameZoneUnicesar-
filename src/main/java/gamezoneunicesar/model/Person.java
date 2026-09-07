@@ -1,7 +1,8 @@
 
 package gamezoneunicesar.model;
+import java.io.Serializable;
 
-public abstract class  Person {
+public abstract class  Person implements Serializable{
     protected long id;
     protected String firstName;
     protected String lastName;
