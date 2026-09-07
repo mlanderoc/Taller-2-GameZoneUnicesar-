@@ -10,7 +10,7 @@ public abstract class Product implements Serializable {
     
     private static final long serialVersionUID = 1L;
     
-    private int id;
+    private String id;
     private String title; 
     private double price; 
     private int stock;
@@ -23,7 +23,7 @@ public abstract class Product implements Serializable {
      * @param price the price of the product
      * @param stock the available quantity in inventory
      */
-    public Product(int id, String title, double price, int stock) {
+    public Product(String id, String title, double price, int stock) {
         
         this.id = id;
         this.title = title;
@@ -36,7 +36,7 @@ public abstract class Product implements Serializable {
      *
      * @return the product id
      */
-    public int getId() {
+    public String getId() {
         return id;
     }
     
@@ -45,7 +45,7 @@ public abstract class Product implements Serializable {
      *
      * @param id the new product identifier
      */
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
     

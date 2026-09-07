@@ -23,7 +23,7 @@ public class Console extends Product {
      * @param model the model of the console
      * @param generation the generation of the console
      */
-    public Console( int id, String title, double price, int stock, String brand, String model, String generation) {
+    public Console( String id, String title, double price, int stock, String brand, String model, String generation) {
         super(id, title, price, stock);
         this.brand = brand;
         this.model = model;

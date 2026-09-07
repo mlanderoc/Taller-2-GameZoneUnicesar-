@@ -27,7 +27,7 @@ public class VideoGame extends Product {
      * @param genre the genre of the video game
      * @param ageRating the recommended age rating of the video game
      */
-    public VideoGame(int id, String title, double price, int stock, String platform, String genre, String ageRating) {
+    public VideoGame(String id, String title, double price, int stock, String platform, String genre, String ageRating) {
         super(id, title, price, stock);
         this.platform = platform;
         this.genre = genre;
