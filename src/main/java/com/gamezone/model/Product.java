@@ -1,12 +1,14 @@
 
 package com.gamezone.model;
-
+import java.io.Serializable;
 
 /**
- * Represents a generic product sold by the GameZone store. This abstract class
- * contains the common data shared by all product types.
+ * Represents a generic product sold by the GameZone store.
+ * This abstract class contains the common data shared by all product types.
  */
-public abstract class Product {
+public abstract class Product implements Serializable {
+    
+    private static final long serialVersionUID = 1L;
     
     private int id;
     private String title; 
