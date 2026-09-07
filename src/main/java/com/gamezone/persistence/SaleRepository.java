@@ -9,9 +9,23 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Manages the file-based persistence of sale records.
+ * Works only with SaleRecord (raw ids), never with full domain objects,
+ * keeping this class independent from the service layer.
+ */
+
+
 public class SaleRepository implements Repository<SaleRecord>{
     private static final String FILE_PATH = "data/sales.dat";
     
+    /**
+     * Saves all sale records to the data file.
+     *
+     * @param records the list of sale records to save
+     */
+    
+    @Override
     public void saveAll(List<SaleRecord> records) {
         File dataDirectory = new File("data");
 
@@ -28,6 +42,12 @@ public class SaleRepository implements Repository<SaleRecord>{
             throw new RuntimeException("Error saving sale records", exception);
         }
     }
+
+    /**
+     * Loads all sale records from the data file.
+     *
+     * @return a list containing all loaded sale records
+     */
 
     @Override
     @SuppressWarnings("unchecked")
