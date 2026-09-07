@@ -4,6 +4,12 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Plain data-transfer object representing the persisted form of a Sale.
+ * Stores only ids of the related entities (customer, seller, products)
+ * instead of full domain objects, avoiding duplicated or desynchronized
+ * copies of those entities across separate data files.
+ */
 public class SaleRecord implements Serializable {
     private static final long serialVersionUID = 1L;
     private String saleId;
@@ -12,6 +18,17 @@ public class SaleRecord implements Serializable {
     private String sellerId;
     private List<String> productIds;
     private double totalAmount;
+    
+     /**
+     * Creates a new SaleRecord.
+     *
+     * @param saleId      unique identifier of the sale
+     * @param date        date the sale was made
+     * @param customerId  id of the customer who made the purchase
+     * @param sellerId    id of the seller who attended the sale
+     * @param productIds  ids of the products included in the sale
+     * @param totalAmount total amount of the sale
+     */
     
     public SaleRecord(String saleId, LocalDate date, String customerId,
                        String sellerId, List<String> productIds, double totalAmount) {
