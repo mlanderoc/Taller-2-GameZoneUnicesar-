@@ -1,4 +1,4 @@
-package gamezoneunicesar.model;
+package gamezone.model;
 import java.io.Serializable;
 
 public abstract class  Person implements Serializable{
