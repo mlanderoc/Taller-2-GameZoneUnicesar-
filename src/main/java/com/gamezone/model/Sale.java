@@ -11,6 +11,17 @@ public class Sale {
     private List<Product> products;
     private double totalAmount;
     
+    /**
+     * Creates a new Sale.
+     *
+     * @param id       unique identifier of the sale
+     * @param date     date the sale was made
+     * @param customer the customer who made the purchase
+     * @param seller   the seller who attended the sale
+     * @param products the products included in the sale (must contain at least one)
+     * @throws IllegalArgumentException if products is null or empty
+     */
+
     public Sale(String id, LocalDate date, Customer customer, Seller seller, List<Product> products) {
         if (products == null || products.isEmpty()) {
             throw new IllegalArgumentException("A sale must contain at least one product.");
@@ -61,7 +72,11 @@ public class Sale {
     public void setTotalAmount(double totalAmount) {
         this.totalAmount = totalAmount;
     }
-    
+    /**
+     * Generates a simple text receipt for the sale.
+     *
+     * @return the receipt text
+     */
     public String generateReceipt() {
         
         StringBuilder sb = new StringBuilder();
@@ -76,7 +91,11 @@ public class Sale {
         sb.append("Total: ").append(totalAmount);
         return sb.toString();
     }
-    
+    /**
+     * Calculates the total amount of the sale by summing the price of all products.
+     *
+     * @return the total amount
+     */
     public double calculateTotal() {
         double total = 0.0;
         for (Product product : products) {
