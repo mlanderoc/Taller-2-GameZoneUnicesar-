@@ -25,7 +25,7 @@ public class ProductRepository {
      *
      * @param products the list of products to save
      */
-    public void saveALL(List<Product> products){
+    public void saveAll(List<Product> products){
         File dataDirectory = new File("data"); 
         
         if(!dataDirectory.exists()){
