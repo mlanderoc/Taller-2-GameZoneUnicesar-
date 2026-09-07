@@ -74,16 +74,23 @@ public class Console extends Product {
     public String getGeneration() {
         return generation;
     }
-
+    
+    /**
+     * Sets the generation of the console.
+     *
+     * @param generation the new console generation
+     */
     public void setGeneration(String generation) {
         this.generation = generation;
     }
     
-    
-    
-    
+    /**
+     * Returns a complete description of the console.
+     *
+     * @return a string containing the console information
+     */
     @Override
-    public String getDescription(){
+    public String getDescription() {
         return "Title: " + getTitle()
                 + ", Brand: " + brand
                 + ", Model: " + model
