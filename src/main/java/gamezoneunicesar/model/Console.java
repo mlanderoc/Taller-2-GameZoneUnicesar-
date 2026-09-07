@@ -8,6 +8,6 @@ package gamezoneunicesar.model;
  *
  * @author Keiner
  */
-public class console {
+public class Console {
     
 }
