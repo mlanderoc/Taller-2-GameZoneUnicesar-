@@ -1,6 +1,6 @@
 
 
-package com.mycompany.gamezoneunicesar;
+package com.gamezone;
 
 /**
    @author Merlin Landero
