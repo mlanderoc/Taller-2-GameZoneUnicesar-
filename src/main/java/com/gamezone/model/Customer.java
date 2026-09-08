@@ -19,11 +19,6 @@ public class Customer extends Person {
     private String email;
 
     /**
-     * Purchase history of the customer.
-     */
-    private String purchasehistory;
-
-    /**
      * Default constructor of the Customer class.
      *
      * <p>Creates a Customer object without initializing
@@ -37,12 +32,10 @@ public class Customer extends Person {
      * with their email address and purchase history.
      *
      * @param email email address of the customer
-     * @param purchasehistory purchase history of the customer
      */
-    public Customer(String id, String firstName,String lastName,long phone,String email, String purchasehistory) {
+    public Customer(String id, String firstName,String lastName,String phone,String email) {
         super(id, firstName, lastName, phone);
         this.email = email;
-        this.purchasehistory = purchasehistory;
     }
     
 
@@ -62,24 +55,6 @@ public class Customer extends Person {
      */
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    /**
-     * Returns the customer's purchase history.
-     *
-     * @return the customer's purchase history
-     */
-    public String getPurchasehistory() {
-        return purchasehistory;
-    }
-
-    /**
-     * Sets the customer's purchase history.
-     *
-     * @param purchasehistory new purchase history of the customer
-     */
-    public void setPurchasehistory(String purchasehistory) {
-        this.purchasehistory = purchasehistory;
     }
 }
 
