@@ -39,10 +39,12 @@ public class Customer extends Person {
      * @param email email address of the customer
      * @param purchasehistory purchase history of the customer
      */
-    public Customer(String email, String purchasehistory) {
+    public Customer(String id, String firstName,String lastName,long phone,String email, String purchasehistory) {
+        super(id, firstName, lastName, phone);
         this.email = email;
         this.purchasehistory = purchasehistory;
     }
+    
 
     /**
      * Returns the customer's email address.
