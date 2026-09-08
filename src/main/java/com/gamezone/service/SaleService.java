@@ -13,6 +13,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Handles the business rules for registering and querying sales,
+ * coordinating stock validation and updates through ProductService,
+ * and resolving persisted SaleRecords back into full Sale objects.
+ */
 public class SaleService {
     private SaleRepository saleRepository;
     private ProductService productService;
@@ -23,6 +28,17 @@ public class SaleService {
         this.productService = productService;
         this.personService = personService;
     }
+    
+  /**
+     * Registers a new sale: validates that there is at least one product,
+     * verifies and updates stock for each product, and persists the sale.
+     *
+     * @param customer the customer making the purchase
+     * @param seller   the seller attending the sale
+     * @param products the products included in the sale
+     * @return the registered Sale
+     * @throws IllegalArgumentException if products is null/empty or stock is insufficient
+     */ 
     
     public Sale registerSale(Customer customer, Seller seller, List<Product> products) {
         if (products == null || products.isEmpty()) {
@@ -52,6 +68,12 @@ public class SaleService {
         return sale;
     }
     
+    /**
+     * Returns the full history of sales, resolving each SaleRecord into a Sale object.
+     *
+     * @return the list of all sales
+     */
+    
     public List<Sale> viewAllSales() {
         List<Sale> sales = new ArrayList<>();
         for (SaleRecord record : saleRepository.loadAll()) {
@@ -60,6 +82,13 @@ public class SaleService {
         return sales;
     }
     
+    /**
+     * Returns the purchase history of a specific customer.
+     *
+     * @param customer the customer to filter by
+     * @return the list of sales made by that customer
+     */
+
     public List<Sale> viewSalesByCustomer(Customer customer) {
         List<Sale> result = new ArrayList<>();
         for (Sale sale : viewAllSales()) {
@@ -69,7 +98,14 @@ public class SaleService {
         }
         return result;
     }
-     
+    
+     /**
+     * Returns the sales attended by a specific seller.
+     *
+     * @param seller the seller to filter by
+     * @return the list of sales attended by that seller
+     */
+    
     public List<Sale> viewSalesBySeller(Seller seller) {
         List<Sale> result = new ArrayList<>();
         for (Sale sale : viewAllSales()) {
@@ -79,6 +115,10 @@ public class SaleService {
         }
         return result;
     }
+    
+    /**
+     * Converts a full Sale object into its persisted record form (raw ids).
+     */
     
     private SaleRecord toRecord(Sale sale) {
         List<String> productIds = new ArrayList<>();
@@ -94,6 +134,11 @@ public class SaleService {
                 sale.getTotalAmount()
         );
     }
+    
+    /**
+     * Resolves a persisted SaleRecord back into a full Sale object,
+     * looking up the referenced customer, seller, and products.
+     */
     
     private Sale toSale(SaleRecord record) {
         Customer customer = personService.findCustomerById(record.getCustomerId());
