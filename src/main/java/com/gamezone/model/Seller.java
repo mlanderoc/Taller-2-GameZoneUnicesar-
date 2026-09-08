@@ -44,6 +44,13 @@ public class Seller extends Person {
         this.shift = shift;
     }
 
+    public Seller(String id, String firstName, String lastName, long phone,long employeecode, String shift) {
+        super(id, firstName, lastName, phone);
+        this.employeecode = employeecode;
+        this.shift = shift;
+    }
+    
+
     /**
      * Returns the employee code of the seller.
      *
