@@ -63,15 +63,17 @@ public class Sale {
         return products;
     }
     public void setProducts(List<Product> products) {
+       if (products == null || products.isEmpty()) {
+            throw new IllegalArgumentException("A sale must contain at least one product.");
+        }
         this.products = products;
+        this.totalAmount = calculateTotal();
     }
 
     public double getTotalAmount() {
         return totalAmount;
     }
-    public void setTotalAmount(double totalAmount) {
-        this.totalAmount = totalAmount;
-    }
+   
     /**
      * Generates a simple text receipt for the sale.
      *
