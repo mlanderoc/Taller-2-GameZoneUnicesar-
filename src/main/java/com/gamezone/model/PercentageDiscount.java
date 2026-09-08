@@ -1,12 +1,12 @@
 
 package com.gamezone.model;
-
+import java.time.LocalDate;
 
 public class PercentageDiscount extends Promotion {
     
     private double discountPercentage;
 
-    public PercentageDiscount(String id, String name, String startDate, String endDate, double discountPercentage ) {
+    public PercentageDiscount(String id, String name, LocalDate startDate, LocalDate      endDate, double discountPercentage ) {
         super(id, name, startDate, endDate);
         this.discountPercentage = discountPercentage;
     }
@@ -23,7 +23,7 @@ public class PercentageDiscount extends Promotion {
    @Override
    public double calculateDiscount(Sale sale){
        
-       return discountPercentage; 
+        return sale.calculateTotal() * discountPercentage / 100;
    }
 
    
