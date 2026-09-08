@@ -21,7 +21,7 @@ public abstract class Person implements Serializable {
     /**
      * Unique identifier of the person.
      */
-    protected long id;
+    protected String id;
 
     /**
      * First name of the person.
@@ -55,7 +55,7 @@ public abstract class Person implements Serializable {
      * @param lastName last name of the person
      * @param phone phone number of the person
      */
-    public Person(long id, String firstName, String lastName, long phone) {
+    public Person(String id, String firstName, String lastName, long phone) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -67,7 +67,7 @@ public abstract class Person implements Serializable {
      *
      * @return the person's ID
      */
-    public long getId() {
+    public String getId() {
         return id;
     }
 
@@ -76,7 +76,7 @@ public abstract class Person implements Serializable {
      *
      * @param id new identifier of the person
      */
-    public void setId(long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
