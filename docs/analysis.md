@@ -55,3 +55,26 @@ Domain classes should represent business concepts and behavior only; mixing in f
 The allowed dependencies are `ui → service`, `service → persistence`, `service → model`, and `persistence → model`; `model` depends on nothing. Any dependency in the opposite direction — `model` depending on `persistence`, `persistence` depending on `service`, or `service`/`persistence`/`model` depending on `ui` — is forbidden. This unidirectional flow keeps the domain model stable and reusable at the core of the application, while outer layers (persistence, service, ui) depend inward on it rather than the reverse, preventing circular dependencies and letting each layer be replaced or tested independently.
 
 A concrete example of this rule in practice is `SaleRepository`. Persisted sales only store raw ids (customer id, seller id, product ids) rather than full domain objects, so reconstructing a complete `Sale` from disk requires resolving those ids into real `Customer`, `Seller`, and `Product` instances. Instead of letting `SaleRepository` call into `ProductService`/`PersonService` to do that resolution — which would create a forbidden `persistence → service` dependency — the repository works only with a plain data-transfer class, `SaleRecord`, that holds the raw ids and lives in the `persistence` layer without depending on anything outside `model`-level data. The resolution of those ids into full domain objects happens in `SaleService`, which is already allowed to depend on `ProductService` and `PersonService`. This keeps `persistence` depending only on plain data, and keeps the reconstruction logic where the architecture permits it: in `service`.
+
+### Requirement questions – partial
+
+### 1.	The three promotions have different calculation rules but share common attributes and behaviors. How is this situation reflected in the class hierarchy design? Which object-oriented programming mechanism allows each promotion type to calculate its discount differently without the rest of the system needing to know the concrete types?
+
+It is reflected in the abstract `Promotion` class and its subclasses: `PercentageDiscount`, `CategoryDiscount`, and `BulkPurchaseDiscount`. The mechanism allowing each promotion type to calculate its discount differently is polymorphism, as it enables the same action to be executed in different ways depending on the specific implementation.
+
+### 2.	The base class `Promotion` cannot implement the discount calculation method because each type has different logic. How is this method declared in the base class, and what does this declaration guarantee regarding the subclasses?
+
+The `Promotion` class—and the method itself—must be abstract so that the subclasses can override the method according to their specific logic.
+
+### 3.	The business rule states that only the promotion offering the highest discount is applied. In which class is this selection logic located, and why is this placement consistent with the layered architecture principle?Why should this logic NOT be placed in the `Sale` class or the console menu?
+
+This logic should be located in the service package, specifically within the `PromotionService` class, because that is where business logic is handled; it cannot be in the `Sale` class, as that class is not designed to manage business logic.
+
+### 4. What modifications are required in the Sale class and the generateReceipt method so that the receipt displays the applied discount? Do these modifications break any existing system behavior?
+
+Two attributes—`Discount` and `subtotal`—must be added and retrieved from the `Promotion` class; then, the `calculateTotal` method must be modified to subtract the discount value from the subtotal.
+
+### 5.	Active promotions are determined by comparing the current date with the start and end dates of each promotion. Where is this validation performed (in the `Promotion` class, in `PromotionService`, or in both)? Justify your answer.
+
+This validation should be performed in `promotionservice`, as that is where validations take place; conversely, we cannot implement the business rule logic in `promotion`, because that class only defines attributes, the constructor, setters, getters, and—of course—its methods.
+
