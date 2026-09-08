@@ -16,7 +16,7 @@ public class Seller extends Person {
     /**
      * Unique employee code assigned to the seller.
      */
-    private long employeecode;
+    private String employeecode;
 
     /**
      * Work shift assigned to the seller.
@@ -39,12 +39,8 @@ public class Seller extends Person {
      * @param employeecode unique employee code of the seller
      * @param shift work shift assigned to the seller
      */
-    public Seller(long employeecode, String shift) {
-        this.employeecode = employeecode;
-        this.shift = shift;
-    }
 
-    public Seller(String id, String firstName, String lastName, long phone,long employeecode, String shift) {
+    public Seller(String id, String firstName, String lastName, String phone,String employeecode, String shift) {
         super(id, firstName, lastName, phone);
         this.employeecode = employeecode;
         this.shift = shift;
@@ -56,7 +52,7 @@ public class Seller extends Person {
      *
      * @return the seller's employee code
      */
-    public long getEmployeecode() {
+    public String getEmployeecode() {
         return employeecode;
     }
 
@@ -65,7 +61,7 @@ public class Seller extends Person {
      *
      * @param employeecode new employee code of the seller
      */
-    public void setEmployeecode(long employeecode) {
+    public void setEmployeecode(String employeecode) {
         this.employeecode = employeecode;
     }
 

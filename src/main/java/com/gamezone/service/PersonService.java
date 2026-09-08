@@ -31,7 +31,7 @@ public class PersonService {
     /**
      * Creates a new PersonService and initializes the repository.
      */
-    public PersonService() {
+    public PersonService(PersonRepository repository) {
         this.repository = new PersonRepository();
     }
 
@@ -43,13 +43,33 @@ public class PersonService {
      *
      * @param customer customer to be registered
      */
-    public void registerCustomer(Customer customer) {
-        List<Customer> customers = repository.loadAllCustomers();
+   public void registerCustomer(String id, String firstName, String lastName, String phone, String email) {
+    List<Customer> customers = repository.loadAllCustomers();
 
-        customers.add(customer);
-
-        repository.saveAllCustomers(customers);
+    for (Customer existing : customers) {
+        if (existing.getId().equals(id)) {
+            throw new IllegalArgumentException("A customer with id " + id + " already exists.");
+        }
     }
+
+    Customer customer = new Customer(id, firstName, lastName, phone, email);
+    customers.add(customer);
+    repository.saveAllCustomers(customers);
+}
+   public void registerSeller(String id, String firstName, String lastName, String phone,
+                            String employeeCode, String shift) {
+    List<Seller> sellers = repository.loadAllSellers();
+
+    for (Seller existing : sellers) {
+        if (existing.getId().equals(id)) {
+            throw new IllegalArgumentException("A seller with id " + id + " already exists.");
+        }
+    }
+
+    Seller seller = new Seller(id, firstName, lastName, phone, employeeCode, shift);
+    sellers.add(seller);
+    repository.saveAllSellers(sellers);
+}
 
     /**
      * Searches for a customer by their ID.

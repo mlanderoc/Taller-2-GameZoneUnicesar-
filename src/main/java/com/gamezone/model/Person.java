@@ -36,7 +36,7 @@ public abstract class Person implements Serializable {
     /**
      * Phone number of the person.
      */
-    protected long phone;
+    protected String phone;
 
     /**
      * Default constructor of the Person class.
@@ -55,7 +55,7 @@ public abstract class Person implements Serializable {
      * @param lastName last name of the person
      * @param phone phone number of the person
      */
-    public Person(String id, String firstName, String lastName, long phone) {
+    public Person(String id, String firstName, String lastName, String phone) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -121,7 +121,7 @@ public abstract class Person implements Serializable {
      *
      * @return the person's phone number
      */
-    public long getPhone() {
+    public String getPhone() {
         return phone;
     }
 
@@ -130,7 +130,7 @@ public abstract class Person implements Serializable {
      *
      * @param phone new phone number of the person
      */
-    public void setPhone(long phone) {
+    public void setPhone(String phone) {
         this.phone = phone;
     }
 
