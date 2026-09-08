@@ -6,10 +6,10 @@ public abstract class Promotion {
     
     private String id;
     private String name; 
-    private String startDate; 
-    private String endDate; 
+    private LocalDate startDate; 
+    private LocalDate endDate; 
 
-    public Promotion(String id, String name, String startDate, String endDate) {
+    public Promotion(String id, String name, LocalDate startDate, LocalDate endDate) {
         this.id = id;
         this.name = name;
         this.startDate = startDate;
@@ -32,25 +32,25 @@ public abstract class Promotion {
         this.name = name;
     }
 
-    public String getStartDate() {
+    public LocalDate getStartDate() {
         return startDate;
     }
 
-    public void setStartDate(String startDate) {
+    public void setStartDate(LocalDate startDate) {
         this.startDate = startDate;
     }
 
-    public String getEndDate() {
+    public LocalDate getEndDate() {
         return endDate;
     }
 
-    public void setEndDate(String endDate) {
+    public void setEndDate(LocalDate endDate) {
         this.endDate = endDate;
     }
     
     public boolean isActive(LocalDate date){
         
-        return true; 
+        return !date.isBefore(startDate) && !date.isAfter(endDate);    
     }
     
     public abstract double calculateDiscount(Sale sale); 
