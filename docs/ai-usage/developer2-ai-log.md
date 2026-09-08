@@ -2,8 +2,8 @@
 
 ## Student Information
 
-**Full name:** Hector
-**Role:** Developer
+**Full name:** Hector Guevara
+**Role:** Developer2
 **Assigned module:** Person management
 **Project:** GameZone Unicesar
 
