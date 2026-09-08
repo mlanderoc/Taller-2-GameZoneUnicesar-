@@ -1,8 +1,8 @@
 
 package com.gamezone.persistence;
 
-import gamezone.model.Customer;
-import gamezone.model.Seller;
+import com.gamezone.model.Customer;
+import com.gamezone.model.Seller;
 
 import java.io.*;
 import java.util.ArrayList;
