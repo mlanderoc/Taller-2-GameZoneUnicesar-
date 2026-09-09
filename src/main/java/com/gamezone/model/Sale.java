@@ -34,7 +34,8 @@ public class Sale {
         this.customer = customer;
         this.seller = seller;
         this.products = products;
-        this.totalAmount = calculateTotal();
+        this.subtotal = calculateTotal();
+        this.totalAmount = subtotal;
         this.discountAmount = 0.0;
         this.appliedPromotionName = null; 
     }
@@ -73,10 +74,11 @@ public class Sale {
         }
         this.products = products;
         this.subtotal = calculateTotal();
+        this.totalAmount = subtotal - discountAmount;
     }
 
     public double getTotalAmount() {
-        return subtotal - discountAmount;//change
+        return totalAmount;//change
     }
 
     public String getAppliedPromotionName() {
@@ -102,6 +104,7 @@ public class Sale {
     public void applyDiscount(String promotionName, double discountAmount) {
         this.appliedPromotionName = promotionName;
         this.discountAmount = discountAmount;
+         this.totalAmount = subtotal - discountAmount;
     }
     /**
      * Generates a simple text receipt for the sale.
