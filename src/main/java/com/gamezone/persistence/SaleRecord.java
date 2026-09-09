@@ -17,7 +17,11 @@ public class SaleRecord implements Serializable {
     private String customerId;
     private String sellerId;
     private List<String> productIds;
-    private double totalAmount;
+    private double subtotal;
+    private String appliedPromotionName;
+    private double discountAmount;
+    
+    
     
      /**
      * Creates a new SaleRecord.
@@ -27,17 +31,20 @@ public class SaleRecord implements Serializable {
      * @param customerId  id of the customer who made the purchase
      * @param sellerId    id of the seller who attended the sale
      * @param productIds  ids of the products included in the sale
-     * @param totalAmount total amount of the sale
+     * @param  subtotal of the sale
      */
     
     public SaleRecord(String saleId, LocalDate date, String customerId,
-                       String sellerId, List<String> productIds, double totalAmount) {
+                       String sellerId, List<String> productIds, double subtotal,String appliedPromotionName,double discountAmount) {
         this.saleId = saleId;
         this.date = date;
         this.customerId = customerId;
         this.sellerId = sellerId;
         this.productIds = productIds;
-        this.totalAmount = totalAmount;
+        this.subtotal = subtotal;
+        this.appliedPromotionName = this.appliedPromotionName;
+        this.discountAmount =this.discountAmount;
+        
     }
     //GETTERS and SETTERS
     public String getSaleId() {
@@ -73,11 +80,29 @@ public class SaleRecord implements Serializable {
         this.productIds = productIds;
     }
 
-    public double getTotalAmount() {
-        return totalAmount;
+    public double getSubtotal() {
+        return subtotal;
     }
 
-    public void setTotalAmount(double totalAmount) {
-        this.totalAmount = totalAmount;
+    public void setSubtotal(double subtotal) {
+        this.subtotal = subtotal;
     }
+
+    public String getAppliedPromotionName() {
+        return appliedPromotionName;
+    }
+
+    public void setAppliedPromotionName(String appliedPromotionName) {
+        this.appliedPromotionName = appliedPromotionName;
+    }
+
+    public double getDiscountAmount() {
+        return discountAmount;
+    }
+
+    public void setDiscountAmount(double discountAmount) {
+        this.discountAmount = discountAmount;
+    }
+    
+    
 }
