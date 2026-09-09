@@ -10,6 +10,9 @@ public class Sale {
     private Seller seller;
     private List<Product> products;
     private double totalAmount;
+    private String appliedPromotionName;
+    private double discountAmount;
+    private double subtotal;
     
     /**
      * Creates a new Sale.
@@ -31,7 +34,10 @@ public class Sale {
         this.customer = customer;
         this.seller = seller;
         this.products = products;
-        this.totalAmount = calculateTotal();
+        this.subtotal = calculateTotal();
+        this.totalAmount = subtotal;
+        this.discountAmount = 0.0;
+        this.appliedPromotionName = null; 
     }
     // Getters and setters
 
@@ -67,13 +73,39 @@ public class Sale {
             throw new IllegalArgumentException("A sale must contain at least one product.");
         }
         this.products = products;
-        this.totalAmount = calculateTotal();
+        this.subtotal = calculateTotal();
+        this.totalAmount = subtotal - discountAmount;
     }
 
     public double getTotalAmount() {
-        return totalAmount;
+        return totalAmount;//change
     }
-   
+
+    public String getAppliedPromotionName() {
+        return appliedPromotionName;
+    }
+
+    public void setAppliedPromotionName(String appliedPromotionName) {
+        this.appliedPromotionName = appliedPromotionName;
+    }
+
+    public double getDiscountAmount() {
+        return discountAmount;
+    }
+
+    public void setDiscountAmount(double discountAmount) {
+        this.discountAmount = discountAmount;
+    }
+
+    public double getSubtotal() {
+        return subtotal;
+    }
+    
+    public void applyDiscount(String promotionName, double discountAmount) {
+        this.appliedPromotionName = promotionName;
+        this.discountAmount = discountAmount;
+         this.totalAmount = subtotal - discountAmount;
+    }
     /**
      * Generates a simple text receipt for the sale.
      *
@@ -84,13 +116,22 @@ public class Sale {
         StringBuilder sb = new StringBuilder();
         sb.append("Sale ID: ").append(id).append("\n");
         sb.append("Date: ").append(date).append("\n");
-        //sb.append("Customer: ").append(customer.getFullName()).append("\n");
-        //sb.append("Seller: ").append(seller.getFullName()).append("\n");
+        sb.append("Customer: ").append(customer.getFullName()).append("\n");
+        sb.append("Seller: ").append(seller.getFullName()).append("\n");
         sb.append("Products:\n");
         for (Product product : products) {
             sb.append(" - ").append(product.getDescription()).append("\n");
         }
-        sb.append("Total: ").append(totalAmount);
+        sb.append("Subtotal: ").append(subtotal).append("\n");
+        
+        if (appliedPromotionName != null) {
+            sb.append("Descuento aplicado (").append(appliedPromotionName).append("): ")
+              .append(discountAmount).append("\n");
+        } else {
+            sb.append("Descuento aplicado: Ninguno\n");
+        }
+        
+        sb.append("Total: ").append(getTotalAmount());
         return sb.toString();
     }
     /**

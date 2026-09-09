@@ -3,6 +3,7 @@ package com.gamezone.service;
 
 import com.gamezone.model.Customer;
 import com.gamezone.model.Product;
+import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
 import com.gamezone.persistence.SaleRecord;
@@ -22,11 +23,13 @@ public class SaleService {
     private SaleRepository saleRepository;
     private ProductService productService;
     private PersonService personService;
+    private PromotionService promotionService;
 
-    public SaleService(SaleRepository saleRepository, ProductService productService, PersonService personService) {
+    public SaleService(SaleRepository saleRepository, ProductService productService, PersonService personService,PromotionService promotionService) {
         this.saleRepository = saleRepository;
         this.productService = productService;
         this.personService = personService;
+        this.promotionService = promotionService;
     }
     
   /**
@@ -59,7 +62,13 @@ public class SaleService {
 
         String saleId = UUID.randomUUID().toString();
         Sale sale = new Sale(saleId, LocalDate.now(), customer, seller, products);
-
+        
+        Promotion bestPromotion = promotionService.findBestPromotionFor(sale);
+        
+        if (bestPromotion != null) {
+            double discount = bestPromotion.calculateDiscount(sale);
+            sale.applyDiscount(bestPromotion.getName(), discount);
+        }  
         SaleRecord record = toRecord(sale);
         List<SaleRecord> records = saleRepository.loadAll();
         records.add(record);
@@ -131,7 +140,9 @@ public class SaleService {
                 sale.getCustomer().getId(),
                 sale.getSeller().getId(),
                 productIds,
-                sale.getTotalAmount()
+                sale.getSubtotal(),
+                sale.getAppliedPromotionName(),
+                sale.getDiscountAmount()
         );
     }
     
@@ -149,6 +160,10 @@ public class SaleService {
             products.add(productService.findById(productId));
         }
 
-        return new Sale(record.getSaleId(), record.getDate(), customer, seller, products);
+        Sale sale = new Sale(record.getSaleId(), record.getDate(), customer, seller, products);
+        sale.setAppliedPromotionName(record.getAppliedPromotionName());
+        sale.setDiscountAmount(record.getDiscountAmount());
+        
+        return sale;
     }
 }
