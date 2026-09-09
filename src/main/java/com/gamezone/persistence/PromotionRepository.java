@@ -11,7 +11,7 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PromotionRepository {
+public class PromotionRepository implements Repository<Promotion>  {
 
     private static final String FILE_PATH = "data/promotion.dat";
 
