@@ -1,8 +1,11 @@
 
 package com.gamezone.model;
+import java.io.Serializable;
 import java.time.LocalDate;
 
-public abstract class Promotion {
+public abstract class Promotion implements Serializable {
+    
+    private static final long serialVersionUID = 1L;
     
     private String id;
     private String name; 
