@@ -1,4 +1,3 @@
-
 package com.gamezone.ui;
 
 import com.gamezone.model.Console;
@@ -17,8 +16,8 @@ import java.util.List;
 import java.util.Scanner;
 
 /**
- * Console-based user interface for the GameZone system.
- * Talks only to the service layer, never directly to persistence.
+ * Console-based user interface for the GameZone system. Talks only to the
+ * service layer, never directly to persistence.
  */
 public class ConsoleMenu {
 
@@ -28,12 +27,12 @@ public class ConsoleMenu {
     private PromotionService promotionService;
     private Scanner scanner;
 
-    public ConsoleMenu(ProductService productService, PersonService personService, SaleService saleService,PromotionService promotionService ) {
+    public ConsoleMenu(ProductService productService, PersonService personService, SaleService saleService, PromotionService promotionService) {
         this.productService = productService;
         this.personService = personService;
-        this.promotionService = promotionService; 
+        this.promotionService = promotionService;
         this.saleService = saleService;
-       
+
         this.scanner = new Scanner(System.in);
     }
 
@@ -41,220 +40,219 @@ public class ConsoleMenu {
      * Starts the main menu loop.
      */
     public void start() {
-    boolean running = true;
+        boolean running = true;
 
-    while (running) {
-        printMainMenu();
-        String option = scanner.nextLine().trim();
+        while (running) {
+            printMainMenu();
+            String option = scanner.nextLine().trim();
 
-        switch (option) {
-            case "1":
-                showProductMenu();
-                break;
-            case "2":
-                showPeopleMenu();
-                break;
-            case "3":
-                showSalesMenu();
-                break;
-            case "4":
-                showPromotionMenu();
-                break;
-            case "0":
-                running = false;
-                printMessage("Gracias por usar GameZone Unicesar.");
-                break;
-            default:
-                printError("Opción invalida. Intente nuevamente.");
-                break;
+            switch (option) {
+                case "1":
+                    showProductMenu();
+                    break;
+                case "2":
+                    showPeopleMenu();
+                    break;
+                case "3":
+                    showSalesMenu();
+                    break;
+                case "4":
+                    showPromotionMenu();
+                    break;
+                case "0":
+                    running = false;
+                    printMessage("Gracias por usar GameZone Unicesar.");
+                    break;
+                default:
+                    printError("Opción invalida. Intente nuevamente.");
+                    break;
+            }
         }
-    }
 
-    scanner.close();
-}
+        scanner.close();
+    }
 
     private void printMainMenu() {
-    printHeader("GAMEZONE UNICESAR");
-    System.out.println("       Sistema de gestión de videojuegos");
-    printLine();
-    System.out.println("  [1] Gestión de productos");
-    System.out.println("  [2] Gestión de personas");
-    System.out.println("  [3] Gestión de ventas");
-    System.out.println("  [4] Gestión de promociones");
-    System.out.println("  [0] Salir");
-    printLine();
-    System.out.print("Seleccione una opción: ");
-}
-    
+        printHeader("GAMEZONE UNICESAR");
+        System.out.println("       Sistema de gestión de videojuegos");
+        printLine();
+        System.out.println("  [1] Gestión de productos");
+        System.out.println("  [2] Gestión de personas");
+        System.out.println("  [3] Gestión de ventas");
+        System.out.println("  [4] Gestión de promociones");
+        System.out.println("  [0] Salir");
+        printLine();
+        System.out.print("Seleccione una opción: ");
+    }
+
     private void showProductMenu() {
-    boolean inProductMenu = true;
+        boolean inProductMenu = true;
 
-    while (inProductMenu) {
-        printHeader("GESTIÓN DE PRODUCTOS");
-        System.out.println("  [1] Registrar videojuego");
-        System.out.println("  [2] Registrar consola");
-        System.out.println("  [3] Listar todos los productos");
-        System.out.println("  [0] Volver al menú principal");
-        printLine();
-        System.out.print("Seleccione una opción: ");
+        while (inProductMenu) {
+            printHeader("GESTIÓN DE PRODUCTOS");
+            System.out.println("  [1] Registrar videojuego");
+            System.out.println("  [2] Registrar consola");
+            System.out.println("  [3] Listar todos los productos");
+            System.out.println("  [0] Volver al menú principal");
+            printLine();
+            System.out.print("Seleccione una opción: ");
 
-        String option = scanner.nextLine().trim();
+            String option = scanner.nextLine().trim();
 
-        switch (option) {
-            case "1":
-                registerVideoGame();
-                pause();
-                break;
-            case "2":
-                registerConsole();
-                pause();
-                break;
-            case "3":
-                listAllProducts();
-                pause();
-                break;
-            case "0":
-                inProductMenu = false;
-                break;
-            default:
-                printError("Opción inválida. Intente nuevamente.");
-                pause();
-                break;
+            switch (option) {
+                case "1":
+                    registerVideoGame();
+                    pause();
+                    break;
+                case "2":
+                    registerConsole();
+                    pause();
+                    break;
+                case "3":
+                    listAllProducts();
+                    pause();
+                    break;
+                case "0":
+                    inProductMenu = false;
+                    break;
+                default:
+                    printError("Opción inválida. Intente nuevamente.");
+                    pause();
+                    break;
+            }
         }
     }
-}
 
-private void showPeopleMenu() {
-    boolean inPeopleMenu = true;
+    private void showPeopleMenu() {
+        boolean inPeopleMenu = true;
 
-    while (inPeopleMenu) {
-        printHeader("GESTIÓN DE PERSONAS");
-        System.out.println("  [1] Registrar cliente");
-        System.out.println("  [2] Listar clientes");
-        System.out.println("  [3] Listar vendedores");
-        System.out.println("  [0] Volver al menú principal");
-        printLine();
-        System.out.print("Seleccione una opción: ");
+        while (inPeopleMenu) {
+            printHeader("GESTIÓN DE PERSONAS");
+            System.out.println("  [1] Registrar cliente");
+            System.out.println("  [2] Listar clientes");
+            System.out.println("  [3] Listar vendedores");
+            System.out.println("  [0] Volver al menú principal");
+            printLine();
+            System.out.print("Seleccione una opción: ");
 
-        String option = scanner.nextLine().trim();
+            String option = scanner.nextLine().trim();
 
-        switch (option) {
-            case "1":
-                registerCustomer();
-                pause();
-                break;
-            case "2":
-                listAllCustomers();
-                pause();
-                break;
-            case "3":
-                listAllSellers();
-                pause();
-                break;
-            case "0":
-                inPeopleMenu = false;
-                break;
-            default:
-                printError("Opción inválida. Intente nuevamente.");
-                pause();
-                break;
+            switch (option) {
+                case "1":
+                    registerCustomer();
+                    pause();
+                    break;
+                case "2":
+                    listAllCustomers();
+                    pause();
+                    break;
+                case "3":
+                    listAllSellers();
+                    pause();
+                    break;
+                case "0":
+                    inPeopleMenu = false;
+                    break;
+                default:
+                    printError("Opción inválida. Intente nuevamente.");
+                    pause();
+                    break;
+            }
         }
     }
-}
 
-private void showSalesMenu() {
-    boolean inSalesMenu = true;
+    private void showSalesMenu() {
+        boolean inSalesMenu = true;
 
-    while (inSalesMenu) {
-        printHeader("GESTIÓN DE VENTAS");
-        System.out.println("  [1] Registrar venta");
-        System.out.println("  [2] Ver todas las ventas");
-        System.out.println("  [3] Ver ventas por cliente");
-        System.out.println("  [4] Ver ventas por vendedor");
-        System.out.println("  [0] Volver al menú principal");
-        printLine();
-        System.out.print("Seleccione una opción: ");
+        while (inSalesMenu) {
+            printHeader("GESTIÓN DE VENTAS");
+            System.out.println("  [1] Registrar venta");
+            System.out.println("  [2] Ver todas las ventas");
+            System.out.println("  [3] Ver ventas por cliente");
+            System.out.println("  [4] Ver ventas por vendedor");
+            System.out.println("  [0] Volver al menú principal");
+            printLine();
+            System.out.print("Seleccione una opción: ");
 
-        String option = scanner.nextLine().trim();
+            String option = scanner.nextLine().trim();
 
-        switch (option) {
-            case "1":
-                registerSale();
-                pause();
-                break;
-            case "2":
-                viewAllSales();
-                pause();
-                break;
-            case "3":
-                viewSalesByCustomer();
-                pause();
-                break;
-            case "4":
-                viewSalesBySeller();
-                pause();
-                break;
-            case "0":
-                inSalesMenu = false;
-                break;
-            default:
-                printError("Opción inválida. Intente nuevamente.");
-                pause();
-                break;
+            switch (option) {
+                case "1":
+                    registerSale();
+                    pause();
+                    break;
+                case "2":
+                    viewAllSales();
+                    pause();
+                    break;
+                case "3":
+                    viewSalesByCustomer();
+                    pause();
+                    break;
+                case "4":
+                    viewSalesBySeller();
+                    pause();
+                    break;
+                case "0":
+                    inSalesMenu = false;
+                    break;
+                default:
+                    printError("Opción inválida. Intente nuevamente.");
+                    pause();
+                    break;
+            }
         }
     }
-}
 
-private void showPromotionMenu() {
-    boolean inPromotionMenu = true;
+    private void showPromotionMenu() {
+        boolean inPromotionMenu = true;
 
-    while (inPromotionMenu) {
-        printHeader("GESTIÓN DE PROMOCIONES");
-        System.out.println("  [1] Registrar promoción por porcentaje");
-        System.out.println("  [2] Registrar promoción por categoría");
-        System.out.println("  [3] Registrar promoción por volumen");
-        System.out.println("  [4] Listar todas las promociones");
-        System.out.println("  [5] Listar promociones vigentes");
-        System.out.println("  [0] Volver al menú principal");
-        printLine();
-        System.out.print("Seleccione una opción: ");
+        while (inPromotionMenu) {
+            printHeader("GESTIÓN DE PROMOCIONES");
+            System.out.println("  [1] Registrar promoción por porcentaje");
+            System.out.println("  [2] Registrar promoción por categoría");
+            System.out.println("  [3] Registrar promoción por volumen");
+            System.out.println("  [4] Listar todas las promociones");
+            System.out.println("  [5] Listar promociones vigentes");
+            System.out.println("  [0] Volver al menú principal");
+            printLine();
+            System.out.print("Seleccione una opción: ");
 
-        String option = scanner.nextLine().trim();
+            String option = scanner.nextLine().trim();
 
-        switch (option) {
-            case "1":
-                registerPercentageDiscount();
-                pause();
-                break;
-            case "2":
-                registerCategoryDiscount();
-                pause();
-                break;
-            case "3":
-                registerBulkPurchaseDiscount();
-                pause();
-                break;
-            case "4":
-                listAllPromotions();
-                pause();
-                break;
-            case "5":
-                listActivePromotions();
-                pause();
-                break;
-            case "0":
-                inPromotionMenu = false;
-                break;
-            default:
-                printError("Opción inválida. Intente nuevamente.");
-                pause();
-                break;
+            switch (option) {
+                case "1":
+                    registerPercentageDiscount();
+                    pause();
+                    break;
+                case "2":
+                    registerCategoryDiscount();
+                    pause();
+                    break;
+                case "3":
+                    registerBulkPurchaseDiscount();
+                    pause();
+                    break;
+                case "4":
+                    listAllPromotions();
+                    pause();
+                    break;
+                case "5":
+                    listActivePromotions();
+                    pause();
+                    break;
+                case "0":
+                    inPromotionMenu = false;
+                    break;
+                default:
+                    printError("Opción inválida. Intente nuevamente.");
+                    pause();
+                    break;
+            }
         }
     }
-}
 
     // ===== Products =====
-
     private void registerVideoGame() {
         System.out.println("==========================================");
         System.out.print("Id: ");
@@ -292,7 +290,7 @@ private void showPromotionMenu() {
         String model = scanner.nextLine().trim();
         System.out.print("Generacion: ");
         String generation = scanner.nextLine().trim();
-        
+
         System.out.println("--------------------------------------------");
         productService.registerConsole(id, title, price, stock, brand, model, generation);
         System.out.println("Consola registrada correctamente.");
@@ -311,7 +309,6 @@ private void showPromotionMenu() {
     }
 
     // ===== People =====
-
     private void registerCustomer() {
         System.out.println("==========================================");
         System.out.print("Id: ");
@@ -354,7 +351,6 @@ private void showPromotionMenu() {
     }
 
     // ===== Sales =====
-
     private void registerSale() {
         System.out.println("==========================================");
         System.out.print("Empleado id: ");
@@ -451,51 +447,51 @@ private void showPromotionMenu() {
             System.out.println("-----");
         }
     }
-    
+
     private void registerPercentageDiscount() {
-    printMessage("Registro de promoción por porcentaje pendiente de integración.");
-}
+        printMessage("Registro de promoción por porcentaje pendiente de integración.");
+    }
 
-private void registerCategoryDiscount() {
-    printMessage("Registro de promoción por categoría pendiente de integración.");
-}
+    private void registerCategoryDiscount() {
+        printMessage("Registro de promoción por categoría pendiente de integración.");
+    }
 
-private void registerBulkPurchaseDiscount() {
-    printMessage("Registro de promoción por volumen pendiente de integración.");
-}
+    private void registerBulkPurchaseDiscount() {
+        printMessage("Registro de promoción por volumen pendiente de integración.");
+    }
 
-private void listAllPromotions() {
-    printMessage("Listado de promociones pendiente de integración.");
-}
+    private void listAllPromotions() {
+        printMessage("Listado de promociones pendiente de integración.");
+    }
 
-private void listActivePromotions() {
-    printMessage("Listado de promociones vigentes pendiente de integración.");
-}
-    
-  private void printHeader(String title) {
-    System.out.println();
-    System.out.println("╔════════════════════════════════════════════╗");
-    System.out.printf("║ %-42s ║%n", title);
-    System.out.println("╚════════════════════════════════════════════╝");
-}
+    private void listActivePromotions() {
+        printMessage("Listado de promociones vigentes pendiente de integración.");
+    }
 
-private void printLine() {
-    System.out.println("──────────────────────────────────────────────");
-}
+    private void printHeader(String title) {
+        System.out.println();
+        System.out.println("╔════════════════════════════════════════════╗");
+        System.out.printf("║ %-42s ║%n", title);
+        System.out.println("╚════════════════════════════════════════════╝");
+    }
 
-private void printMessage(String message) {
-    System.out.println();
-    System.out.println("  ✓ " + message);
-}
+    private void printLine() {
+        System.out.println("──────────────────────────────────────────────");
+    }
 
-private void printError(String message) {
-    System.out.println();
-    System.out.println("  ✗ " + message);
-}
+    private void printMessage(String message) {
+        System.out.println();
+        System.out.println("  ✓ " + message);
+    }
 
-private void pause() {
-    System.out.println();
-    System.out.print("Presione Enter para continuar...");
-    scanner.nextLine();
-}
+    private void printError(String message) {
+        System.out.println();
+        System.out.println("  ✗ " + message);
+    }
+
+    private void pause() {
+        System.out.println();
+        System.out.print("Presione Enter para continuar...");
+        scanner.nextLine();
+    }
 }
