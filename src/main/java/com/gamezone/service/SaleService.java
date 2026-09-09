@@ -24,8 +24,6 @@ public class SaleService {
     private ProductService productService;
     private PersonService personService;
     private PromotionService promotionService;
-    private Promotion bestPromotion;
-    private double discount;
 
     public SaleService(SaleRepository saleRepository, ProductService productService, PersonService personService,PromotionService promotionService) {
         this.saleRepository = saleRepository;
@@ -66,11 +64,11 @@ public class SaleService {
         Sale sale = new Sale(saleId, LocalDate.now(), customer, seller, products);
         
         Promotion bestPromotion = promotionService.findBestPromotionFor(sale);
+        
         if (bestPromotion != null) {
-            discount = bestPromotion.calculateDiscount(sale);
-            sale.setDiscountAmount(discount);
-            sale.setAppliedPromotionName(bestPromotion.getName());
-            
+            double discount = bestPromotion.calculateDiscount(sale);
+            sale.applyDiscount(bestPromotion.getName(), discount);
+        }  
         SaleRecord record = toRecord(sale);
         List<SaleRecord> records = saleRepository.loadAll();
         records.add(record);

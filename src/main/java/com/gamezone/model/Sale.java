@@ -76,7 +76,7 @@ public class Sale {
     }
 
     public double getTotalAmount() {
-        return totalAmount;
+        return subtotal - discountAmount;//change
     }
 
     public String getAppliedPromotionName() {
@@ -99,8 +99,10 @@ public class Sale {
         return subtotal;
     }
     
-    
-   
+    public void applyDiscount(String promotionName, double discountAmount) {
+        this.appliedPromotionName = promotionName;
+        this.discountAmount = discountAmount;
+    }
     /**
      * Generates a simple text receipt for the sale.
      *

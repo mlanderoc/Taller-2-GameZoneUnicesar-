@@ -15,6 +15,7 @@ public class PromotionRepository implements Repository<Promotion>  {
 
     private static final String FILE_PATH = "data/promotion.dat";
 
+    @Override
     public void saveAll(List<Promotion> promotions) {
         File dataDirectory = new File("data");
 
