@@ -11,6 +11,7 @@ graph TD
         PersonService["PersonService<br/><i>(Desarrollador 2)</i>"]
         SaleService["SaleService<br/><i>(Líder Técnico)</i>"]
         ProductService["ProductService<br/><i>(Desarrollador 1)</i>"]
+        PromotionService["PromotionService<br/><i>(Desarrollador 2)</i>"]
     end
 
     %% Capa de Persistencia
@@ -18,6 +19,7 @@ graph TD
         SaleRepository["SaleRepository<br/><i>(Líder Técnico)</i>"]
         PersonRepository["PersonRepository<br/><i>(Desarrollador 2)</i>"]
         ProductRepository["ProductRepository<br/><i>(Desarrollador 1)</i>"]
+        PromotionRepository["PromotionRepository<br/><i>(desarollador 2)</1>"]
     end
 
     %% Capa de Modelo
@@ -25,6 +27,7 @@ graph TD
         
         subgraph ModVentas ["Módulo de Ventas (Líder Técnico)"]
             Sale["Sale"]
+            SaleRecord["SaleRecord"]
         end
         
         subgraph ModPersonas ["Módulo de Personas (Desarrollador 2)"]
@@ -37,6 +40,13 @@ graph TD
             Product["«abstract»<br/>Product"]
             VideoGame["VideoGame"]
             Console["Console"]
+        end
+
+        subgraph ModPromociones ["Módulo de Promociones (desarollador 1)"]
+            Promotion["«abstract»<br/>Promotion"]
+            PercentageDiscount["PercentageDiscount"]
+            CategoryDiscount["CategoryDiscount"]
+            BulkPurchaseDiscount["BulkPurchaseDiscount"]
         end
         
     end
@@ -52,16 +62,23 @@ graph TD
 
     SaleService --> SaleRepository
     SaleService -.-> ProductService
+    SaleService -.-> PersonService
+    SaleService -.-> PromotionService
     SaleService --> Sale
     SaleService --> Person
     SaleService --> Customer
     SaleService --> Seller
     SaleService --> Product
+    SaleService --> SaleRecord
 
     ProductService --> ProductRepository
     ProductService --> Product
 
+    PromotionService --> PromotionRepository
+    PromotionService --> Promotion
+
     %% Relaciones desde Persistence
-    SaleRepository --> Sale
+    SaleRepository --> SaleRecord
     PersonRepository --> Person
     ProductRepository --> Product
+    PromotionRepository --> Promotion

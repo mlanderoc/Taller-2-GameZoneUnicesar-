@@ -1,6 +1,12 @@
+# Class hierarchu-diagram— GameZone Unicesar
+
 ```mermaid
 classDiagram
-    Person <|-- Customer
-    Person <|-- Seller
-    Product <|-- Game
-    Product <|-- Console
+    person <|-- customer
+    person <|-- seller
+    product <|-- game
+    product <|-- console
+    promotion <|--percentagediscount
+    promotion <|--categorydiscount
+    promotion <|--BulkPurchaseDiscount
+

@@ -1,6 +1,7 @@
 # Class Diagram — GameZone Unicesar
 
 ```mermaid
+
 classDiagram
 
     %% ===== MODEL LAYER =====
@@ -47,19 +48,50 @@ classDiagram
         -customer: Customer
         -seller: Seller
         -products: List~Product~
-        -totalAmount: double
-        +calculateTotal() double
-        +generateReceipt() String
+        -subtotal: double
+    -appliedPromotionName: String
+    -discountAmount: double
+    +calculateTotal() double
+    +getTotalAmount() double
+    +applyDiscount(promotionName String, discountAmount double) void
+    +generateReceipt() String
     }
+    class promotion{
+      -start_date:string
+      -end_date: string
+      -title:string
+      -id:string
+      +metodo isActive(localDate date):boolean
+      +calculateDiscount(Sale sale):double
+    }
+    class  PercentageDiscount{
+      discount_percentage:double
+      +calculateDiscount():double
+    }
+     class CategoryDiscount{
+      discount_percentage:double
+      category:string
+      object:string
+      +calculateDiscount()
+     }
+     class BulkPurchaseDiscount{
+      minimum_amount:int
+      discount_percentage:double
+      +calculateDiscount():double
+     }
 
     Product <|-- VideoGame
     Product <|-- Console
     Person <|-- Customer
     Person <|-- Seller
+    promotion<|-- PercentageDiscount
+    promotion<|-- CategoryDiscount
+    promotion<|-- BulkPurchaseDiscount
     Sale "1" --> "1" Customer
     Sale "1" --> "1" Seller
     Sale "1" o-- "1..*" Product
     Customer "1" o-- "0..*" Sale : purchaseHistory
+	SaleService "1" --> "1" PromotionService
 
     %% ===== PERSISTENCE LAYER =====
     class ProductRepository {
@@ -84,12 +116,16 @@ classDiagram
         +saveAll(records List~SaleRecord~) void
         +loadAll() List~SaleRecord~
     }
+    class  PromotionRepository{
+      +saveAll(List<Promotion>):List<Promotion>.
+      +loadAll(): List<Promotion>.
 
+    }
     ProductRepository ..> Product
     PersonRepository ..> Customer
     PersonRepository ..> Seller
     SaleRepository ..> SaleRecord
-
+    PromotionRepository..>promotion
     %% ===== SERVICE LAYER =====
     class ProductService {
         -repository: ProductRepository
@@ -109,12 +145,22 @@ classDiagram
     }
     class SaleService {
         -saleRepository: SaleRepository
-        -productService: ProductService
+        -productService: ProductService 
         -personService: PersonService
         +registerSale(customer Customer, seller Seller, products List~Product~) Sale
         +viewAllSales() List~Sale~
         +viewSalesByCustomer(customer Customer) List~Sale~
         +viewSalesBySeller(seller Seller) List~Sale~
+    }
+    class  PromotionService {
+      -repository: promotionRepository
+      + registerPercentageDiscount(...):void
+      +registerCategoryDiscount(...):void
+      +registerBulkPurchaseDiscount(...): void
+      +listAllPromotions(): List<Promotion>:list<promotion>
+      +listActivePromotions(): List<Promotion>
+      +findBestPromotionFor(Sale sale): Promotion:
+      +findById(String id): Promotion
     }
 
     ProductService "1" --> "1" ProductRepository
@@ -125,6 +171,8 @@ classDiagram
     SaleService "1" --> "1" PersonService
     SaleService ..> Sale
     SaleService ..> SaleRecord
+    PromotionService ..>PromotionRepository
+     SaleService "1" --> "1" PromotionService
 
     %% ===== UI LAYER =====
     class ConsoleMenu {
@@ -150,6 +198,10 @@ classDiagram
     Main ..> ProductService
     Main ..> PersonService
     Main ..> SaleService
+    Main ..>PromotionService
+    Main ..>PromotionRepository
+
+
 ```
 
-**Layering note:** `SaleRepository` only depends on `SaleRecord`, a plain data-transfer object holding raw ids (customerId, sellerId, productIds) as stored in `data/sales.csv`. The resolution of those ids into full domain objects (`Customer`, `Seller`, `Product`) is done in `SaleService`, which already depends on `ProductService` and `PersonService`. This keeps the dependency direction strictly as `ui → service → persistence → model`, with no reverse dependency from `persistence` to `service`.
+**Layering note:** `SaleRepository` only depends on `SaleRecord`, a plain data-transfer object holding raw ids (customerId, sellerId, productIds) as stored in `sales.dat`. The resolution of those ids into full domain objects (`Customer`, `Seller`, `Product`) is done in `SaleService`, which already depends on `ProductService` and `PersonService`. This keeps the dependency direction strictly as `ui → service → persistence → model`, with no reverse dependency from `persistence` to `service`.
