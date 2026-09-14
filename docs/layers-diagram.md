@@ -11,7 +11,7 @@ graph TD
         PersonService["PersonService<br/><i>(Desarrollador 2)</i>"]
         SaleService["SaleService<br/><i>(Líder Técnico)</i>"]
         ProductService["ProductService<br/><i>(Desarrollador 1)</i>"]
-        PromotionService["PromotionService"]
+        PromotionService["PromotionService<br/><i>(Desarrollador 2)</i>"]
     end
 
     %% Capa de Persistencia
@@ -19,7 +19,7 @@ graph TD
         SaleRepository["SaleRepository<br/><i>(Líder Técnico)</i>"]
         PersonRepository["PersonRepository<br/><i>(Desarrollador 2)</i>"]
         ProductRepository["ProductRepository<br/><i>(Desarrollador 1)</i>"]
-        PromotionRepository["PromotionRepository"]
+        PromotionRepository["PromotionRepository<br/><i>(desarollador 2)</1>"]
     end
 
     %% Capa de Modelo
