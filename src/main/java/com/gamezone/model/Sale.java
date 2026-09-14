@@ -100,6 +100,11 @@ public class Sale {
     public double getSubtotal() {
         return subtotal;
     }
+
+    public void setSubtotal(double subtotal) {
+        this.subtotal = subtotal;
+    }
+    
     
     public void applyDiscount(String promotionName, double discountAmount) {
         this.appliedPromotionName = promotionName;
