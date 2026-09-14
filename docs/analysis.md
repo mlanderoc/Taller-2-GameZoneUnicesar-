@@ -76,5 +76,5 @@ Two attributes—`Discount` and `subtotal`—must be added and retrieved from th
 
 ### 5.	Active promotions are determined by comparing the current date with the start and end dates of each promotion. Where is this validation performed (in the `Promotion` class, in `PromotionService`, or in both)? Justify your answer.
 
-This validation should be performed in `promotionservice`, as that is where validations take place; conversely, we cannot implement the business rule logic in `promotion`, because that class only defines attributes, the constructor, setters, getters, and—of course—its methods.
+Validation of validity is performed in the Promotion class, using a method like `isActive(LocalDate currentDate)`. This is because the start and end dates belong to each promotion object; therefore, the promotion itself is best positioned to determine its validity. PromotionService uses this method to iterate through available promotions, identify active ones, and apply the appropriate promotion to a sale.
 
