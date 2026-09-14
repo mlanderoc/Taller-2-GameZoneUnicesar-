@@ -48,9 +48,13 @@ classDiagram
         -customer: Customer
         -seller: Seller
         -products: List~Product~
-        -totalAmount: double
-        +calculateTotal() double
-        +generateReceipt() String
+        -subtotal: double
+    -appliedPromotionName: String
+    -discountAmount: double
+    +calculateTotal() double
+    +getTotalAmount() double
+    +applyDiscount(promotionName String, discountAmount double) void
+    +generateReceipt() String
     }
     class promotion{
       -start_date:string
@@ -87,6 +91,7 @@ classDiagram
     Sale "1" --> "1" Seller
     Sale "1" o-- "1..*" Product
     Customer "1" o-- "0..*" Sale : purchaseHistory
+	SaleService "1" --> "1" PromotionService
 
     %% ===== PERSISTENCE LAYER =====
     class ProductRepository {
@@ -140,7 +145,7 @@ classDiagram
     }
     class SaleService {
         -saleRepository: SaleRepository
-        -productService: ProductService
+        -productService: ProductService 
         -personService: PersonService
         +registerSale(customer Customer, seller Seller, products List~Product~) Sale
         +viewAllSales() List~Sale~
@@ -196,6 +201,7 @@ classDiagram
     Main ..>PromotionService
     Main ..>PromotionRepository
 
+
 ```
 
-**Layering note:** `SaleRepository` only depends on `SaleRecord`, a plain data-transfer object holding raw ids (customerId, sellerId, productIds) as stored in `data/sales.csv`. The resolution of those ids into full domain objects (`Customer`, `Seller`, `Product`) is done in `SaleService`, which already depends on `ProductService` and `PersonService`. This keeps the dependency direction strictly as `ui → service → persistence → model`, with no reverse dependency from `persistence` to `service`.
+**Layering note:** `SaleRepository` only depends on `SaleRecord`, a plain data-transfer object holding raw ids (customerId, sellerId, productIds) as stored in `sales.dat`. The resolution of those ids into full domain objects (`Customer`, `Seller`, `Product`) is done in `SaleService`, which already depends on `ProductService` and `PersonService`. This keeps the dependency direction strictly as `ui → service → persistence → model`, with no reverse dependency from `persistence` to `service`.
