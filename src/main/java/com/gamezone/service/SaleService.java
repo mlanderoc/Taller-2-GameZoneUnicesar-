@@ -161,6 +161,7 @@ public class SaleService {
         }
 
         Sale sale = new Sale(record.getSaleId(), record.getDate(), customer, seller, products);
+        sale.setSubtotal(record.getSubtotal());
         sale.setAppliedPromotionName(record.getAppliedPromotionName());
         sale.setDiscountAmount(record.getDiscountAmount());
         
