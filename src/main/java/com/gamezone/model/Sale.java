@@ -155,6 +155,11 @@ public class Sale {
         return total;
     }
     
+    /**
+     * Checks whether the sale is still within the 30-day return period.
+     *
+     * @return true if the sale can be returned; otherwise false
+     */
     public boolean canBeReturned() {
         
         long daysPassed = ChronoUnit.DAYS.between(date, LocalDate.now());
