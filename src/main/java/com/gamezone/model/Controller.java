@@ -23,7 +23,7 @@ public class Controller extends Accessory {
     @Override
     public String getDescription() {
         return super.getDescription()
-                + ", Conn  ection type: " + connectionType;
+                + ", Conection type: " + connectionType;
     }
     
 }

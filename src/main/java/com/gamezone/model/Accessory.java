@@ -22,6 +22,15 @@ public abstract class Accessory extends Product {
         this.compatibleConsoleIds = compatibleConsoleIds;
     }
     
+    public boolean isCompatibleWith(String ConsoleId){
+        for(String compatibleId : compatibleConsoleIds){
+            if(compatibleId.equals(ConsoleId))
+                return true; 
+        }
+        
+        return false; 
+    }
+    
     @Override
     public String getDescription(){
         return "Title: " + getTitle()
