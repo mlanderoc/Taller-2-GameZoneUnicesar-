@@ -1,7 +1,10 @@
 
 package com.gamezone.model;
+
 import java.time.LocalDate;
 import java.util.List;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
 public class Sale {
     private String id;
@@ -150,6 +153,14 @@ public class Sale {
             total += product.getPrice();
         }
         return total;
+    }
+    
+    public boolean canBeReturned() {
+        
+        long daysPassed = ChronoUnit.DAYS.between(date, LocalDate.now());
+
+        return daysPassed >= 0 && daysPassed <= 30;
+    
     }
     
 }
