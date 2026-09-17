@@ -57,7 +57,7 @@ public class AccessoryService {
         repository.saveAll(accessories);
 
     }
-        public List<Accessory> listAllaceesory() {
+        public List<Accessory> listAllaccessories() {
         return accessories;
     }
         
