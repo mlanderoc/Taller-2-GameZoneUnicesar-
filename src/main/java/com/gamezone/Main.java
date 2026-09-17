@@ -4,12 +4,15 @@ import com.gamezone.persistence.PersonRepository;
 import com.gamezone.persistence.ProductRepository;
 import com.gamezone.persistence.SaleRepository;
 import com.gamezone.persistence.PromotionRepository;
+import com.gamezone.persistence.AccessoryRepository;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.SaleService;
 import com.gamezone.service.PromotionService;
+import com.gamezone.service.AccessoryService;
 import com.gamezone.ui.ConsoleMenu;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * Entry point of the GameZone Unicesar application.
@@ -23,15 +26,18 @@ public class Main {
         PersonRepository personRepository = new PersonRepository();
         SaleRepository saleRepository = new SaleRepository();
         PromotionRepository promotionRepository = new PromotionRepository();
+        AccessoryRepository accessoryRepository = new AccessoryRepository();
 
         ProductService productService = new ProductService(productRepository);
         PersonService personService = new PersonService(personRepository);
         PromotionService promotionService = new PromotionService(promotionRepository);
-        SaleService saleService = new SaleService(saleRepository, productService, personService,promotionService);
+        AccessoryService accessoryService = new AccessoryService(accessoryRepository,accessoryRepository.loadAll());
+        SaleService saleService = new SaleService(saleRepository, productService, personService,promotionService,accessoryService);
         
 
         preloadSellersIfNeeded(personService);
         preloadPromotionsIfNeeded(promotionService);
+        preloadAccessoriesIfNeeded(accessoryService);
 
         ConsoleMenu menu = new ConsoleMenu(productService, personService, saleService, promotionService);
         menu.start();
@@ -61,4 +67,22 @@ public class Main {
             System.out.println("Promotions preloaded successfully.");
         }
     }
+    //add preload accessory
+    private static void preloadAccessoriesIfNeeded(AccessoryService accessoryService) {
+    if (accessoryService.listAllaccessories().isEmpty()) {
+        accessoryService.registerController(
+                "WIRELESS", List.of("C001", "C002"),
+                "A001", "Control inalámbrico", 150000.0, 10);
+
+        accessoryService.registerCable(
+                2.0, "HDMI", List.of("C001", "C002"),
+                "A002", "Cable HDMI 2m", 30000.0, 20);
+
+        accessoryService.registerMemory(
+                8, "SD", List.of("C001"),
+                "A003", "Memoria SD 8GB", 25000.0, 15);
+
+        System.out.println("Accesorios precargados exitosamente.");
+    }
+}
 }
