@@ -6,6 +6,7 @@ import com.gamezone.model.Product;
 import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
+import com.gamezone.model.Accessory;
 import com.gamezone.persistence.SaleRecord;
 import com.gamezone.persistence.SaleRepository;
 
@@ -24,12 +25,14 @@ public class SaleService {
     private ProductService productService;
     private PersonService personService;
     private PromotionService promotionService;
+    private AccessoryService accessoryService;
 
-    public SaleService(SaleRepository saleRepository, ProductService productService, PersonService personService,PromotionService promotionService) {
+    public SaleService(SaleRepository saleRepository, ProductService productService, PersonService personService,PromotionService promotionService,AccessoryService accessoryService) {
         this.saleRepository = saleRepository;
         this.productService = productService;
         this.personService = personService;
         this.promotionService = promotionService;
+        this.accessoryService= accessoryService;
     }
     
   /**
@@ -38,37 +41,51 @@ public class SaleService {
      *
      * @param customer the customer making the purchase
      * @param seller   the seller attending the sale
-     * @param products the products included in the sale
+     * @param items the products included in the sale
      * @return the registered Sale
      * @throws IllegalArgumentException if products is null/empty or stock is insufficient
      */ 
     
-    public Sale registerSale(Customer customer, Seller seller, List<Product> products) {
-        if (products == null || products.isEmpty()) {
-            throw new IllegalArgumentException("A sale must contain at least one product.");
+    public Sale registerSale(Customer customer, Seller seller, List<Product> items) {
+        if (items == null || items.isEmpty()) {
+            throw new IllegalArgumentException("Una venyta dbe contener al menos un producto");
         }
-
-        for (Product product : products) {
-            Product current = productService.findById(product.getId());
+           //it need to know the product type to valide the stock
+        for (Product item : items) {
+            Product current;
+            if (item instanceof Accessory){
+                current = accessoryService.findById(item.getId());
+                
+            }else{
+                current = productService.findById(item.getId());
+            }
+            
             if (current.getStock() <= 0) {
                 throw new IllegalArgumentException(
-                        "Insufficient stock for product: " + current.getTitle());
+                        "Inventario insuficiente: " + current.getTitle());
+            }
+        }
+        //discount in the stock if they pass te validation
+        for (Product item : items) {
+            if (item instanceof Accessory) {
+                accessoryService.updateStock(item.getId(), -1);
+            } else {
+                productService.updateStock(item.getId(), -1);
             }
         }
 
-        for (Product product : products) {
-            productService.updateStock(product.getId(), -1);
-        }
-
+        //Create the SALE
         String saleId = UUID.randomUUID().toString();
-        Sale sale = new Sale(saleId, LocalDate.now(), customer, seller, products);
+        Sale sale = new Sale(saleId, LocalDate.now(), customer, seller, items);
         
+        //Apply promotion
         Promotion bestPromotion = promotionService.findBestPromotionFor(sale);
         
         if (bestPromotion != null) {
             double discount = bestPromotion.calculateDiscount(sale);
             sale.applyDiscount(bestPromotion.getName(), discount);
-        }  
+        } 
+        //SAVE SALE
         SaleRecord record = toRecord(sale);
         List<SaleRecord> records = saleRepository.loadAll();
         records.add(record);
@@ -156,8 +173,14 @@ public class SaleService {
         Seller seller = personService.findSellerById(record.getSellerId());
 
         List<Product> products = new ArrayList<>();
+        
         for (String productId : record.getProductIds()) {
-            products.add(productService.findById(productId));
+            Product item = productService.findById(productId);
+            
+            if (item == null) {
+                item = accessoryService.findById(productId);
+            }
+            products.add(item);
         }
 
         Sale sale = new Sale(record.getSaleId(), record.getDate(), customer, seller, products);
