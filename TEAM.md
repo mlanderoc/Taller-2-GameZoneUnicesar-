@@ -2,70 +2,59 @@
 
 ## Members
 
-| Name | Student Code | GitHub Username | Role | Module | Feature Branch |
+| Name | Student Code | GitHub Username | Role | Modules | Feature Branches |
 |---|---|---|---|---|---|
-| Merlin Landero | 1065563683 | mlanderoc | Technical Lead | Sale + UI + Main | feature/sale-module |
-| Carlos Gomez | 1066867142 | craulgomez | Developer 1 | Product | feature/product-module |
-| Héctor Guevara | 1067602882 | Hectorguevara22 | Developer 2 | Person | feature/person-module |
+| Merlin Landero | 1065563683 | mlanderoc | Technical Lead | Sales, UI (Console & Swing), System Integration & Reports | `feature/sale-module`, `feature/view-module` |
+| Carlos Gomez | 1066867142 | craulgomez | Developer 1 | Domain Models: Products, Accessories (RE1), Returns (RE3), Warranties (RE4) | `feature/product-module`, `feature/accessory-module`, `feature/return-module`, `feature/warranty-module` |
+| Héctor Guevara | 1067602882 | Hectorguevara22 | Developer 2 | Persistence & Services: People, Accessories (RE1), Returns (RE3), Warranties (RE4) | `feature/person-module`, `feature/accessory-module`, `feature/return-module`, `feature/warranty-module` |
 
 ## Class Distribution
 
-### Technical Lead
-- Sale
-- SaleRepository
-- SaleService
-- ConsoleMenu
-- Main
+### Technical Lead (Merlin Landero)
+- **Base / Sales:** `Sale`, `SaleRecord`, `SaleRepository`, `SaleService`
+- **UI & Presentation:** `ConsoleMenu`, `MainFrame`, `SalePanel`, `SaleDialog`, `CustomerPanel`, `CustomerDialog`, `SellerPanel`, `ProductPanel`, `ProductDialog`, `AccessoryPanel`, `AccessoryDialog`, `ReturnPanel`, `ReturnDialog`, `WarrantyPanel`, `PromotionPanel`, `PromotionDialog`, `ReportsPanel`, `DetailDialog`
+- **Application Core:** `Main`
 
-### Developer 1
-- Product (abstract)
-- VideoGame
-- Console
-- ProductRepository
-- ProductService
+### Developer 1 (Carlos Gomez) - Domain Models
+- **Products (Base):** `Product` (abstract), `VideoGame`, `Console`
+- **Accessories (RE1):** `Accessory` (abstract), `Controller`, `Cable`, `Memory`
+- **Returns (RE3):** `Return`, additive method `Sale.canBeReturned()`
+- **Warranties (RE4):** `Warranty` (abstract), `BasicWarranty`, `ExtendedWarranty`
+- **Promotions:** `Promotion` (abstract), `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount`
 
-### Developer 2
-- Person (abstract)
-- Customer
-- Seller
-- PersonRepository
-- PersonService
+### Developer 2 (Héctor Guevara) - Persistence & Services
+- **People (Base):** `Person` (abstract), `Customer`, `Seller`, `PersonRepository`, `PersonService`
+- **Accessories (RE1):** `AccessoryRepository`, `AccessoryService` (console compatibility logic)
+- **Returns (RE3):** `ReturnRecord`, `ReturnRepository`, `ReturnService` (30-day rule, return validation, monthly balance report)
+- **Warranties (RE4):** `WarrantyRecord`, `WarrantyRepository`, `WarrantyService` (automatic basic warranty, extended warranty, expiration tracking)
+- **Promotions:** `PromotionRepository`, `PromotionService` (best promotion calculation)
 
 ## Committed Activities
 
-### Technical Lead
-1. Create the project repository on GitHub with initial configuration.
-2. Configure main and develop branches and enable branch protection.
-3. Configure the Maven project with the initial pom.xml and four-layer package structure.
-4. Author TEAM.md with team information, roles, and class distribution.
-5. Implement the Sale class with attributes, constructor, and basic methods.
-6. Implement the total calculation method for Sale.
-7. Implement SaleRepository for sale persistence.
-8. Implement SaleService with validation rules.
-9. Implement the basic structure of ConsoleMenu.
-10. Implement the three submenus (products, people, sales).
-11. Implement Main with initial data loading and dependency injection.
-12. Review and merge developer Pull Requests.
-13. Author the final README.md with build and run instructions.
+### Technical Lead (Merlin Landero)
+1. Repository initialization, branching model configuration (`main`, `develop`), and branch protection rules.
+2. Initial Maven project structure with multi-layer architecture packages.
+3. Implementation of `Sale`, `SaleRepository`, and `SaleService` with base transaction validations.
+4. Additive system integrations in `SaleService`:
+   - Unified accessory sales with inventory deduction delegation.
+   - Automatic basic warranty assignment on console sales and extended warranty fee application.
+5. Implementation of full Swing GUI (`MainFrame`, sub-panels, modal dialogs, and balance/expiry reports).
+6. Cross-review and approval of Pull Requests from Developer 1 and Developer 2.
+7. Documentation maintenance (`README.md`, `TEAM.md`).
 
-### Developer 1
-1. Create the feature/product-module branch.
-2. Implement the abstract Product class with common attributes, constructor, and shared methods.
-3. Declare the abstract description method in Product.
-4. Implement VideoGame subclass with its specific attributes and description implementation.
-5. Implement Console subclass with its specific attributes and description implementation.
-6. Implement ProductRepository with save and load methods.
-7. Implement ProductService with registration, listing, and stock update methods.
-8. Add JavaDoc in English to all product module classes.
-9. Open a Pull Request to the Technical Lead for module integration.
+### Developer 1 (Carlos Gomez)
+1. Implementation of the `Product` hierarchy (`Product`, `VideoGame`, `Console`) with polymorphic description formatting.
+2. Implementation of the `Accessory` hierarchy (`Accessory`, `Controller`, `Cable`, `Memory`) including console compatibility attributes (RE1).
+3. Implementation of the `Return` domain entity (`calculateRefundAmount`, `generateReturnReceipt`) and `Sale.canBeReturned` (RE3).
+4. Implementation of the `Warranty` hierarchy (`Warranty`, `BasicWarranty`, `ExtendedWarranty`) with duration and cost calculation (RE4).
+5. Comprehensive JavaDoc documentation in English for all domain classes.
+6. Pull Request submissions to Technical Lead for each feature module.
 
-### Developer 2
-1. Create the feature/person-module branch.
-2. Implement the abstract Person class with common attributes, constructor, and shared methods.
-3. Declare any abstract or business method the subclasses must implement.
-4. Implement Customer subclass with its specific attributes.
-5. Implement Seller subclass with its specific attributes.
-6. Implement PersonRepository with save and load methods for customers and sellers.
-7. Implement PersonService with registration and listing methods.
-8. Add JavaDoc in English to all person module classes.
-9. Open a Pull Request to the Technical Lead for module integration.
+### Developer 2 (Héctor Guevara)
+1. Implementation of the `Person` hierarchy (`Customer`, `Seller`), `PersonRepository`, and `PersonService` with preloaded seller data.
+2. Implementation of `AccessoryRepository` and `AccessoryService` with console compatibility filtering (RE1).
+3. Implementation of `ReturnRepository` and `ReturnService` with 30-day time window validation, item-sale verification, and stock restoration (RE3).
+4. Implementation of `generateMonthlyBalance` calculating net revenue (sales minus returns) (RE3).
+5. Implementation of `WarrantyRepository` and `WarrantyService` for warranty lookup, active warranties, and expiring soon queries (RE4).
+6. Comprehensive JavaDoc documentation in English for repositories and services.
+7. Pull Request submissions to Technical Lead for each feature module.
