@@ -42,8 +42,8 @@ public class SaleRecord implements Serializable {
         this.sellerId = sellerId;
         this.productIds = productIds;
         this.subtotal = subtotal;
-        this.appliedPromotionName = this.appliedPromotionName;
-        this.discountAmount =this.discountAmount;
+        this.appliedPromotionName = appliedPromotionName;
+        this.discountAmount = discountAmount;
         
     }
     //GETTERS and SETTERS

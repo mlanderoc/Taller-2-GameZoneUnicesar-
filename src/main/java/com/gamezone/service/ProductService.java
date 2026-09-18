@@ -128,7 +128,26 @@ public class ProductService {
                     "the stock cannot be negative"
             ); 
         }
+        
         product.updateStock(quantity);
+        
+        List<Product> products = repository.loadAll();
+        for (int i = 0; i < products.size(); i++) {
+            if (products.get(i).getId().equals(productId)) {
+                products.set(i, product);
+                break;
+            }
+        }
         repository.saveAll(products);
+    }
+    /**
+     * Increases the stock of a product by the given quantity. Used when a
+     * return is processed and the product goes back to inventory.
+     *
+     * @param productId the id of the product to restore
+     * @param quantity the quantity to add back to stock (must be positive)
+     */
+    public void restoreStock(String productId, int quantity) {
+        updateStock(productId, quantity);
     }
 }

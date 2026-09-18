@@ -1,7 +1,10 @@
 
 package com.gamezone.model;
+
 import java.time.LocalDate;
 import java.util.List;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
 public class Sale {
     private String id;
@@ -78,7 +81,7 @@ public class Sale {
     }
 
     public double getTotalAmount() {
-        return totalAmount;//change
+        return subtotal - discountAmount;
     }
 
     public String getAppliedPromotionName() {
@@ -100,6 +103,11 @@ public class Sale {
     public double getSubtotal() {
         return subtotal;
     }
+
+    public void setSubtotal(double subtotal) {
+        this.subtotal = subtotal;
+    }
+    
     
     public void applyDiscount(String promotionName, double discountAmount) {
         this.appliedPromotionName = promotionName;
@@ -145,6 +153,19 @@ public class Sale {
             total += product.getPrice();
         }
         return total;
+    }
+    
+    /**
+     * Checks whether the sale is still within the 30-day return period.
+     *
+     * @return true if the sale can be returned; otherwise false
+     */
+    public boolean canBeReturned() {
+        
+        long daysPassed = ChronoUnit.DAYS.between(date, LocalDate.now());
+
+        return daysPassed >= 0 && daysPassed <= 30;
+    
     }
     
 }

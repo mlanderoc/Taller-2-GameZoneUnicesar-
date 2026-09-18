@@ -1,84 +1,76 @@
 ```mermaid
-graph TD
+---
+config:
+  layout: elk
+  theme: base
+---
+flowchart TB
+ subgraph UI["UI"]
+        ConsoleMenu["ConsoleMenu / MainApp"]
+ end
+ subgraph Service["Service"]
+        PersonService["PersonService"]
+        SaleService["SaleService"]
+        ProductService["ProductService"]
+        PromotionService["PromotionService"]
+        AccessoryService["AccessoryService"]
+        ReturnService["ReturnService"]
+        WarrantyService["WarrantyService"]
+ end
+ subgraph DAOLayer["DAO/Repository"]
+        SaleRepository["SaleRepository"]
+        PersonRepository["PersonRepository"]
+        ProductRepository["ProductRepository"]
+        PromotionRepository["PromotionRepository"]
+        AccessoryRepository["AccessoryRepository"]
+        ReturnRepository["ReturnRepository"]
+        WarrantyRepository["WarrantyRepository"]
+ end
+ subgraph ModVentas["Sale module"]
+        Sale["Sale"]
+        SaleRecord["SaleRecord"]
+ end
+ subgraph ModPersonas["People module"]
+        Person["«abstract»Person"]
+        Customer["Customer"]
+        Seller["Seller"]
+ end
+ subgraph ModProductos["Products module"]
+        Product["«abstract»Product"]
+        VideoGame["VideoGame"]
+        Console["Console"]
+ end
+ subgraph ModPromociones["Promotion module"]
+        Promotion["«abstract»Promotion"]
+        PercentageDiscount["PercentageDiscount"]
+        CategoryDiscount["CategoryDiscount"]
+        BulkPurchaseDiscount["BulkPurchaseDiscount"]
+ end
+ subgraph ModAccessories["Accessory module"]
+        Accessory["«abstract»Accessory"]
+        Controller["Controller"]
+        Cable["Cable"]
+        Memory["Memory"]
+ end
+ subgraph ModReturns["Return module"]
+        Return["Return"]
+ end
+ subgraph ModWarranties["Warranty module"]
+        Warranty["«abstract»Warranty"]
+        BasicWarranty["BasicWarranty"]
+        ExtendedWarranty["ExtendedWarranty"]
+ end
+ subgraph Model["Model"]
+        ModVentas
+        ModPersonas
+        ModProductos
+        ModPromociones
+        ModAccessories
+        ModReturns
+        ModWarranties
+ end
+    UI --> Service
+    Service --> DAOLayer & Model
+    DAOLayer --> Model
 
-    %% Capa de Interfaz de Usuario
-    subgraph UI ["Capa de Interfaz de Usuario (ui)"]
-        ConsoleMenu["ConsoleMenu / MainApp<br/><i>(Líder Técnico)</i>"]
-    end
-
-    %% Capa de Servicios
-    subgraph Service ["Capa de Servicios (service)"]
-        PersonService["PersonService<br/><i>(Desarrollador 2)</i>"]
-        SaleService["SaleService<br/><i>(Líder Técnico)</i>"]
-        ProductService["ProductService<br/><i>(Desarrollador 1)</i>"]
-        PromotionService["PromotionService<br/><i>(Desarrollador 2)</i>"]
-    end
-
-    %% Capa de Persistencia
-    subgraph Persistence ["Capa de Persistencia (persistence)"]
-        SaleRepository["SaleRepository<br/><i>(Líder Técnico)</i>"]
-        PersonRepository["PersonRepository<br/><i>(Desarrollador 2)</i>"]
-        ProductRepository["ProductRepository<br/><i>(Desarrollador 1)</i>"]
-        PromotionRepository["PromotionRepository<br/><i>(desarollador 2)</1>"]
-    end
-
-    %% Capa de Modelo
-    subgraph Model ["Capa de Modelo (model)"]
-        
-        subgraph ModVentas ["Módulo de Ventas (Líder Técnico)"]
-            Sale["Sale"]
-            SaleRecord["SaleRecord"]
-        end
-        
-        subgraph ModPersonas ["Módulo de Personas (Desarrollador 2)"]
-            Person["«abstract»<br/>Person"]
-            Customer["Customer"]
-            Seller["Seller"]
-        end
-        
-        subgraph ModProductos ["Módulo de Productos (Desarrollador 1)"]
-            Product["«abstract»<br/>Product"]
-            VideoGame["VideoGame"]
-            Console["Console"]
-        end
-
-        subgraph ModPromociones ["Módulo de Promociones (desarollador 1)"]
-            Promotion["«abstract»<br/>Promotion"]
-            PercentageDiscount["PercentageDiscount"]
-            CategoryDiscount["CategoryDiscount"]
-            BulkPurchaseDiscount["BulkPurchaseDiscount"]
-        end
-        
-    end
-
-    %% Relaciones desde UI
-    ConsoleMenu --> PersonService
-    ConsoleMenu --> SaleService
-    ConsoleMenu --> ProductService
-
-    %% Relaciones desde Service
-    PersonService --> PersonRepository
-    PersonService --> Person
-
-    SaleService --> SaleRepository
-    SaleService -.-> ProductService
-    SaleService -.-> PersonService
-    SaleService -.-> PromotionService
-    SaleService --> Sale
-    SaleService --> Person
-    SaleService --> Customer
-    SaleService --> Seller
-    SaleService --> Product
-    SaleService --> SaleRecord
-
-    ProductService --> ProductRepository
-    ProductService --> Product
-
-    PromotionService --> PromotionRepository
-    PromotionService --> Promotion
-
-    %% Relaciones desde Persistence
-    SaleRepository --> SaleRecord
-    PersonRepository --> Person
-    ProductRepository --> Product
-    PromotionRepository --> Promotion
+    L_Service_Model_0@{ curve: natural }
