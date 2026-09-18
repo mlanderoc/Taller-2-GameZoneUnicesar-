@@ -48,7 +48,7 @@ public class Main {
         preloadPromotionsIfNeeded(promotionService);
         preloadAccessoriesIfNeeded(accessoryService);
 
-        ConsoleMenu menu = new ConsoleMenu(productService, personService, saleService, promotionService);
+        ConsoleMenu menu = new ConsoleMenu(productService,personService,saleService,accessoryService,promotionService,returnService,warrantyService);
         menu.start();
     }
 
@@ -81,7 +81,7 @@ public class Main {
     if (accessoryService.listAllaccessories().isEmpty()) {
         accessoryService.registerController(
                 "WIRELESS", List.of("C001", "C002"),
-                "A001", "Control inalámbrico", 150000.0, 10);
+                "A001", "Control inalambrico", 150000.0, 10);
 
         accessoryService.registerCable(
                 2.0, "HDMI", List.of("C001", "C002"),
