@@ -1,0 +1,225 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
+ */
+package com.gamezone.ui;
+
+/**
+ *
+ * @author USUARIO
+ */
+public class WarrantyPanel extends javax.swing.JPanel {
+    private com.gamezone.service.WarrantyService warrantyService;
+
+    /**
+     * Creates new form WarrantyPanel
+     */
+    public WarrantyPanel() {
+        initComponents();
+    }
+
+    public WarrantyPanel(com.gamezone.service.WarrantyService warrantyService) {
+        this.warrantyService = warrantyService;
+        initComponents();
+        setupEvents();
+        loadWarranties();
+    }
+
+    private void setupEvents() {
+        btnBuscarGarantia.addActionListener(e -> searchWarranties());
+        txtBuscarGarantia.addActionListener(e -> searchWarranties());
+        cmbFiltroGarantias.addActionListener(e -> filterWarranties());
+        btnVerCertificado.addActionListener(e -> showWarrantyCertificate());
+    }
+
+    public void loadWarranties() {
+        filterWarranties();
+    }
+
+    private void filterWarranties() {
+        if (warrantyService == null) return;
+        String selected = cmbFiltroGarantias.getSelectedItem() != null ? cmbFiltroGarantias.getSelectedItem().toString().trim() : "";
+        java.util.List<com.gamezone.model.Warranty> list;
+
+        if (selected.contains("vigentes")) {
+            list = warrantyService.listActiveWarranties();
+        } else if (selected.contains("vencer")) {
+            list = warrantyService.listWarrantiesExpiringSoon(30);
+        } else {
+            list = warrantyService.listAllWarranties();
+        }
+
+        renderWarrantiesTable(list);
+    }
+
+    private void searchWarranties() {
+        if (warrantyService == null) return;
+        String query = txtBuscarGarantia.getText().trim().toLowerCase();
+        java.util.List<com.gamezone.model.Warranty> all = warrantyService.listAllWarranties();
+
+        if (query.isEmpty()) {
+            filterWarranties();
+            return;
+        }
+
+        java.util.List<com.gamezone.model.Warranty> filtered = all.stream()
+                .filter(w -> (w.getWarrantyId() != null && w.getWarrantyId().toLowerCase().contains(query))
+                        || (w.getProduct() != null && w.getProduct().getTitle() != null && w.getProduct().getTitle().toLowerCase().contains(query))
+                        || (w.getProduct() != null && w.getProduct().getId() != null && w.getProduct().getId().toLowerCase().contains(query))
+                        || (w.getSale() != null && w.getSale().getId() != null && w.getSale().getId().toLowerCase().contains(query)))
+                .collect(java.util.stream.Collectors.toList());
+
+        renderWarrantiesTable(filtered);
+    }
+
+    private void renderWarrantiesTable(java.util.List<com.gamezone.model.Warranty> list) {
+        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tblGarantias.getModel();
+        model.setRowCount(0);
+        java.time.LocalDate today = java.time.LocalDate.now();
+
+        for (com.gamezone.model.Warranty w : list) {
+            String prodTitle = (w.getProduct() != null) ? w.getProduct().getTitle() : "-";
+            String saleId = (w.getSale() != null) ? w.getSale().getId() : "-";
+            String status = w.isActive(today) ? "Vigente" : "Vencida";
+
+            model.addRow(new Object[]{
+                w.getWarrantyId(),
+                w.getWarrantyType(),
+                prodTitle,
+                saleId,
+                w.getStartDate(),
+                w.getEndDate(),
+                String.format("$%.2f", w.getAdditionalCost()),
+                status
+            });
+        }
+    }
+
+    private void showWarrantyCertificate() {
+        int selectedRow = tblGarantias.getSelectedRow();
+        if (selectedRow == -1) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Por favor seleccione una garantía de la tabla.", "Aviso", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String warrantyId = tblGarantias.getValueAt(selectedRow, 0).toString();
+        if (warrantyService == null) return;
+
+        com.gamezone.model.Warranty warranty = warrantyService.listAllWarranties().stream()
+                .filter(w -> w.getWarrantyId().equals(warrantyId))
+                .findFirst().orElse(null);
+
+        if (warranty == null) {
+            javax.swing.JOptionPane.showMessageDialog(this, "No se encontró la información de la garantía seleccionada.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        java.awt.Frame parentFrame = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
+        DetailDialog dialog = new DetailDialog(parentFrame, true);
+        dialog.setDocumentDetails("Certificado de Garantía", "Garantía para " + (warranty.getProduct() != null ? warranty.getProduct().getTitle() : ""), warranty.generateWarrantyCertificate());
+        dialog.setVisible(true);
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        lblTituloGarantias = new javax.swing.JLabel();
+        lblSubtituloGarantias = new javax.swing.JLabel();
+        btnVerCertificado = new javax.swing.JButton();
+        pnlContenidoGarantias = new javax.swing.JPanel();
+        lblBuscarGarantia = new javax.swing.JLabel();
+        txtBuscarGarantia = new javax.swing.JTextField();
+        btnBuscarGarantia = new javax.swing.JButton();
+        lblFiltroGarantias = new javax.swing.JLabel();
+        cmbFiltroGarantias = new javax.swing.JComboBox<>();
+        JsGarantias = new javax.swing.JScrollPane();
+        tblGarantias = new javax.swing.JTable();
+
+        setBackground(new java.awt.Color(245, 247, 250));
+        setToolTipText("");
+        setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        lblTituloGarantias.setFont(new java.awt.Font("Arial", 1, 26)); // NOI18N
+        lblTituloGarantias.setForeground(new java.awt.Color(31, 41, 55));
+        lblTituloGarantias.setText("Garantias");
+        add(lblTituloGarantias, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 35, 200, 35));
+
+        lblSubtituloGarantias.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        lblSubtituloGarantias.setForeground(new java.awt.Color(107, 114, 128));
+        lblSubtituloGarantias.setText("Gestión y seguimiento de garantías básicas y extendidas");
+        add(lblSubtituloGarantias, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 75, 450, 25));
+
+        btnVerCertificado.setBackground(new java.awt.Color(30, 136, 229));
+        btnVerCertificado.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        btnVerCertificado.setForeground(new java.awt.Color(255, 255, 255));
+        btnVerCertificado.setText("Ver certificado");
+        btnVerCertificado.setBorderPainted(false);
+        btnVerCertificado.setFocusPainted(false);
+        add(btnVerCertificado, new org.netbeans.lib.awtextra.AbsoluteConstraints(770, 30, 165, 40));
+
+        pnlContenidoGarantias.setBackground(new java.awt.Color(255, 255, 255));
+        pnlContenidoGarantias.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        lblBuscarGarantia.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
+        lblBuscarGarantia.setForeground(new java.awt.Color(31, 41, 55));
+        lblBuscarGarantia.setText("Buscar");
+        pnlContenidoGarantias.add(lblBuscarGarantia, new org.netbeans.lib.awtextra.AbsoluteConstraints(25, 25, 60, 25));
+
+        txtBuscarGarantia.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        pnlContenidoGarantias.add(txtBuscarGarantia, new org.netbeans.lib.awtextra.AbsoluteConstraints(85, 20, 240, 35));
+
+        btnBuscarGarantia.setBackground(new java.awt.Color(30, 136, 229));
+        btnBuscarGarantia.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        btnBuscarGarantia.setForeground(new java.awt.Color(255, 255, 255));
+        btnBuscarGarantia.setText("Buscar");
+        btnBuscarGarantia.setBorderPainted(false);
+        btnBuscarGarantia.setFocusPainted(false);
+        pnlContenidoGarantias.add(btnBuscarGarantia, new org.netbeans.lib.awtextra.AbsoluteConstraints(335, 20, 95, 35));
+
+        lblFiltroGarantias.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
+        lblFiltroGarantias.setForeground(new java.awt.Color(31, 41, 55));
+        lblFiltroGarantias.setText("Filtro:");
+        pnlContenidoGarantias.add(lblFiltroGarantias, new org.netbeans.lib.awtextra.AbsoluteConstraints(460, 25, 55, 25));
+
+        cmbFiltroGarantias.setFont(new java.awt.Font("Arial", 0, 13)); // NOI18N
+        cmbFiltroGarantias.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Todas las garantias", "Solo vigentes", "Próximas a vencer (30 días)", " " }));
+        pnlContenidoGarantias.add(cmbFiltroGarantias, new org.netbeans.lib.awtextra.AbsoluteConstraints(520, 20, 210, 35));
+
+        tblGarantias.setFont(new java.awt.Font("Arial", 0, 13)); // NOI18N
+        tblGarantias.setForeground(new java.awt.Color(31, 41, 55));
+        tblGarantias.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "ID Garantía", "Tipo", "Producto", "ID Venta", "Fecha Inicio", "Fecha Vencimiento", "Costo Extra", "Estado"
+            }
+        ));
+        JsGarantias.setViewportView(tblGarantias);
+
+        pnlContenidoGarantias.add(JsGarantias, new org.netbeans.lib.awtextra.AbsoluteConstraints(25, 85, 870, 400));
+
+        add(pnlContenidoGarantias, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 130, 920, 520));
+    }// </editor-fold>//GEN-END:initComponents
+
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JScrollPane JsGarantias;
+    private javax.swing.JButton btnBuscarGarantia;
+    private javax.swing.JButton btnVerCertificado;
+    private javax.swing.JComboBox<String> cmbFiltroGarantias;
+    private javax.swing.JLabel lblBuscarGarantia;
+    private javax.swing.JLabel lblFiltroGarantias;
+    private javax.swing.JLabel lblSubtituloGarantias;
+    private javax.swing.JLabel lblTituloGarantias;
+    private javax.swing.JPanel pnlContenidoGarantias;
+    private javax.swing.JTable tblGarantias;
+    private javax.swing.JTextField txtBuscarGarantia;
+    // End of variables declaration//GEN-END:variables
+}

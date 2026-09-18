@@ -1,0 +1,217 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
+ */
+package com.gamezone.ui;
+
+/**
+ *
+ * @author USUARIO
+ */
+public class ReturnPanel extends javax.swing.JPanel {
+
+    private com.gamezone.service.ReturnService returnService;
+    private com.gamezone.service.SaleService saleService;
+
+    /**
+     * Creates new form ReturnPanel
+     */
+    public ReturnPanel() {
+        initComponents();
+    }
+
+    public ReturnPanel(com.gamezone.service.ReturnService returnService, com.gamezone.service.SaleService saleService) {
+        this.returnService = returnService;
+        this.saleService = saleService;
+        initComponents();
+        setupEvents();
+        loadReturns();
+    }
+
+    private void setupEvents() {
+        btnBuscarDevolucion.addActionListener(e -> searchReturns());
+        txtBuscarDevolucion.addActionListener(e -> searchReturns());
+        btnVerComprobante.addActionListener(e -> showReturnReceipt());
+    }
+
+    public void loadReturns() {
+        if (returnService == null) return;
+        renderReturnsTable(returnService.viewAllReturns());
+    }
+
+    private void searchReturns() {
+        if (returnService == null) return;
+        String query = txtBuscarDevolucion.getText().trim().toLowerCase();
+        java.util.List<com.gamezone.model.Return> all = returnService.viewAllReturns();
+
+        if (query.isEmpty()) {
+            renderReturnsTable(all);
+            return;
+        }
+
+        java.util.List<com.gamezone.model.Return> filtered = all.stream()
+                .filter(r -> (r.getReturnId() != null && r.getReturnId().toLowerCase().contains(query))
+                        || (r.getOriginalSale() != null && r.getOriginalSale().getId() != null && r.getOriginalSale().getId().toLowerCase().contains(query))
+                        || (r.getOriginalSale() != null && r.getOriginalSale().getCustomer() != null && r.getOriginalSale().getCustomer().getFullName().toLowerCase().contains(query))
+                        || (r.getReason() != null && r.getReason().toLowerCase().contains(query))
+                        || (r.getReturnedProducts() != null && r.getReturnedProducts().stream().anyMatch(p -> p.getTitle().toLowerCase().contains(query))))
+                .collect(java.util.stream.Collectors.toList());
+
+        renderReturnsTable(filtered);
+    }
+
+    private void renderReturnsTable(java.util.List<com.gamezone.model.Return> list) {
+        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tblReturns.getModel();
+        model.setRowCount(0);
+
+        for (com.gamezone.model.Return r : list) {
+            String saleId = (r.getOriginalSale() != null) ? r.getOriginalSale().getId() : "-";
+            String customerName = (r.getOriginalSale() != null && r.getOriginalSale().getCustomer() != null)
+                    ? r.getOriginalSale().getCustomer().getFullName() : "-";
+            String productsStr = (r.getReturnedProducts() != null)
+                    ? r.getReturnedProducts().stream().map(com.gamezone.model.Product::getTitle).collect(java.util.stream.Collectors.joining(", "))
+                    : "-";
+
+            model.addRow(new Object[]{
+                r.getReturnId(),
+                r.getReturnDate(),
+                saleId,
+                customerName,
+                productsStr,
+                r.getReason(),
+                String.format("$%.2f", r.getRefundAmount())
+            });
+        }
+    }
+
+    private void showReturnReceipt() {
+        int selectedRow = tblReturns.getSelectedRow();
+        if (selectedRow == -1) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Por favor seleccione una devolución de la tabla.", "Aviso", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String returnId = tblReturns.getValueAt(selectedRow, 0).toString();
+        if (returnService == null) return;
+
+        com.gamezone.model.Return returnObj = returnService.viewAllReturns().stream()
+                .filter(r -> r.getReturnId().equals(returnId))
+                .findFirst().orElse(null);
+
+        if (returnObj == null) {
+            javax.swing.JOptionPane.showMessageDialog(this, "No se encontró la información de la devolución seleccionada.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        java.awt.Frame parentFrame = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
+        DetailDialog dialog = new DetailDialog(parentFrame, true);
+        dialog.setDocumentDetails("Comprobante de Devolución", "Devolución #" + returnObj.getReturnId(), returnObj.generateReturnReceipt());
+        dialog.setVisible(true);
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        lblTituloDevoluciones = new javax.swing.JLabel();
+        lblSubtituloDevoluciones = new javax.swing.JLabel();
+        btnNuevaDevolucion = new javax.swing.JButton();
+        pnlContenidoDevoluciones = new javax.swing.JPanel();
+        lblBuscarDevolucion = new javax.swing.JLabel();
+        txtBuscarDevolucion = new javax.swing.JTextField();
+        btnBuscarDevolucion = new javax.swing.JButton();
+        btnVerComprobante = new javax.swing.JButton();
+        JsReturn = new javax.swing.JScrollPane();
+        tblReturns = new javax.swing.JTable();
+
+        setBackground(new java.awt.Color(245, 247, 250));
+        setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        lblTituloDevoluciones.setFont(new java.awt.Font("Arial", 1, 26)); // NOI18N
+        lblTituloDevoluciones.setForeground(new java.awt.Color(31, 41, 55));
+        lblTituloDevoluciones.setText("Devoluciones");
+        add(lblTituloDevoluciones, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 35, 200, 35));
+
+        lblSubtituloDevoluciones.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        lblSubtituloDevoluciones.setForeground(new java.awt.Color(107, 114, 128));
+        lblSubtituloDevoluciones.setText("Gestión de reembolsos y devoluciones de productos");
+        add(lblSubtituloDevoluciones, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 75, 450, 25));
+
+        btnNuevaDevolucion.setBackground(new java.awt.Color(30, 136, 229));
+        btnNuevaDevolucion.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
+        btnNuevaDevolucion.setForeground(new java.awt.Color(255, 255, 255));
+        btnNuevaDevolucion.setText("+ Nueva devolución");
+        btnNuevaDevolucion.setBorderPainted(false);
+        btnNuevaDevolucion.setFocusPainted(false);
+        btnNuevaDevolucion.addActionListener(this::btnNuevaDevolucionActionPerformed);
+        add(btnNuevaDevolucion, new org.netbeans.lib.awtextra.AbsoluteConstraints(750, 30, 185, 40));
+
+        pnlContenidoDevoluciones.setBackground(new java.awt.Color(255, 255, 255));
+        pnlContenidoDevoluciones.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        lblBuscarDevolucion.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
+        lblBuscarDevolucion.setForeground(new java.awt.Color(31, 41, 55));
+        lblBuscarDevolucion.setText("Buscar");
+        pnlContenidoDevoluciones.add(lblBuscarDevolucion, new org.netbeans.lib.awtextra.AbsoluteConstraints(25, 25, 60, 25));
+
+        txtBuscarDevolucion.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        pnlContenidoDevoluciones.add(txtBuscarDevolucion, new org.netbeans.lib.awtextra.AbsoluteConstraints(90, 20, 300, 35));
+
+        btnBuscarDevolucion.setBackground(new java.awt.Color(30, 136, 229));
+        btnBuscarDevolucion.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        btnBuscarDevolucion.setForeground(new java.awt.Color(255, 255, 255));
+        btnBuscarDevolucion.setText("Buscar");
+        btnBuscarDevolucion.setBorderPainted(false);
+        btnBuscarDevolucion.setFocusPainted(false);
+        pnlContenidoDevoluciones.add(btnBuscarDevolucion, new org.netbeans.lib.awtextra.AbsoluteConstraints(405, 20, 100, 35));
+
+        btnVerComprobante.setBackground(new java.awt.Color(38, 198, 218));
+        btnVerComprobante.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        btnVerComprobante.setForeground(new java.awt.Color(255, 255, 255));
+        btnVerComprobante.setText("Ver comprobante");
+        btnVerComprobante.setBorderPainted(false);
+        btnVerComprobante.setFocusPainted(false);
+        pnlContenidoDevoluciones.add(btnVerComprobante, new org.netbeans.lib.awtextra.AbsoluteConstraints(735, 20, 160, 35));
+
+        tblReturns.setFont(new java.awt.Font("Arial", 0, 13)); // NOI18N
+        tblReturns.setForeground(new java.awt.Color(31, 41, 55));
+        tblReturns.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "ID Devolución", "Fecha", "ID Venta", "Cliente", "Productos Devueltos", "Motivo", "Reembolso ($)"
+            }
+        ));
+        JsReturn.setViewportView(tblReturns);
+
+        pnlContenidoDevoluciones.add(JsReturn, new org.netbeans.lib.awtextra.AbsoluteConstraints(25, 85, 870, 400));
+
+        add(pnlContenidoDevoluciones, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 130, 920, 520));
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void btnNuevaDevolucionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevaDevolucionActionPerformed
+        java.awt.Frame parentFrame = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
+        ReturnDialog dialog = new ReturnDialog(parentFrame, true, returnService, saleService, this);
+        dialog.setVisible(true);
+    }//GEN-LAST:event_btnNuevaDevolucionActionPerformed
+
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JScrollPane JsReturn;
+    private javax.swing.JButton btnBuscarDevolucion;
+    private javax.swing.JButton btnNuevaDevolucion;
+    private javax.swing.JButton btnVerComprobante;
+    private javax.swing.JLabel lblBuscarDevolucion;
+    private javax.swing.JLabel lblSubtituloDevoluciones;
+    private javax.swing.JLabel lblTituloDevoluciones;
+    private javax.swing.JPanel pnlContenidoDevoluciones;
+    private javax.swing.JTable tblReturns;
+    private javax.swing.JTextField txtBuscarDevolucion;
+    // End of variables declaration//GEN-END:variables
+}
