@@ -12,13 +12,53 @@ public class SaleDialog extends javax.swing.JDialog {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(SaleDialog.class.getName());
 
+    private com.gamezone.service.SaleService saleService;
+    private com.gamezone.service.PersonService personService;
+    private com.gamezone.service.ProductService productService;
+    private com.gamezone.service.AccessoryService accessoryService;
+    private com.gamezone.service.PromotionService promotionService;
+    private SalePanel salePanel;
+
+    private static class CartItem {
+        com.gamezone.model.Product product;
+        boolean extendedWarranty;
+
+        CartItem(com.gamezone.model.Product product, boolean extendedWarranty) {
+            this.product = product;
+            this.extendedWarranty = extendedWarranty;
+        }
+    }
+
+    private final java.util.List<CartItem> cartItems = new java.util.ArrayList<>();
+    private final java.util.List<com.gamezone.model.Customer> customerList = new java.util.ArrayList<>();
+    private final java.util.List<com.gamezone.model.Seller> sellerList = new java.util.ArrayList<>();
+    private final java.util.List<com.gamezone.model.Product> catalogProducts = new java.util.ArrayList<>();
+
     /**
      * Creates new form SaleDialog
      */
     public SaleDialog(java.awt.Frame parent, boolean modal) {
+        this(parent, modal, null, null, null, null, null, null);
+    }
+
+    public SaleDialog(java.awt.Frame parent, boolean modal,
+                      com.gamezone.service.SaleService saleService,
+                      com.gamezone.service.PersonService personService,
+                      com.gamezone.service.ProductService productService,
+                      com.gamezone.service.AccessoryService accessoryService,
+                      com.gamezone.service.PromotionService promotionService,
+                      SalePanel salePanel) {
         super(parent, modal);
+        this.saleService = saleService;
+        this.personService = personService;
+        this.productService = productService;
+        this.accessoryService = accessoryService;
+        this.promotionService = promotionService;
+        this.salePanel = salePanel;
         initComponents();
         setLocationRelativeTo(null);
+        populateDropdowns();
+        setupEventListeners();
     }
 
     /**
@@ -194,6 +234,224 @@ public class SaleDialog extends javax.swing.JDialog {
     private void btnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelActionPerformed
         dispose();
     }//GEN-LAST:event_btnCancelActionPerformed
+
+    private void populateDropdowns() {
+        if (personService != null) {
+            cmbCustomer.removeAllItems();
+            cmbCustomer.addItem("Seleccionar cliente...");
+            customerList.clear();
+            for (com.gamezone.model.Customer c : personService.listAllCustomers()) {
+                customerList.add(c);
+                cmbCustomer.addItem(c.getId() + " - " + c.getFullName());
+            }
+
+            cmbSeller.removeAllItems();
+            cmbSeller.addItem("Seleccionar vendedor...");
+            sellerList.clear();
+            for (com.gamezone.model.Seller s : personService.listAllSellers()) {
+                sellerList.add(s);
+                cmbSeller.addItem(s.getId() + " - " + s.getFullName() + " (" + s.getEmployeecode() + ")");
+            }
+        }
+
+        cmbProduct.removeAllItems();
+        cmbProduct.addItem("Seleccionar producto del catálogo...");
+        catalogProducts.clear();
+
+        if (productService != null) {
+            for (com.gamezone.model.Product p : productService.listAllProducts()) {
+                catalogProducts.add(p);
+                String tag = (p instanceof com.gamezone.model.Console) ? "[Consola]" : "[Videojuego]";
+                cmbProduct.addItem(tag + " " + p.getId() + " - " + p.getTitle() + " ($" + p.getPrice() + ") [Stock: " + p.getStock() + "]");
+            }
+        }
+
+        if (accessoryService != null) {
+            for (com.gamezone.model.Accessory a : accessoryService.listAllaccessories()) {
+                catalogProducts.add(a);
+                cmbProduct.addItem("[Accesorio] " + a.getId() + " - " + a.getTitle() + " ($" + a.getPrice() + ") [Stock: " + a.getStock() + "]");
+            }
+        }
+    }
+
+    private void setupEventListeners() {
+        btnAddProduct.addActionListener(e -> addProductToCart());
+        btnRemoveItem.addActionListener(e -> removeItemFromCart());
+        btnConfirmSale.addActionListener(e -> confirmSale());
+
+        cmbProduct.addActionListener(e -> {
+            int idx = cmbProduct.getSelectedIndex();
+            if (idx > 0 && (idx - 1) < catalogProducts.size()) {
+                com.gamezone.model.Product selected = catalogProducts.get(idx - 1);
+                boolean isConsole = selected instanceof com.gamezone.model.Console;
+                chkExtendedWarranty.setEnabled(isConsole);
+                if (!isConsole) {
+                    chkExtendedWarranty.setSelected(false);
+                }
+            } else {
+                chkExtendedWarranty.setEnabled(false);
+                chkExtendedWarranty.setSelected(false);
+            }
+        });
+
+        cmbCustomer.addActionListener(e -> updateTotals());
+    }
+
+    private void addProductToCart() {
+        int idx = cmbProduct.getSelectedIndex();
+        if (idx <= 0 || (idx - 1) >= catalogProducts.size()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Por favor seleccione un producto del catálogo.", "Aviso", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        com.gamezone.model.Product selected = catalogProducts.get(idx - 1);
+
+        long alreadyInCart = cartItems.stream()
+                .filter(ci -> ci.product.getId().equals(selected.getId()))
+                .count();
+
+        if (alreadyInCart >= selected.getStock()) {
+            javax.swing.JOptionPane.showMessageDialog(this,
+                    "Stock insuficiente para '" + selected.getTitle() + "'.\nDisponibles: " + selected.getStock() + " unidad(es).",
+                    "Stock insuficiente", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        boolean extWarranty = chkExtendedWarranty.isSelected() && (selected instanceof com.gamezone.model.Console);
+        cartItems.add(new CartItem(selected, extWarranty));
+
+        renderCartTable();
+        updateTotals();
+    }
+
+    private void removeItemFromCart() {
+        int selectedRow = tblSaleItems.getSelectedRow();
+        if (selectedRow == -1) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Por favor seleccione un ítem de la tabla para quitarlo.", "Aviso", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (selectedRow >= 0 && selectedRow < cartItems.size()) {
+            cartItems.remove(selectedRow);
+            renderCartTable();
+            updateTotals();
+        }
+    }
+
+    private void renderCartTable() {
+        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tblSaleItems.getModel();
+        model.setRowCount(0);
+
+        for (CartItem ci : cartItems) {
+            String warrantyText = "No";
+            if (ci.product instanceof com.gamezone.model.Console) {
+                warrantyText = ci.extendedWarranty ? "Básica + Extendida" : "Básica";
+            }
+            model.addRow(new Object[]{
+                ci.product.getId(),
+                ci.product.getTitle(),
+                String.format(java.util.Locale.US, "$%.2f", ci.product.getPrice()),
+                warrantyText
+            });
+        }
+    }
+
+    private void updateTotals() {
+        double subtotal = 0.0;
+        for (CartItem ci : cartItems) {
+            subtotal += ci.product.getPrice();
+            if (ci.extendedWarranty && (ci.product instanceof com.gamezone.model.Console)) {
+                subtotal += (ci.product.getPrice() * 0.10);
+            }
+        }
+
+        double discount = 0.0;
+        String promoName = null;
+
+        if (cmbCustomer.getSelectedIndex() > 0 && !cartItems.isEmpty() && promotionService != null) {
+            com.gamezone.model.Customer customer = customerList.get(cmbCustomer.getSelectedIndex() - 1);
+            com.gamezone.model.Seller dummySeller = !sellerList.isEmpty() ? sellerList.get(0) : new com.gamezone.model.Seller();
+            java.util.List<com.gamezone.model.Product> prods = cartItems.stream()
+                    .map(ci -> ci.product)
+                    .collect(java.util.stream.Collectors.toList());
+
+            try {
+                com.gamezone.model.Sale tempSale = new com.gamezone.model.Sale("TEMP", java.time.LocalDate.now(), customer, dummySeller, prods);
+                tempSale.setSubtotal(subtotal);
+                com.gamezone.model.Promotion bestPromo = promotionService.findBestPromotionFor(tempSale);
+                if (bestPromo != null) {
+                    discount = bestPromo.calculateDiscount(tempSale);
+                    promoName = bestPromo.getName();
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        double total = Math.max(0.0, subtotal - discount);
+
+        lblSubtotalValue.setText(String.format(java.util.Locale.US, "$%.2f", subtotal));
+        if (discount > 0) {
+            lblDiscountValue.setText(String.format(java.util.Locale.US, "-$%.2f (%s)", discount, promoName != null ? promoName : "Promo"));
+        } else {
+            lblDiscountValue.setText("-$0.00");
+        }
+        lblTotalValue.setText(String.format(java.util.Locale.US, "$%.2f", total));
+    }
+
+    private void confirmSale() {
+        if (saleService == null) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Servicio de ventas no disponible.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (cmbCustomer.getSelectedIndex() <= 0) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Por favor seleccione el cliente que realiza la compra.", "Cliente requerido", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (cmbSeller.getSelectedIndex() <= 0) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Por favor seleccione el vendedor que atiende la venta.", "Vendedor requerido", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (cartItems.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Debe agregar al menos un producto a la venta.", "Venta vacía", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        com.gamezone.model.Customer customer = customerList.get(cmbCustomer.getSelectedIndex() - 1);
+        com.gamezone.model.Seller seller = sellerList.get(cmbSeller.getSelectedIndex() - 1);
+        java.util.List<com.gamezone.model.Product> products = cartItems.stream()
+                .map(ci -> ci.product)
+                .collect(java.util.stream.Collectors.toList());
+
+        java.util.List<String> extWarrantyIds = cartItems.stream()
+                .filter(ci -> ci.extendedWarranty)
+                .map(ci -> ci.product.getId())
+                .collect(java.util.stream.Collectors.toList());
+
+        try {
+            com.gamezone.model.Sale sale = saleService.registerSale(customer, seller, products, extWarrantyIds);
+            javax.swing.JOptionPane.showMessageDialog(this,
+                    "¡Venta registrada con éxito!\nID de Venta: " + sale.getId()
+                    + "\nCliente: " + customer.getFullName()
+                    + "\nVendedor: " + seller.getFullName()
+                    + "\nTotal Facturado: $" + String.format(java.util.Locale.US, "%.2f", sale.getTotalAmount()),
+                    "Venta Exitosa", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+
+            java.awt.Frame parentFrame = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
+            DetailDialog detail = new DetailDialog(parentFrame, true);
+            detail.setDocumentDetails("Recibo de Venta", "Factura de compra #" + sale.getId(), sale.generateReceipt());
+            detail.setVisible(true);
+
+            if (salePanel != null) {
+                salePanel.loadSales();
+            }
+            dispose();
+        } catch (Exception ex) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error al registrar la venta: " + ex.getMessage(), "Error en venta", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     /**
      * @param args the command line arguments

@@ -10,11 +10,103 @@ package com.gamezone.ui;
  */
 public class ReturnPanel extends javax.swing.JPanel {
 
+    private com.gamezone.service.ReturnService returnService;
+    private com.gamezone.service.SaleService saleService;
+
     /**
      * Creates new form ReturnPanel
      */
     public ReturnPanel() {
         initComponents();
+    }
+
+    public ReturnPanel(com.gamezone.service.ReturnService returnService, com.gamezone.service.SaleService saleService) {
+        this.returnService = returnService;
+        this.saleService = saleService;
+        initComponents();
+        setupEvents();
+        loadReturns();
+    }
+
+    private void setupEvents() {
+        btnBuscarDevolucion.addActionListener(e -> searchReturns());
+        txtBuscarDevolucion.addActionListener(e -> searchReturns());
+        btnVerComprobante.addActionListener(e -> showReturnReceipt());
+    }
+
+    public void loadReturns() {
+        if (returnService == null) return;
+        renderReturnsTable(returnService.viewAllReturns());
+    }
+
+    private void searchReturns() {
+        if (returnService == null) return;
+        String query = txtBuscarDevolucion.getText().trim().toLowerCase();
+        java.util.List<com.gamezone.model.Return> all = returnService.viewAllReturns();
+
+        if (query.isEmpty()) {
+            renderReturnsTable(all);
+            return;
+        }
+
+        java.util.List<com.gamezone.model.Return> filtered = all.stream()
+                .filter(r -> (r.getReturnId() != null && r.getReturnId().toLowerCase().contains(query))
+                        || (r.getOriginalSale() != null && r.getOriginalSale().getId() != null && r.getOriginalSale().getId().toLowerCase().contains(query))
+                        || (r.getOriginalSale() != null && r.getOriginalSale().getCustomer() != null && r.getOriginalSale().getCustomer().getFullName().toLowerCase().contains(query))
+                        || (r.getReason() != null && r.getReason().toLowerCase().contains(query))
+                        || (r.getReturnedProducts() != null && r.getReturnedProducts().stream().anyMatch(p -> p.getTitle().toLowerCase().contains(query))))
+                .collect(java.util.stream.Collectors.toList());
+
+        renderReturnsTable(filtered);
+    }
+
+    private void renderReturnsTable(java.util.List<com.gamezone.model.Return> list) {
+        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tblReturns.getModel();
+        model.setRowCount(0);
+
+        for (com.gamezone.model.Return r : list) {
+            String saleId = (r.getOriginalSale() != null) ? r.getOriginalSale().getId() : "-";
+            String customerName = (r.getOriginalSale() != null && r.getOriginalSale().getCustomer() != null)
+                    ? r.getOriginalSale().getCustomer().getFullName() : "-";
+            String productsStr = (r.getReturnedProducts() != null)
+                    ? r.getReturnedProducts().stream().map(com.gamezone.model.Product::getTitle).collect(java.util.stream.Collectors.joining(", "))
+                    : "-";
+
+            model.addRow(new Object[]{
+                r.getReturnId(),
+                r.getReturnDate(),
+                saleId,
+                customerName,
+                productsStr,
+                r.getReason(),
+                String.format("$%.2f", r.getRefundAmount())
+            });
+        }
+    }
+
+    private void showReturnReceipt() {
+        int selectedRow = tblReturns.getSelectedRow();
+        if (selectedRow == -1) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Por favor seleccione una devolución de la tabla.", "Aviso", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String returnId = tblReturns.getValueAt(selectedRow, 0).toString();
+        if (returnService == null) return;
+
+        com.gamezone.model.Return returnObj = returnService.viewAllReturns().stream()
+                .filter(r -> r.getReturnId().equals(returnId))
+                .findFirst().orElse(null);
+
+        if (returnObj == null) {
+            javax.swing.JOptionPane.showMessageDialog(this, "No se encontró la información de la devolución seleccionada.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        java.awt.Frame parentFrame = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
+        DetailDialog dialog = new DetailDialog(parentFrame, true);
+        dialog.setDocumentDetails("Comprobante de Devolución", "Devolución #" + returnObj.getReturnId(), returnObj.generateReturnReceipt());
+        dialog.setVisible(true);
     }
 
     /**
@@ -105,7 +197,7 @@ public class ReturnPanel extends javax.swing.JPanel {
 
     private void btnNuevaDevolucionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevaDevolucionActionPerformed
         java.awt.Frame parentFrame = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
-        ReturnDialog dialog = new ReturnDialog(parentFrame, true);
+        ReturnDialog dialog = new ReturnDialog(parentFrame, true, returnService, saleService, this);
         dialog.setVisible(true);
     }//GEN-LAST:event_btnNuevaDevolucionActionPerformed
 

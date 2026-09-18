@@ -4,11 +4,15 @@
  */
 package com.gamezone.ui;
 
+import com.gamezone.service.PersonService;                             
+import javax.swing.JOptionPane;
 /**
  *
  * @author USUARIO
  */
 public class CustomerDialog extends javax.swing.JDialog {
+    private PersonService personService;
+    private CustomerPanel customerPanel;
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(CustomerDialog.class.getName());
 
@@ -21,6 +25,14 @@ public class CustomerDialog extends javax.swing.JDialog {
         setLocationRelativeTo(null);
     }
 
+    public CustomerDialog(java.awt.Frame parent, boolean modal,
+            PersonService personService, CustomerPanel customerPanel) {
+        super(parent, modal);
+        this.personService = personService;
+        this.customerPanel = customerPanel;
+        initComponents();
+        setLocationRelativeTo(null);
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -39,11 +51,11 @@ public class CustomerDialog extends javax.swing.JDialog {
         lblFirstName = new javax.swing.JLabel();
         txtEmail = new javax.swing.JTextField();
         lblEmail = new javax.swing.JLabel();
-        txtFirstName1 = new javax.swing.JTextField();
+        txtFirstName = new javax.swing.JTextField();
         lblLastName1 = new javax.swing.JLabel();
-        txtLastName1 = new javax.swing.JTextField();
+        txtLastName = new javax.swing.JTextField();
         lblPhone1 = new javax.swing.JLabel();
-        txtPhone1 = new javax.swing.JTextField();
+        txtPhone = new javax.swing.JTextField();
         btnCancel = new javax.swing.JButton();
         btnSave = new javax.swing.JButton();
 
@@ -94,27 +106,28 @@ public class CustomerDialog extends javax.swing.JDialog {
         lblEmail.setText("Correo Electrónico:*");
         getContentPane().add(lblEmail, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 380, 200, 20));
 
-        txtFirstName1.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        txtFirstName1.setForeground(new java.awt.Color(31, 41, 55));
-        getContentPane().add(txtFirstName1, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 190, 410, 35));
+        txtFirstName.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        txtFirstName.setForeground(new java.awt.Color(31, 41, 55));
+        txtFirstName.addActionListener(this::txtFirstNameActionPerformed);
+        getContentPane().add(txtFirstName, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 190, 410, 35));
 
         lblLastName1.setFont(new java.awt.Font("Arial", 1, 13)); // NOI18N
         lblLastName1.setForeground(new java.awt.Color(31, 41, 55));
         lblLastName1.setText("Apellido:*");
         getContentPane().add(lblLastName1, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 235, 200, 20));
 
-        txtLastName1.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        txtLastName1.setForeground(new java.awt.Color(31, 41, 55));
-        getContentPane().add(txtLastName1, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 260, 410, 35));
+        txtLastName.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        txtLastName.setForeground(new java.awt.Color(31, 41, 55));
+        getContentPane().add(txtLastName, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 260, 410, 35));
 
         lblPhone1.setFont(new java.awt.Font("Arial", 1, 13)); // NOI18N
         lblPhone1.setForeground(new java.awt.Color(31, 41, 55));
         lblPhone1.setText("Teléfono:*");
         getContentPane().add(lblPhone1, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 305, 200, 20));
 
-        txtPhone1.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        txtPhone1.setForeground(new java.awt.Color(31, 41, 55));
-        getContentPane().add(txtPhone1, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 330, 410, 35));
+        txtPhone.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        txtPhone.setForeground(new java.awt.Color(31, 41, 55));
+        getContentPane().add(txtPhone, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 330, 410, 35));
 
         btnCancel.setBackground(new java.awt.Color(229, 57, 53));
         btnCancel.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
@@ -133,6 +146,7 @@ public class CustomerDialog extends javax.swing.JDialog {
         btnSave.setBorderPainted(false);
         btnSave.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnSave.setFocusPainted(false);
+        btnSave.addActionListener(this::btnSaveActionPerformed);
         getContentPane().add(btnSave, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 470, 140, 40));
 
         pack();
@@ -141,6 +155,62 @@ public class CustomerDialog extends javax.swing.JDialog {
     private void btnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelActionPerformed
         dispose(); // Cierra la ventanita emergente
     }//GEN-LAST:event_btnCancelActionPerformed
+
+    private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveActionPerformed
+        String id = txtId.getText().trim();
+        String firstName = txtFirstName.getText().trim();
+        String lastName = txtLastName.getText().trim();
+        String phone = txtPhone.getText().trim();
+        String email = txtEmail.getText().trim();
+
+        // Validación de campos vacíos:
+        if (id.isEmpty() || firstName.isEmpty() || lastName.isEmpty()
+                || phone.isEmpty() || email.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Por favor completa todos los campos requeridos.", "Campos vacíos", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Validación de nombre y apellido (solo letras y espacios, mínimo 2 caracteres):
+        if (!firstName.matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]{2,50}$")) {
+            JOptionPane.showMessageDialog(this, "El nombre debe contener solo letras (mínimo 2 caracteres).", "Nombre inválido", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (!lastName.matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]{2,50}$")) {
+            JOptionPane.showMessageDialog(this, "El apellido debe contener solo letras (mínimo 2 caracteres).", "Apellido inválido", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Validación de teléfono (solo dígitos, entre 7 y 15 números):
+        if (!phone.matches("^\\d{7,15}$")) {
+            JOptionPane.showMessageDialog(this, "El teléfono debe contener entre 7 y 15 dígitos numéricos sin letras ni símbolos.", "Teléfono inválido", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Validación de correo electrónico (debe contener @ y un dominio válido):
+        if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            JOptionPane.showMessageDialog(this, "El correo electrónico debe tener un formato válido (ejemplo: usuario@correo.com).", "Correo inválido", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            // Registra en el backend persistente:
+            personService.registerCustomer(id, firstName, lastName, phone, email);
+            JOptionPane.showMessageDialog(this, "¡Cliente registrado exitosamente!", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+
+            // Recarga automáticamente la tabla de CustomerPanel:
+            if (customerPanel != null) {
+                customerPanel.loadCustomers();
+            }
+            dispose(); // Cierra la ventanita
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al registrar: "
+                    + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_btnSaveActionPerformed
+
+    private void txtFirstNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtFirstNameActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtFirstNameActionPerformed
 
     /**
      * @param args the command line arguments
@@ -192,9 +262,9 @@ public class CustomerDialog extends javax.swing.JDialog {
     private javax.swing.JLabel lblPhone1;
     private javax.swing.JPanel pnlHeader;
     private javax.swing.JTextField txtEmail;
-    private javax.swing.JTextField txtFirstName1;
+    private javax.swing.JTextField txtFirstName;
     private javax.swing.JTextField txtId;
-    private javax.swing.JTextField txtLastName1;
-    private javax.swing.JTextField txtPhone1;
+    private javax.swing.JTextField txtLastName;
+    private javax.swing.JTextField txtPhone;
     // End of variables declaration//GEN-END:variables
 }

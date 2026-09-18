@@ -4,12 +4,17 @@
  */
 package com.gamezone.ui;
 
+import com.gamezone.model.Customer;
+import com.gamezone.service.PersonService;
+import javax.swing.table.DefaultTableModel;
+
 /**
  *
  * @author USUARIO
  */
 public class CustomerPanel extends javax.swing.JPanel {
 
+    private PersonService personService;
     /**
      * Creates new form CustomerPanel
      */
@@ -17,6 +22,30 @@ public class CustomerPanel extends javax.swing.JPanel {
         initComponents();
     }
 
+    public CustomerPanel(PersonService personService) {                
+            this.personService = personService;
+            initComponents();
+            loadCustomers(); // Carga la lista inicial
+        } 
+    
+    public void loadCustomers() {
+        if (personService == null) {
+            return;
+        }
+        DefaultTableModel model = (DefaultTableModel) tblClientes.
+                getModel();
+        model.setRowCount(0);
+
+        for (Customer c : personService.listAllCustomers()) {
+            model.addRow(new Object[]{
+                c.getId(),
+                c.getFirstName(),
+                c.getLastName(),
+                c.getPhone(),
+                c.getEmail()
+            });
+        }
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -54,6 +83,7 @@ public class CustomerPanel extends javax.swing.JPanel {
         btnNuevoCliente.setForeground(new java.awt.Color(255, 255, 255));
         btnNuevoCliente.setText("+ Nuevo cliente");
         btnNuevoCliente.setBorderPainted(false);
+        btnNuevoCliente.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnNuevoCliente.setFocusPainted(false);
         btnNuevoCliente.addActionListener(this::btnNuevoClienteActionPerformed);
         add(btnNuevoCliente, new org.netbeans.lib.awtextra.AbsoluteConstraints(770, 30, 165, 40));
@@ -76,6 +106,7 @@ public class CustomerPanel extends javax.swing.JPanel {
         btnBuscarCliente.setText("Buscar");
         btnBuscarCliente.setBorderPainted(false);
         btnBuscarCliente.setFocusPainted(false);
+        btnBuscarCliente.addActionListener(this::btnBuscarClienteActionPerformed);
         pnlContenidoClientes.add(btnBuscarCliente, new org.netbeans.lib.awtextra.AbsoluteConstraints(480, 20, 110, 35));
 
         tblClientes.setFont(new java.awt.Font("Arial", 0, 13)); // NOI18N
@@ -97,9 +128,37 @@ public class CustomerPanel extends javax.swing.JPanel {
 
     private void btnNuevoClienteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoClienteActionPerformed
         java.awt.Frame parentFrame = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
-        CustomerDialog dialog = new CustomerDialog(parentFrame, true);
+        CustomerDialog dialog = new CustomerDialog(parentFrame, true,
+                personService, this);
         dialog.setVisible(true);
     }//GEN-LAST:event_btnNuevoClienteActionPerformed
+
+    private void btnBuscarClienteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarClienteActionPerformed
+        if (personService == null)
+            return;
+        String query = txtBuscarCliente.getText().trim().toLowerCase();
+
+        if (query.isEmpty()) {
+            loadCustomers();
+            return;
+        }
+
+        DefaultTableModel model = (DefaultTableModel) tblClientes.
+                getModel();
+        model.setRowCount(0);
+
+        for (Customer c : personService.listAllCustomers()) {
+            if (c.getId().toLowerCase().contains(query)
+                    || c.getFirstName().toLowerCase().contains(query)
+                    || c.getLastName().toLowerCase().contains(query)
+                    || c.getEmail().toLowerCase().contains(query)) {
+                model.addRow(new Object[]{
+                    c.getId(), c.getFirstName(), c.getLastName(), c.
+                    getPhone(), c.getEmail()
+                });
+            }
+        }
+    }//GEN-LAST:event_btnBuscarClienteActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

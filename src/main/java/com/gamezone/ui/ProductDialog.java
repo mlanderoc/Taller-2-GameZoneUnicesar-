@@ -4,6 +4,9 @@
  */
 package com.gamezone.ui;
 
+import com.gamezone.service.ProductService;
+import javax.swing.JOptionPane;
+
 /**
  *
  * @author USUARIO
@@ -11,6 +14,8 @@ package com.gamezone.ui;
 public class ProductDialog extends javax.swing.JDialog {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(ProductDialog.class.getName());
+    private ProductService productService;
+    private ProductPanel productPanel;
 
     /**
      * Creates new form ProductDialog
@@ -19,6 +24,16 @@ public class ProductDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         setLocationRelativeTo(null);
+        btnSave.addActionListener(e -> saveProduct());
+    }
+
+    public ProductDialog(java.awt.Frame parent, boolean modal, ProductService productService, ProductPanel productPanel) {
+        super(parent, modal);
+        this.productService = productService;
+        this.productPanel = productPanel;
+        initComponents();
+        setLocationRelativeTo(null);
+        btnSave.addActionListener(e -> saveProduct());
     }
 
     /**
@@ -172,12 +187,79 @@ public class ProductDialog extends javax.swing.JDialog {
            lblSpecific1.setText("Marca:*");
            lblSpecific2.setText("Modelo:*");
            lblSpecific3.setText("Generación:*");
-       } else {
-           lblSpecific1.setText("Plataforma:*");
-           lblSpecific2.setText("Género:*");
-           lblSpecific3.setText("Clasificación de edad:*");
-       }
+        } else {
+            lblSpecific1.setText("Plataforma:*");
+            lblSpecific2.setText("Género:*");
+            lblSpecific3.setText("Clasificación de edad:*");
+        }
     }//GEN-LAST:event_cmbProductTypeActionPerformed
+
+    private void saveProduct() {
+        if (productService == null) {
+            JOptionPane.showMessageDialog(this, "Servicio de productos no disponible.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String id = txtId.getText().trim();
+        String title = txtTitle.getText().trim();
+        String priceStr = txtPrice.getText().trim();
+        String stockStr = txtStock.getText().trim();
+        String specific1 = txtSpecific1.getText().trim();
+        String specific2 = txtSpecific2.getText().trim();
+        String specific3 = txtSpecific3.getText().trim();
+
+        // 1. Validar campos vacíos
+        if (id.isEmpty() || title.isEmpty() || priceStr.isEmpty() || stockStr.isEmpty()
+                || specific1.isEmpty() || specific2.isEmpty() || specific3.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Por favor completa todos los campos del producto.", "Campos incompletos", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // 2. Validar precio (número positivo)
+        double price;
+        try {
+            price = Double.parseDouble(priceStr);
+            if (price <= 0) {
+                JOptionPane.showMessageDialog(this, "El precio debe ser mayor a cero.", "Precio inválido", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "El precio debe ser un número válido (ejemplo: 50000 o 45.99).", "Precio inválido", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // 3. Validar stock (entero no negativo)
+        int stock;
+        try {
+            stock = Integer.parseInt(stockStr);
+            if (stock < 0) {
+                JOptionPane.showMessageDialog(this, "El stock no puede ser negativo.", "Stock inválido", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "El stock debe ser un número entero (ejemplo: 10).", "Stock inválido", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String type = cmbProductType.getSelectedItem().toString().trim();
+        try {
+            if ("Consola".equalsIgnoreCase(type)) {
+                // specific1 = Marca, specific2 = Modelo, specific3 = Generación
+                productService.registerConsole(id, title, price, stock, specific1, specific2, specific3);
+            } else {
+                // specific1 = Plataforma, specific2 = Género, specific3 = Clasificación de edad
+                productService.registerVideoGame(id, title, price, stock, specific1, specific2, specific3);
+            }
+
+            JOptionPane.showMessageDialog(this, "¡Producto registrado exitosamente!", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            if (productPanel != null) {
+                productPanel.loadProducts();
+            }
+            dispose();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "No se pudo registrar el producto: " + ex.getMessage(), "Error al registrar", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     /**
      * @param args the command line arguments

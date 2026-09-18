@@ -10,11 +10,87 @@ package com.gamezone.ui;
  */
 public class SalePanel extends javax.swing.JPanel {
 
+    private com.gamezone.service.SaleService saleService;
+    private com.gamezone.service.PersonService personService;
+    private com.gamezone.service.ProductService productService;
+    private com.gamezone.service.AccessoryService accessoryService;
+    private com.gamezone.service.PromotionService promotionService;
+
     /**
      * Creates new form SalePanel
      */
     public SalePanel() {
         initComponents();
+    }
+
+    public SalePanel(com.gamezone.service.SaleService saleService,
+                     com.gamezone.service.PersonService personService,
+                     com.gamezone.service.ProductService productService,
+                     com.gamezone.service.AccessoryService accessoryService,
+                     com.gamezone.service.PromotionService promotionService) {
+        this.saleService = saleService;
+        this.personService = personService;
+        this.productService = productService;
+        this.accessoryService = accessoryService;
+        this.promotionService = promotionService;
+        initComponents();
+        setupEvents();
+        loadSales();
+    }
+
+    private void setupEvents() {
+        btnBuscarVenta.addActionListener(e -> searchSales());
+        txtBuscarVenta.addActionListener(e -> searchSales());
+    }
+
+    public void loadSales() {
+        if (saleService == null) return;
+        renderSalesTable(saleService.viewAllSales());
+    }
+
+    private void searchSales() {
+        if (saleService == null) return;
+        String query = txtBuscarVenta.getText().trim().toLowerCase();
+        java.util.List<com.gamezone.model.Sale> all = saleService.viewAllSales();
+
+        if (query.isEmpty()) {
+            renderSalesTable(all);
+            return;
+        }
+
+        java.util.List<com.gamezone.model.Sale> filtered = all.stream()
+                .filter(s -> (s.getId() != null && s.getId().toLowerCase().contains(query))
+                        || (s.getDate() != null && s.getDate().toString().contains(query))
+                        || (s.getCustomer() != null && s.getCustomer().getFullName() != null && s.getCustomer().getFullName().toLowerCase().contains(query))
+                        || (s.getCustomer() != null && s.getCustomer().getId() != null && s.getCustomer().getId().toLowerCase().contains(query))
+                        || (s.getSeller() != null && s.getSeller().getFullName() != null && s.getSeller().getFullName().toLowerCase().contains(query))
+                        || (s.getSeller() != null && s.getSeller().getEmployeecode() != null && s.getSeller().getEmployeecode().toLowerCase().contains(query)))
+                .collect(java.util.stream.Collectors.toList());
+
+        renderSalesTable(filtered);
+    }
+
+    private void renderSalesTable(java.util.List<com.gamezone.model.Sale> list) {
+        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tblVentas.getModel();
+        model.setRowCount(0);
+
+        for (com.gamezone.model.Sale s : list) {
+            String customerName = (s.getCustomer() != null) ? s.getCustomer().getFullName() : "-";
+            String sellerName = (s.getSeller() != null) ? s.getSeller().getFullName() : "-";
+            String discountStr = (s.getDiscountAmount() > 0)
+                    ? String.format(java.util.Locale.US, "-$%.2f", s.getDiscountAmount())
+                    : "$0.00";
+
+            model.addRow(new Object[]{
+                s.getId(),
+                s.getDate(),
+                customerName,
+                sellerName,
+                String.format(java.util.Locale.US, "$%.2f", s.getSubtotal()),
+                discountStr,
+                String.format(java.util.Locale.US, "$%.2f", s.getTotalAmount())
+            });
+        }
     }
 
     /**
@@ -106,35 +182,29 @@ public class SalePanel extends javax.swing.JPanel {
 
     private void btnNuevaVentaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevaVentaActionPerformed
         java.awt.Frame parentFrame = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
-        SaleDialog dialog = new SaleDialog(parentFrame, true);
+        SaleDialog dialog = new SaleDialog(parentFrame, true, saleService, personService, productService, accessoryService, promotionService, this);
         dialog.setVisible(true);
     }//GEN-LAST:event_btnNuevaVentaActionPerformed
 
     private void btnVerDetalleVentaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVerDetalleVentaActionPerformed
+        int selectedRow = tblVentas.getSelectedRow();
+        if (selectedRow == -1) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Por favor seleccione una venta de la tabla para ver su detalle.", "Aviso", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String saleId = tblVentas.getValueAt(selectedRow, 0).toString();
+        if (saleService == null) return;
+
+        com.gamezone.model.Sale sale = saleService.findSaleById(saleId);
+        if (sale == null) {
+            javax.swing.JOptionPane.showMessageDialog(this, "No se encontró la información de la venta seleccionada.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         java.awt.Frame parentFrame = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
         DetailDialog dialog = new DetailDialog(parentFrame, true);
-
-        // Ticket de ejemplo visual mientras conectamos la base de datos:
-        String reciboDemo = "========================================\n"
-                + "       GAMEZONE UNICESAR - RECIBO       \n"
-                + "========================================\n"
-                + "ID Venta: V-001\n"
-                + "Fecha:    2026-09-17\n"
-                + "Cliente:  Carlos Gomez (1066867142)\n"
-                + "Vendedor: Laura Gomez (EMP001)\n"
-                + "----------------------------------------\n"
-                + "Productos:\n"
-                + " - 1x PlayStation 5 Slim    $2.500.000\n"
-                + " - 1x Control DualSense       $350.000\n"
-                + "----------------------------------------\n"
-                + "Subtotal:                   $2.850.000\n"
-                + "Descuento (PROMO001 15%):     -$427.500\n"
-                + "TOTAL A PAGAR:              $2.422.500\n"
-                + "========================================\n"
-                + "  ¡Gracias por tu compra en GameZone!  \n"
-                + "========================================";
-
-        dialog.setDocumentDetails("Recibo de Venta", "Detalle de compra y facturacion", reciboDemo);
+        dialog.setDocumentDetails("Recibo de Venta", "Detalle de compra y facturación #" + sale.getId(), sale.generateReceipt());
         dialog.setVisible(true);
     }//GEN-LAST:event_btnVerDetalleVentaActionPerformed
 

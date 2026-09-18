@@ -9,12 +9,115 @@ package com.gamezone.ui;
  * @author USUARIO
  */
 public class WarrantyPanel extends javax.swing.JPanel {
+    private com.gamezone.service.WarrantyService warrantyService;
 
     /**
      * Creates new form WarrantyPanel
      */
     public WarrantyPanel() {
         initComponents();
+    }
+
+    public WarrantyPanel(com.gamezone.service.WarrantyService warrantyService) {
+        this.warrantyService = warrantyService;
+        initComponents();
+        setupEvents();
+        loadWarranties();
+    }
+
+    private void setupEvents() {
+        btnBuscarGarantia.addActionListener(e -> searchWarranties());
+        txtBuscarGarantia.addActionListener(e -> searchWarranties());
+        cmbFiltroGarantias.addActionListener(e -> filterWarranties());
+        btnVerCertificado.addActionListener(e -> showWarrantyCertificate());
+    }
+
+    public void loadWarranties() {
+        filterWarranties();
+    }
+
+    private void filterWarranties() {
+        if (warrantyService == null) return;
+        String selected = cmbFiltroGarantias.getSelectedItem() != null ? cmbFiltroGarantias.getSelectedItem().toString().trim() : "";
+        java.util.List<com.gamezone.model.Warranty> list;
+
+        if (selected.contains("vigentes")) {
+            list = warrantyService.listActiveWarranties();
+        } else if (selected.contains("vencer")) {
+            list = warrantyService.listWarrantiesExpiringSoon(30);
+        } else {
+            list = warrantyService.listAllWarranties();
+        }
+
+        renderWarrantiesTable(list);
+    }
+
+    private void searchWarranties() {
+        if (warrantyService == null) return;
+        String query = txtBuscarGarantia.getText().trim().toLowerCase();
+        java.util.List<com.gamezone.model.Warranty> all = warrantyService.listAllWarranties();
+
+        if (query.isEmpty()) {
+            filterWarranties();
+            return;
+        }
+
+        java.util.List<com.gamezone.model.Warranty> filtered = all.stream()
+                .filter(w -> (w.getWarrantyId() != null && w.getWarrantyId().toLowerCase().contains(query))
+                        || (w.getProduct() != null && w.getProduct().getTitle() != null && w.getProduct().getTitle().toLowerCase().contains(query))
+                        || (w.getProduct() != null && w.getProduct().getId() != null && w.getProduct().getId().toLowerCase().contains(query))
+                        || (w.getSale() != null && w.getSale().getId() != null && w.getSale().getId().toLowerCase().contains(query)))
+                .collect(java.util.stream.Collectors.toList());
+
+        renderWarrantiesTable(filtered);
+    }
+
+    private void renderWarrantiesTable(java.util.List<com.gamezone.model.Warranty> list) {
+        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tblGarantias.getModel();
+        model.setRowCount(0);
+        java.time.LocalDate today = java.time.LocalDate.now();
+
+        for (com.gamezone.model.Warranty w : list) {
+            String prodTitle = (w.getProduct() != null) ? w.getProduct().getTitle() : "-";
+            String saleId = (w.getSale() != null) ? w.getSale().getId() : "-";
+            String status = w.isActive(today) ? "Vigente" : "Vencida";
+
+            model.addRow(new Object[]{
+                w.getWarrantyId(),
+                w.getWarrantyType(),
+                prodTitle,
+                saleId,
+                w.getStartDate(),
+                w.getEndDate(),
+                String.format("$%.2f", w.getAdditionalCost()),
+                status
+            });
+        }
+    }
+
+    private void showWarrantyCertificate() {
+        int selectedRow = tblGarantias.getSelectedRow();
+        if (selectedRow == -1) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Por favor seleccione una garantía de la tabla.", "Aviso", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String warrantyId = tblGarantias.getValueAt(selectedRow, 0).toString();
+        if (warrantyService == null) return;
+
+        com.gamezone.model.Warranty warranty = warrantyService.listAllWarranties().stream()
+                .filter(w -> w.getWarrantyId().equals(warrantyId))
+                .findFirst().orElse(null);
+
+        if (warranty == null) {
+            javax.swing.JOptionPane.showMessageDialog(this, "No se encontró la información de la garantía seleccionada.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        java.awt.Frame parentFrame = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
+        DetailDialog dialog = new DetailDialog(parentFrame, true);
+        dialog.setDocumentDetails("Certificado de Garantía", "Garantía para " + (warranty.getProduct() != null ? warranty.getProduct().getTitle() : ""), warranty.generateWarrantyCertificate());
+        dialog.setVisible(true);
     }
 
     /**

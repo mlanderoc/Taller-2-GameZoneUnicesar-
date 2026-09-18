@@ -12,13 +12,23 @@ public class AccessoryDialog extends javax.swing.JDialog {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(AccessoryDialog.class.getName());
 
+    private com.gamezone.service.AccessoryService accessoryService;
+    private AccessoryPanel accessoryPanel;
+
     /**
      * Creates new form AccessoryDialog
      */
     public AccessoryDialog(java.awt.Frame parent, boolean modal) {
+        this(parent, modal, null, null);
+    }
+
+    public AccessoryDialog(java.awt.Frame parent, boolean modal, com.gamezone.service.AccessoryService accessoryService, AccessoryPanel accessoryPanel) {
         super(parent, modal);
+        this.accessoryService = accessoryService;
+        this.accessoryPanel = accessoryPanel;
         initComponents();
-        setLocationRelativeTo(null); 
+        setLocationRelativeTo(null);
+        btnSave.addActionListener(this::btnSaveActionPerformed);
     }
 
     /**
@@ -169,6 +179,99 @@ public class AccessoryDialog extends javax.swing.JDialog {
             lblSpecific2.setText("Consolas compatibles (separadas por coma):*");
         }
     }//GEN-LAST:event_cmbAccessoryTypeActionPerformed
+
+    private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {
+        if (accessoryService == null) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Servicio de accesorios no disponible.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String id = txtId1.getText().trim();
+        String title = txtTitle2.getText().trim();
+        String priceStr = txtPrice1.getText().trim();
+        String stockStr = txtStock.getText().trim();
+        String spec1 = txtSpecific1.getText().trim();
+        String spec2 = txtSpecific2.getText().trim();
+        String type = cmbAccessoryType.getSelectedItem().toString().trim();
+
+        if (id.isEmpty() || title.isEmpty() || priceStr.isEmpty() || stockStr.isEmpty() || spec1.isEmpty() || spec2.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Por favor complete todos los campos obligatorios (*).", "Campos incompletos", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (accessoryService.findById(id) != null) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Ya existe un accesorio con el ID: " + id, "ID duplicado", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        double price;
+        try {
+            price = Double.parseDouble(priceStr);
+            if (price <= 0) {
+                javax.swing.JOptionPane.showMessageDialog(this, "El precio debe ser un número mayor a cero.", "Error de validación", javax.swing.JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        } catch (NumberFormatException e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "El precio debe ser un número válido.", "Error de validación", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int stock;
+        try {
+            stock = Integer.parseInt(stockStr);
+            if (stock < 0) {
+                javax.swing.JOptionPane.showMessageDialog(this, "El stock no puede ser un número negativo.", "Error de validación", javax.swing.JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        } catch (NumberFormatException e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "El stock debe ser un número entero válido.", "Error de validación", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            if ("Cable".equalsIgnoreCase(type)) {
+                double length;
+                try {
+                    length = Double.parseDouble(spec1);
+                    if (length <= 0) {
+                        javax.swing.JOptionPane.showMessageDialog(this, "La longitud del cable debe ser mayor a 0 metros.", "Error de validación", javax.swing.JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    javax.swing.JOptionPane.showMessageDialog(this, "La longitud debe ser un número válido en metros.", "Error de validación", javax.swing.JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                accessoryService.registerCable(length, spec2, new java.util.ArrayList<>(), id, title, price, stock);
+            } else if ("Memoria".equalsIgnoreCase(type)) {
+                int capacity;
+                try {
+                    capacity = Integer.parseInt(spec1);
+                    if (capacity <= 0) {
+                        javax.swing.JOptionPane.showMessageDialog(this, "La capacidad debe ser un número entero mayor a 0 GB.", "Error de validación", javax.swing.JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    javax.swing.JOptionPane.showMessageDialog(this, "La capacidad debe ser un número entero válido.", "Error de validación", javax.swing.JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                accessoryService.registerMemory(capacity, spec2, new java.util.ArrayList<>(), id, title, price, stock);
+            } else { // Control
+                java.util.List<String> consoles = java.util.Arrays.stream(spec2.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .collect(java.util.stream.Collectors.toList());
+                accessoryService.registerController(spec1, consoles, id, title, price, stock);
+            }
+
+            javax.swing.JOptionPane.showMessageDialog(this, "Accesorio registrado exitosamente.", "Éxito", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            if (accessoryPanel != null) {
+                accessoryPanel.loadAccessories();
+            }
+            dispose();
+        } catch (Exception ex) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error al registrar el accesorio: " + ex.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     /**
      * @param args the command line arguments

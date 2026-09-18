@@ -4,17 +4,109 @@
  */
 package com.gamezone.ui;
 
+import com.gamezone.model.BulkPurchaseDiscount;
+import com.gamezone.model.CategoryDiscount;
+import com.gamezone.model.PercentageDiscount;
+import com.gamezone.model.Promotion;
+import com.gamezone.service.PromotionService;
+import java.time.LocalDate;
+import java.util.List;
+import javax.swing.table.DefaultTableModel;
+
 /**
  *
  * @author USUARIO
  */
 public class PromotionPanel extends javax.swing.JPanel {
 
+    private PromotionService promotionService;
+
     /**
      * Creates new form PromotionPanel
      */
     public PromotionPanel() {
         initComponents();
+        setupEvents();
+    }
+
+    public PromotionPanel(PromotionService promotionService) {
+        this.promotionService = promotionService;
+        initComponents();
+        setupEvents();
+        loadPromotions();
+    }
+
+    private void setupEvents() {
+        btnBuscarPromocion.addActionListener(e -> searchPromotions());
+        txtBuscarPromocion.addActionListener(e -> searchPromotions());
+        chkSoloVigentes.addActionListener(e -> loadPromotions());
+    }
+
+    public void loadPromotions() {
+        if (promotionService == null) return;
+        List<Promotion> list = chkSoloVigentes.isSelected()
+                ? promotionService.listActivePromotions()
+                : promotionService.listAllPromotions();
+
+        renderPromotionsTable(list);
+    }
+
+    private void renderPromotionsTable(List<Promotion> list) {
+        DefaultTableModel model = (DefaultTableModel) tblPromociones.getModel();
+        model.setRowCount(0);
+        LocalDate today = LocalDate.now();
+
+        for (Promotion p : list) {
+            String typeName;
+            String discountDetail;
+
+            if (p instanceof PercentageDiscount) {
+                typeName = "Porcentaje";
+                discountDetail = String.format("%.1f%%", ((PercentageDiscount) p).getDiscountPercentage());
+            } else if (p instanceof CategoryDiscount) {
+                CategoryDiscount cd = (CategoryDiscount) p;
+                typeName = "Categoría";
+                discountDetail = String.format("%.1f%% (%s)", cd.getDiscountPercentage(), cd.getCategoryObjective());
+            } else if (p instanceof BulkPurchaseDiscount) {
+                BulkPurchaseDiscount bd = (BulkPurchaseDiscount) p;
+                typeName = "Volumen";
+                discountDetail = String.format("%.1f%% (Mín: %d)", bd.getDiscountPercentage(), bd.getMinimumQuantity());
+            } else {
+                typeName = "General";
+                discountDetail = "-";
+            }
+
+            String status = p.isActive(today) ? "Vigente" : (today.isBefore(p.getStartDate()) ? "Próxima" : "Vencida");
+
+            model.addRow(new Object[]{
+                p.getId(),
+                p.getName(),
+                typeName,
+                discountDetail,
+                p.getStartDate(),
+                p.getEndDate(),
+                status
+            });
+        }
+    }
+
+    private void searchPromotions() {
+        if (promotionService == null) return;
+        String query = txtBuscarPromocion.getText().trim().toLowerCase();
+        if (query.isEmpty()) {
+            loadPromotions();
+            return;
+        }
+
+        List<Promotion> baseList = chkSoloVigentes.isSelected()
+                ? promotionService.listActivePromotions()
+                : promotionService.listAllPromotions();
+
+        List<Promotion> filtered = baseList.stream()
+                .filter(p -> p.getId().toLowerCase().contains(query) || p.getName().toLowerCase().contains(query))
+                .toList();
+
+        renderPromotionsTable(filtered);
     }
 
     /**
@@ -104,7 +196,7 @@ public class PromotionPanel extends javax.swing.JPanel {
 
     private void btnNuevaPromocionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevaPromocionActionPerformed
         java.awt.Frame parentFrame = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
-        PromotionDialog dialog = new PromotionDialog(parentFrame, true);
+        PromotionDialog dialog = new PromotionDialog(parentFrame, true, promotionService, this);
         dialog.setVisible(true);
     }//GEN-LAST:event_btnNuevaPromocionActionPerformed
 

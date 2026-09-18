@@ -1,8 +1,8 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
- */
 package com.gamezone.ui;
+
+import com.gamezone.model.Product;
+import com.gamezone.service.ProductService;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
@@ -10,11 +10,61 @@ package com.gamezone.ui;
  */
 public class ProductPanel extends javax.swing.JPanel {
 
+    private ProductService productService;
+
     /**
      * Creates new form ProductPanel
      */
     public ProductPanel() {
         initComponents();
+        setupEvents();
+    }
+
+    public ProductPanel(ProductService productService) {
+        this.productService = productService;
+        initComponents();
+        setupEvents();
+        loadProducts();
+    }
+
+    private void setupEvents() {
+        btnBuscarProducto.addActionListener(e -> searchProducts());
+        txtBuscarProducto.addActionListener(e -> searchProducts());
+    }
+
+    public void loadProducts() {
+        if (productService == null) return;
+        DefaultTableModel model = (DefaultTableModel) tblProductos.getModel();
+        model.setRowCount(0);
+        for (Product p : productService.listAllProducts()) {
+            model.addRow(new Object[]{
+                p.getId(),
+                p.getTitle(),
+                String.format("$%,.0f", p.getPrice()),
+                p.getStock()
+            });
+        }
+    }
+
+    private void searchProducts() {
+        if (productService == null) return;
+        String query = txtBuscarProducto.getText().trim().toLowerCase();
+        if (query.isEmpty()) {
+            loadProducts();
+            return;
+        }
+        DefaultTableModel model = (DefaultTableModel) tblProductos.getModel();
+        model.setRowCount(0);
+        for (Product p : productService.listAllProducts()) {
+            if (p.getId().toLowerCase().contains(query) || p.getTitle().toLowerCase().contains(query)) {
+                model.addRow(new Object[]{
+                    p.getId(),
+                    p.getTitle(),
+                    String.format("$%,.0f", p.getPrice()),
+                    p.getStock()
+                });
+            }
+        }
     }
 
     /**
@@ -97,9 +147,9 @@ public class ProductPanel extends javax.swing.JPanel {
         add(pnlContenidoProductos, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 130, 920, 450));
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnNuevoProductoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoProductoActionPerformed
+    private void btnNuevoProductoActionPerformed(java.awt.event.ActionEvent evt) {                                                 
         java.awt.Frame parentFrame = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
-        ProductDialog dialog = new ProductDialog(parentFrame, true);
+        ProductDialog dialog = new ProductDialog(parentFrame, true, productService, this);
         dialog.setVisible(true);
     }//GEN-LAST:event_btnNuevoProductoActionPerformed
 

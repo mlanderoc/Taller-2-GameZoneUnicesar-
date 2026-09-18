@@ -48,15 +48,16 @@ public class Main {
         preloadPromotionsIfNeeded(promotionService);
         preloadAccessoriesIfNeeded(accessoryService);
 
-        ConsoleMenu menu = new ConsoleMenu(productService,personService,saleService,accessoryService,promotionService,returnService,warrantyService);
-        menu.start();
+        java.awt.EventQueue.invokeLater(() -> {
+            new com.gamezone.ui.MainFrame(productService, personService, saleService, accessoryService, promotionService, returnService, warrantyService).setVisible(true);
+        });
     }
 
     /**
      * Ensures at least three sellers exist on first run, since sellers
      * are already hired staff and are not registered through the UI.
      */
-    private static void preloadSellersIfNeeded(PersonService personService) {
+    public static void preloadSellersIfNeeded(PersonService personService) {
         if (personService.listAllSellers().isEmpty()) {
             personService.registerSeller("V001", "Laura", "Gómez", "3001234567", "EMP001", "Morning");
             personService.registerSeller("V002", "Carlos", "Pérez", "3007654321", "EMP002", "Afternoon");
@@ -65,7 +66,7 @@ public class Main {
         }
     }
     //add preload promotions
-    private static void preloadPromotionsIfNeeded(PromotionService promotionService) {
+    public static void preloadPromotionsIfNeeded(PromotionService promotionService) {
         if (promotionService.listAllPromotions().isEmpty()) {
             promotionService.registerPercentageDiscount(
                     "PROMO001", "Descuento general", LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30), 15.0);
@@ -77,21 +78,21 @@ public class Main {
         }
     }
     //add preload accessory
-    private static void preloadAccessoriesIfNeeded(AccessoryService accessoryService) {
-    if (accessoryService.listAllaccessories().isEmpty()) {
-        accessoryService.registerController(
-                "WIRELESS", List.of("C001", "C002"),
-                "A001", "Control inalambrico", 150000.0, 10);
+    public static void preloadAccessoriesIfNeeded(AccessoryService accessoryService) {
+        if (accessoryService.listAllaccessories().isEmpty()) {
+            accessoryService.registerController(
+                    "WIRELESS", List.of("C001", "C002"),
+                    "A001", "Control inalambrico", 150000.0, 10);
 
-        accessoryService.registerCable(
-                2.0, "HDMI", List.of("C001", "C002"),
-                "A002", "Cable HDMI 2m", 30000.0, 20);
+            accessoryService.registerCable(
+                    2.0, "HDMI", List.of("C001", "C002"),
+                    "A002", "Cable HDMI 2m", 30000.0, 20);
 
-        accessoryService.registerMemory(
-                8, "SD", List.of("C001"),
-                "A003", "Memoria SD 8GB", 25000.0, 15);
+            accessoryService.registerMemory(
+                    8, "SD", List.of("C001"),
+                    "A003", "Memoria SD 8GB", 25000.0, 15);
 
-        System.out.println("Accesorios precargados exitosamente.");
+            System.out.println("Accesorios precargados exitosamente.");
+        }
     }
-}
 }
