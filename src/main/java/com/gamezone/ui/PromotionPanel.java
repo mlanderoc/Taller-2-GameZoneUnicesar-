@@ -56,6 +56,7 @@ public class PromotionPanel extends javax.swing.JPanel {
         btnNuevaPromocion.setText("+ Nueva promoción");
         btnNuevaPromocion.setBorderPainted(false);
         btnNuevaPromocion.setFocusPainted(false);
+        btnNuevaPromocion.addActionListener(this::btnNuevaPromocionActionPerformed);
         add(btnNuevaPromocion, new org.netbeans.lib.awtextra.AbsoluteConstraints(750, 30, 185, 40));
 
         pnlContenidoPromociones.setBackground(new java.awt.Color(255, 255, 255));
@@ -100,6 +101,12 @@ public class PromotionPanel extends javax.swing.JPanel {
 
         add(pnlContenidoPromociones, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 130, 920, 520));
     }// </editor-fold>//GEN-END:initComponents
+
+    private void btnNuevaPromocionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevaPromocionActionPerformed
+        java.awt.Frame parentFrame = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
+        PromotionDialog dialog = new PromotionDialog(parentFrame, true);
+        dialog.setVisible(true);
+    }//GEN-LAST:event_btnNuevaPromocionActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

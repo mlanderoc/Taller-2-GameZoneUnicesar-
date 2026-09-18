@@ -58,6 +58,7 @@ public class AccessoryPanel extends javax.swing.JPanel {
         btnNuevoAccesorio.setText("+ Nuevo accesorio");
         btnNuevoAccesorio.setBorderPainted(false);
         btnNuevoAccesorio.setFocusPainted(false);
+        btnNuevoAccesorio.addActionListener(this::btnNuevoAccesorioActionPerformed);
         add(btnNuevoAccesorio, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 30, 175, 40));
 
         pnlContenidoAccesorios.setBackground(new java.awt.Color(255, 255, 255));
@@ -116,6 +117,12 @@ public class AccessoryPanel extends javax.swing.JPanel {
     private void txtBuscarAccesorioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtBuscarAccesorioActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_txtBuscarAccesorioActionPerformed
+
+    private void btnNuevoAccesorioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoAccesorioActionPerformed
+        java.awt.Frame parentFrame = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
+        AccessoryDialog dialog = new AccessoryDialog(parentFrame, true);
+        dialog.setVisible(true);
+    }//GEN-LAST:event_btnNuevoAccesorioActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

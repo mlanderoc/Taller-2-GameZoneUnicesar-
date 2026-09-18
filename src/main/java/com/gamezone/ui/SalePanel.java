@@ -56,6 +56,7 @@ public class SalePanel extends javax.swing.JPanel {
         btnNuevaVenta.setText("+ Nueva venta");
         btnNuevaVenta.setBorderPainted(false);
         btnNuevaVenta.setFocusPainted(false);
+        btnNuevaVenta.addActionListener(this::btnNuevaVentaActionPerformed);
         add(btnNuevaVenta, new org.netbeans.lib.awtextra.AbsoluteConstraints(770, 30, 165, 40));
 
         pnlContenidoVentas.setBackground(new java.awt.Color(255, 255, 255));
@@ -101,6 +102,12 @@ public class SalePanel extends javax.swing.JPanel {
 
         add(pnlContenidoVentas, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 130, 920, 520));
     }// </editor-fold>//GEN-END:initComponents
+
+    private void btnNuevaVentaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevaVentaActionPerformed
+        java.awt.Frame parentFrame = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
+        SaleDialog dialog = new SaleDialog(parentFrame, true);
+        dialog.setVisible(true);
+    }//GEN-LAST:event_btnNuevaVentaActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

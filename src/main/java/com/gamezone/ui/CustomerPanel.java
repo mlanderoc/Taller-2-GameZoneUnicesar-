@@ -55,6 +55,7 @@ public class CustomerPanel extends javax.swing.JPanel {
         btnNuevoCliente.setText("+ Nuevo cliente");
         btnNuevoCliente.setBorderPainted(false);
         btnNuevoCliente.setFocusPainted(false);
+        btnNuevoCliente.addActionListener(this::btnNuevoClienteActionPerformed);
         add(btnNuevoCliente, new org.netbeans.lib.awtextra.AbsoluteConstraints(770, 30, 165, 40));
 
         pnlContenidoClientes.setBackground(new java.awt.Color(255, 255, 255));
@@ -93,6 +94,12 @@ public class CustomerPanel extends javax.swing.JPanel {
 
         add(pnlContenidoClientes, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 130, 920, 520));
     }// </editor-fold>//GEN-END:initComponents
+
+    private void btnNuevoClienteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoClienteActionPerformed
+        java.awt.Frame parentFrame = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
+        CustomerDialog dialog = new CustomerDialog(parentFrame, true);
+        dialog.setVisible(true);
+    }//GEN-LAST:event_btnNuevoClienteActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

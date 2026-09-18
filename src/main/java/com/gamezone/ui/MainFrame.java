@@ -391,7 +391,8 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_botonVentas1ActionPerformed
 
     private void botonNuevaVentaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonNuevaVentaActionPerformed
-        cambiarPanel(salePanel);
+        SaleDialog dialog = new SaleDialog(this, true);
+        dialog.setVisible(true);
     }//GEN-LAST:event_botonNuevaVentaActionPerformed
 
     private void botonPromociones1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonPromociones1ActionPerformed

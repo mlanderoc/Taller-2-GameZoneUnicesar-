@@ -55,6 +55,7 @@ public class ProductPanel extends javax.swing.JPanel {
         btnNuevoProducto.setText("+ Nuevo producto");
         btnNuevoProducto.setBorderPainted(false);
         btnNuevoProducto.setFocusPainted(false);
+        btnNuevoProducto.addActionListener(this::btnNuevoProductoActionPerformed);
         add(btnNuevoProducto, new org.netbeans.lib.awtextra.AbsoluteConstraints(770, 30, 165, 40));
 
         pnlContenidoProductos.setBackground(new java.awt.Color(255, 255, 255));
@@ -95,6 +96,12 @@ public class ProductPanel extends javax.swing.JPanel {
 
         add(pnlContenidoProductos, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 130, 920, 450));
     }// </editor-fold>//GEN-END:initComponents
+
+    private void btnNuevoProductoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoProductoActionPerformed
+        java.awt.Frame parentFrame = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
+        ProductDialog dialog = new ProductDialog(parentFrame, true);
+        dialog.setVisible(true);
+    }//GEN-LAST:event_btnNuevoProductoActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
