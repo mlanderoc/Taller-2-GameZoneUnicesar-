@@ -141,6 +141,20 @@ public class SaleService {
         }
         return result;
     }
+    /**
+     * Finds a sale by its id.
+     *
+     * @param saleId the id of the sale to find
+     * @return the sale, or null if not found
+     */
+    public Sale findSaleById(String saleId) {
+        for (Sale sale : viewAllSales()) {
+            if (sale.getId().equals(saleId)) {
+                return sale;
+            }
+        }
+        return null;
+    }
     
     /**
      * Converts a full Sale object into its persisted record form (raw ids).
