@@ -56,25 +56,90 @@ The allowed dependencies are `ui → service`, `service → persistence`, `servi
 
 A concrete example of this rule in practice is `SaleRepository`. Persisted sales only store raw ids (customer id, seller id, product ids) rather than full domain objects, so reconstructing a complete `Sale` from disk requires resolving those ids into real `Customer`, `Seller`, and `Product` instances. Instead of letting `SaleRepository` call into `ProductService`/`PersonService` to do that resolution — which would create a forbidden `persistence → service` dependency — the repository works only with a plain data-transfer class, `SaleRecord`, that holds the raw ids and lives in the `persistence` layer without depending on anything outside `model`-level data. The resolution of those ids into full domain objects happens in `SaleService`, which is already allowed to depend on `ProductService` and `PersonService`. This keeps `persistence` depending only on plain data, and keeps the reconstruction logic where the architecture permits it: in `service`.
 
-### Requirement questions – partial
+## Requirement 1: Accessories Module
 
-### 1.	The three promotions have different calculation rules but share common attributes and behaviors. How is this situation reflected in the class hierarchy design? Which object-oriented programming mechanism allows each promotion type to calculate its discount differently without the rest of the system needing to know the concrete types?
+### 1. Should accessories be integrated into the existing product hierarchy by extending Product, or should they form an independent hierarchy? Justify your decision considering code reuse and model coherence.
 
-It is reflected in the abstract `Promotion` class and its subclasses: `PercentageDiscount`, `CategoryDiscount`, and `BulkPurchaseDiscount`. The mechanism allowing each promotion type to calculate its discount differently is polymorphism, as it enables the same action to be executed in different ways depending on the specific implementation.
+Accessories should be integrated into the existing product hierarchy by extending `Product`. They share common attributes such as identifier, title, price, and stock, so extending `Product` avoids duplicating code. An abstract class called `Accessory` can manage the common accessory behavior—especially console compatibility—while `Controller`, `Cable`, and `Memory` extend it. This design is coherent because accessories are still products that can be sold in the store system.
 
-### 2.	The base class `Promotion` cannot implement the discount calculation method because each type has different logic. How is this method declared in the base class, and what does this declaration guarantee regarding the subclasses?
+### 2. What attributes are common to the three types of accessories, and which ones are specific to each type? How is this distinction reflected in the module class hierarchy?
 
-The `Promotion` class—and the method itself—must be abstract so that the subclasses can override the method according to their specific logic.
+The common attributes are identifier, title, price, and stock (inherited from `Product`), as well as a `List<String>` called `compatibleConsoleIds`, which stores the IDs of the consoles they are compatible with. Specific attributes include connection type for `Controller`, length in meters and connector type for `Cable`, and storage capacity in gigabytes along with memory type for `Memory`. This is reflected by having `Accessory` extend `Product`, while `Controller`, `Cable`, and `Memory` extend `Accessory`.
 
-### 3.	The business rule states that only the promotion offering the highest discount is applied. In which class is this selection logic located, and why is this placement consistent with the layered architecture principle?Why should this logic NOT be placed in the `Sale` class or the console menu?
+### 3. Compatibility between an accessory and a console is a relationship between two system entities. How is this relationship represented in the design and persistence? Is compatibility an attribute of the accessory, the console, or both?
 
-This logic should be located in the service package, specifically within the `PromotionService` class, because that is where business logic is handled; it cannot be in the `Sale` class, as that class is not designed to manage business logic.
+Compatibility is mainly represented as an attribute of the accessory. Each `Accessory` stores a `List<String>` named `compatibleConsoleIds`, containing the IDs of compatible consoles. `AccessoryService` can use this list to find accessories compatible with a selected console. Since the project uses Java serialization, this list is saved automatically as part of the serialized `Accessory` object without needing manual text conversions.
+
+### 4. What modifications are necessary in the sales service class, SaleService, so that sales can include accessories without breaking the existing behavior for video games and consoles?
+
+`SaleService` must allow a sale to contain regular products and accessories within the same `List<Product>`. Since `Accessory` extends `Product`, no separate list is necessary in `Sale`. However, `SaleService` must use `instanceof Accessory` to determine which service manages each item: `AccessoryService` for accessories and `ProductService` for video games and consoles. When reconstructing a sale from a `SaleRecord`, it must look up each item ID in the correct service repository.
+
+### 5. In which layer of the system architecture should the new accessory module classes be located? Justify your decision based on the responsibilities of each layer.
+
+`Accessory`, `Controller`, `Cable`, and `Memory` belong to the `model` layer because they represent entity data and compatibility behavior. `AccessoryRepository` belongs to `persistence` because it saves and loads serialized accessory data. `AccessoryService` belongs to `service` because it manages business rules for registering, querying, and updating stock for accessories.
+
+## Requirement 2: Promotions Module (PARCIAL CORRESPONDIENTE)
+
+### 1. The three promotions have different calculation rules but share common attributes and behaviors. How is this situation reflected in the class hierarchy design? Which object-oriented programming mechanism allows each promotion type to calculate its discount differently without the rest of the system needing to know the concrete types?
+
+It is reflected in the abstract `Promotion` class and its subclasses: `PercentageDiscount`, `CategoryDiscount`, and `BulkPurchaseDiscount`. The mechanism allowing each promotion type to calculate its discount differently is polymorphism, as it enables the same method call to execute differently depending on the specific subclass implementation.
+
+### 2. The base class Promotion cannot implement the discount calculation method because each type has different logic. How is this method declared in the base class, and what does this declaration guarantee regarding the subclasses?
+
+The method `calculateDiscount(Sale)` is declared as an abstract method in the abstract `Promotion` class. This declaration guarantees that every concrete subclass must provide its own specific discount calculation logic, preventing incomplete implementations.
+
+### 3. The business rule states that only the promotion offering the highest discount is applied. In which class is this selection logic located, and why is this placement consistent with the layered architecture principle? Why should this logic NOT be placed in the Sale class or the console menu?
+
+This selection logic is located in `PromotionService` (via `findBestPromotionFor(Sale)`), which is part of the `service` layer where business rules belong. It must not be placed in `Sale` because domain models should only manage their own state, nor in `ConsoleMenu` because UI classes should not contain business rules.
 
 ### 4. What modifications are required in the Sale class and the generateReceipt method so that the receipt displays the applied discount? Do these modifications break any existing system behavior?
 
-Two attributes—`Discount` and `subtotal`—must be added and retrieved from the `Promotion` class; then, the `calculateTotal` method must be modified to subtract the discount value from the subtotal.
+`Sale` requires attributes for `appliedPromotionName` and `discountAmount`, along with an `applyDiscount(...)` method. `calculateTotal()` subtracts `discountAmount` from `subtotal`. `generateReceipt()` is updated to display these fields. These modifications add optional functionality without breaking existing sale logic.
 
-### 5.	Active promotions are determined by comparing the current date with the start and end dates of each promotion. Where is this validation performed (in the `Promotion` class, in `PromotionService`, or in both)? Justify your answer.
+### 5. Active promotions are determined by comparing the current date with the start and end dates of each promotion. Where is this validation performed (in the Promotion class, in PromotionService, or in both)? Justify your answer.
 
-Validation of validity is performed in the Promotion class, using a method like `isActive(LocalDate currentDate)`. This is because the start and end dates belong to each promotion object; therefore, the promotion itself is best positioned to determine its validity. PromotionService uses this method to iterate through available promotions, identify active ones, and apply the appropriate promotion to a sale.
+The basic validation is performed in `Promotion` using `isActive(LocalDate currentDate)`, because the start and end dates belong to the promotion entity. `PromotionService` uses this method to filter all promotions and retrieve currently active ones for a sale.
 
+## Requirement 3: Returns Module
+
+### 1. A return is a new system entity that refers to an existing sale. What type of relationship exists between the Return class and the Sale class? Is this relationship inheritance, association, aggregation, or composition? Justify your answer.
+
+The relationship between `Return` and `Sale` is an association. A return requires a reference to an existing sale to verify that returned products belonged to that transaction. `Return` is not a `Sale` (not inheritance), and a sale exists independently of any return (not composition or aggregation).
+
+### 2. A return can contain only some products from the original sale, not necessarily all of them. How is this situation represented in the attributes of the Return class? What is stored in the returned products attribute?
+
+This is represented using a `List<Product>` attribute in the `Return` class. This list holds the specific subset of products being returned by the customer after validating that each item belonged to the original sale's product list.
+
+### 3. The business rule states that returns can only be registered within 30 days after the sale. In which system layer is this validation located and why? What Java mechanism is used to calculate the difference between two dates?
+
+This validation is located in `ReturnService` (and supported by `Sale.canBeReturned()`) within the `service` layer, as it represents a core business rule. Java uses `LocalDate` and `ChronoUnit.DAYS.between(saleDate, currentDate)` to compute calendar days elapsed.
+
+### 4. Returning products increases stock. What existing method from the Workshop 1 system is reused for this operation, and in which class is it invoked from the returns module? Why is it important to reuse existing methods instead of duplicating stock-update logic?
+
+The method reused is `restoreStock(String productId, int quantity)` from `ProductService` (and `AccessoryService`). It is invoked from `ReturnService` upon successful registration of a return. Reusing this method prevents duplicate code and centralizes inventory modification logic.
+
+### 5. The monthly balance report needs to combine information from two different modules: sales and returns. In which service class is this report located, and why is this location consistent with the layered architecture? What dependencies does this class need to generate it?
+
+The report is located in `ReturnService` via `generateMonthlyBalance(int month, int year)`. This fits the layered architecture because services coordinate cross-module business rules. It depends on `ReturnRepository` for return refunds and `SaleService` for total sales.
+
+## Requirement 4: Warranties Module
+
+### 1. The two warranty types have common attributes such as dates and associated product, but they also have different attributes and behaviors such as duration, coverage, and cost. How is this situation reflected in the class hierarchy design? What object-oriented programming mechanism allows each warranty type to have its own duration without duplicating code?
+
+This is represented with an abstract `Warranty` class and two concrete subclasses: `BasicWarranty` and `ExtendedWarranty`. Common fields (`warrantyId`, `product`, `sale`, `startDate`, `endDate`) reside in `Warranty`. Subclasses override `getDurationInMonths()`. Inheritance and polymorphism enable custom duration logic without code duplication.
+
+### 2. The business rule states that only consoles generate an automatic basic warranty, not video games. In which system layer is this decision located and what Java mechanism is used to verify the real type of a product? Justify your answer.
+
+This decision is in `SaleService` within the `service` layer because automatic warranty assignment is part of the sale processing flow. Java's `instanceof Console` operator verifies if a product item is a console before triggering `WarrantyService.assignBasicWarranty(...)`.
+
+### 3. Each warranty type has a different duration: 6 months or 12 months. How is the expiration date calculated in each subclass? Should this calculation be done in the warranty constructor or in a separate method? Justify your answer.
+
+`Warranty` defines the abstract method `getDurationInMonths()`, implemented as `6` by `BasicWarranty` and `12` by `ExtendedWarranty`. The expiration date (`endDate`) is calculated inside the `Warranty` constructor by adding the subclass duration to `startDate`. Calculating this on initialization guarantees a valid state upon object instantiation.
+
+### 4. The extended warranty adds a cost equal to 10% of the product price to the sale total. At what point in the sale-registration flow is this additional cost calculated and applied? What modifications are necessary in the SaleService.registerSale method?
+
+The cost is applied after validating stock and constructing the `Sale`. `SaleService.registerSale` receives a `List<String> productIdsWithExtendedWarranty` parameter. For each matching console, it calls `WarrantyService.assignExtendedWarranty(...)` and adds `warranty.getAdditionalCost()` to the sale's subtotal.
+
+### 5. The "warranties expiring soon" query requires iterating through all warranties and filtering those whose end date is within the next 30 days. In which class is this method located and what dependencies does it need? Why is this location consistent with the layered architecture?
+
+This query is located in `WarrantyService` (via `listWarrantiesExpiringSoon(int daysAhead)`). It depends on `WarrantyRepository` to load warranty data. This location is consistent with layered architecture because data filtering and business queries belong in the `service` layer.
