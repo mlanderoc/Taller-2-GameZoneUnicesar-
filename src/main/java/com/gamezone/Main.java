@@ -6,12 +6,14 @@ import com.gamezone.persistence.SaleRepository;
 import com.gamezone.persistence.PromotionRepository;
 import com.gamezone.persistence.AccessoryRepository;
 import com.gamezone.persistence.ReturnRepository;
+import com.gamezone.persistence.WarrantyRepository;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.SaleService;
 import com.gamezone.service.PromotionService;
 import com.gamezone.service.AccessoryService;
 import com.gamezone.service.ReturnService;
+import com.gamezone.service.WarrantyService;
 import com.gamezone.ui.ConsoleMenu;
 import java.time.LocalDate;
 import java.util.List;
@@ -30,13 +32,17 @@ public class Main {
         PromotionRepository promotionRepository = new PromotionRepository();
         AccessoryRepository accessoryRepository = new AccessoryRepository();
         ReturnRepository returnRepository = new ReturnRepository();
+        WarrantyRepository warrantyRepository = new WarrantyRepository();
         
         ProductService productService = new ProductService(productRepository);
         PersonService personService = new PersonService(personRepository);
         PromotionService promotionService = new PromotionService(promotionRepository);
         AccessoryService accessoryService = new AccessoryService(accessoryRepository,accessoryRepository.loadAll());
+        
         SaleService saleService = new SaleService(saleRepository, productService, personService,promotionService,accessoryService);
-       ReturnService returnService = new ReturnService(returnRepository, saleService, productService, accessoryService);
+        WarrantyService warrantyService = new WarrantyService(warrantyRepository, saleService, productService);
+        saleService.setWarrantyService(warrantyService);
+        ReturnService returnService = new ReturnService(returnRepository, saleService, productService, accessoryService);
 
         preloadSellersIfNeeded(personService);
         preloadPromotionsIfNeeded(promotionService);
