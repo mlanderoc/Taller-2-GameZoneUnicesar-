@@ -10,7 +10,7 @@ import java.util.List;
  */
 public class Return {
  
-    private String id; 
+    private String returnId; 
     private LocalDate returnDate;
     private Sale originalSale;
     private List<Product> returnedProducts;
@@ -27,8 +27,8 @@ public class Return {
      * @param returnedProducts products returned by the customer
      * @param reason reason for the return
      */
-    public Return(String id, LocalDate returnDate, Sale originalSale, List<Product> returnedProducts, String reason) {
-        this.id = id;
+    public Return(String returnId, LocalDate returnDate, Sale originalSale, List<Product> returnedProducts, String reason) {
+        this.returnId = returnId;
         this.returnDate = returnDate;
         this.originalSale = originalSale;
         this.returnedProducts = returnedProducts;
@@ -41,8 +41,8 @@ public class Return {
      *
      * @return return identifier
      */
-    public String getId() {
-        return id;
+    public String getReturnId() {
+        return returnId;
     }
 
     /**
@@ -91,6 +91,11 @@ public class Return {
         return refundAmount;
     }
 
+    public void setRefundAmount(double refundAmount) {
+        this.refundAmount = refundAmount;
+    }
+    
+
     /**
      * Calculates the refund amount by summing the prices
      * of all returned products.
@@ -116,7 +121,7 @@ public class Return {
     public String generateReturnReceipt() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("ID de devolución: ").append(id).append("\n");
+        sb.append("ID de devolución: ").append(returnId).append("\n");
         sb.append("Fecha de devolución: ").append(returnDate).append("\n");
         sb.append("ID de venta original: ").append(originalSale.getId()).append("\n");
         sb.append("Productos devueltos:\n");

@@ -81,6 +81,15 @@ public class AccessoryService {
     accessory.updateStock(quantity);
     repository.saveAll(accessories);
 }
-
+/**
+ * Increases the stock of an accessory by the given quantity.
+ * Used when a return is processed.
+ *
+ * @param accessoryId the id of the accessory to restore
+ * @param quantity the quantity to add back to stock
+ */
+public void restoreStock(String accessoryId, int quantity) {
+    updateStock(accessoryId, quantity);
+}
         
 }
