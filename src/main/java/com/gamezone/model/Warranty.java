@@ -9,7 +9,7 @@ import java.time.LocalDate;
  */
 public abstract class Warranty {
     
-    private String id;
+    private String warrantyId;
     private Product product;
     private Sale sale;
     private LocalDate startDate;
@@ -19,13 +19,13 @@ public abstract class Warranty {
      * Creates a warranty and calculates its expiration date according to the
      * duration defined by the concrete warranty type.
      *
-     * @param id unique identifier of the warranty
+     * @param warrantyId unique identifier of the warranty
      * @param product product covered by the warranty
      * @param sale sale associated with the warranty
      * @param startDate start date of the warranty
      */
-    public Warranty(String id, Product product, Sale sale, LocalDate startDate) {
-        this.id = id;
+    public Warranty(String warrantyId, Product product, Sale sale, LocalDate startDate) {
+        this.warrantyId = warrantyId;
         this.product = product;
         this.sale = sale;
         this.startDate = startDate;
@@ -37,8 +37,8 @@ public abstract class Warranty {
      *
      * @return warranty identifier
      */
-    public String getId() {
-        return id;
+    public String getWarrantyId() {
+        return warrantyId;
     }
 
     /**
@@ -117,7 +117,7 @@ public abstract class Warranty {
     public String generateWarrantyCertificate() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("ID de garantía: ").append(id).append("\n");
+        sb.append("ID de garantía: ").append(warrantyId).append("\n");
         sb.append("Tipo de garantía: ").append(getWarrantyType()).append("\n");
         sb.append("Producto: ").append(product.getTitle()).append("\n");
         sb.append("ID de venta: ").append(sale.getId()).append("\n");

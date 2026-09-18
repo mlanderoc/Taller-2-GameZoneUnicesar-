@@ -56,6 +56,7 @@ public class ReturnPanel extends javax.swing.JPanel {
         btnNuevaDevolucion.setText("+ Nueva devolución");
         btnNuevaDevolucion.setBorderPainted(false);
         btnNuevaDevolucion.setFocusPainted(false);
+        btnNuevaDevolucion.addActionListener(this::btnNuevaDevolucionActionPerformed);
         add(btnNuevaDevolucion, new org.netbeans.lib.awtextra.AbsoluteConstraints(750, 30, 185, 40));
 
         pnlContenidoDevoluciones.setBackground(new java.awt.Color(255, 255, 255));
@@ -101,6 +102,12 @@ public class ReturnPanel extends javax.swing.JPanel {
 
         add(pnlContenidoDevoluciones, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 130, 920, 520));
     }// </editor-fold>//GEN-END:initComponents
+
+    private void btnNuevaDevolucionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevaDevolucionActionPerformed
+        java.awt.Frame parentFrame = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
+        ReturnDialog dialog = new ReturnDialog(parentFrame, true);
+        dialog.setVisible(true);
+    }//GEN-LAST:event_btnNuevaDevolucionActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

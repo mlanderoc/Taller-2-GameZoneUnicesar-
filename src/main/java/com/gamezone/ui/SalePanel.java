@@ -84,6 +84,7 @@ public class SalePanel extends javax.swing.JPanel {
         btnVerDetalleVenta.setText("Ver detalle");
         btnVerDetalleVenta.setBorderPainted(false);
         btnVerDetalleVenta.setFocusPainted(false);
+        btnVerDetalleVenta.addActionListener(this::btnVerDetalleVentaActionPerformed);
         pnlContenidoVentas.add(btnVerDetalleVenta, new org.netbeans.lib.awtextra.AbsoluteConstraints(765, 20, 130, 35));
 
         tblVentas.setFont(new java.awt.Font("Arial", 0, 13)); // NOI18N
@@ -108,6 +109,34 @@ public class SalePanel extends javax.swing.JPanel {
         SaleDialog dialog = new SaleDialog(parentFrame, true);
         dialog.setVisible(true);
     }//GEN-LAST:event_btnNuevaVentaActionPerformed
+
+    private void btnVerDetalleVentaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVerDetalleVentaActionPerformed
+        java.awt.Frame parentFrame = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
+        DetailDialog dialog = new DetailDialog(parentFrame, true);
+
+        // Ticket de ejemplo visual mientras conectamos la base de datos:
+        String reciboDemo = "========================================\n"
+                + "       GAMEZONE UNICESAR - RECIBO       \n"
+                + "========================================\n"
+                + "ID Venta: V-001\n"
+                + "Fecha:    2026-09-17\n"
+                + "Cliente:  Carlos Gomez (1066867142)\n"
+                + "Vendedor: Laura Gomez (EMP001)\n"
+                + "----------------------------------------\n"
+                + "Productos:\n"
+                + " - 1x PlayStation 5 Slim    $2.500.000\n"
+                + " - 1x Control DualSense       $350.000\n"
+                + "----------------------------------------\n"
+                + "Subtotal:                   $2.850.000\n"
+                + "Descuento (PROMO001 15%):     -$427.500\n"
+                + "TOTAL A PAGAR:              $2.422.500\n"
+                + "========================================\n"
+                + "  ¡Gracias por tu compra en GameZone!  \n"
+                + "========================================";
+
+        dialog.setDocumentDetails("Recibo de Venta", "Detalle de compra y facturacion", reciboDemo);
+        dialog.setVisible(true);
+    }//GEN-LAST:event_btnVerDetalleVentaActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
