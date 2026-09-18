@@ -10,11 +10,110 @@ package com.gamezone.ui;
  */
 public class ReportsPanel extends javax.swing.JPanel {
 
+    private com.gamezone.service.SaleService saleService;
+    private com.gamezone.service.ReturnService returnService;
+
     /**
      * Creates new form ReportsPanel
      */
     public ReportsPanel() {
         initComponents();
+    }
+
+    public ReportsPanel(com.gamezone.service.SaleService saleService, com.gamezone.service.ReturnService returnService) {
+        this.saleService = saleService;
+        this.returnService = returnService;
+        initComponents();
+        setupEvents();
+        setDefaultDate();
+        generateReport();
+    }
+
+    private void setupEvents() {
+        btnGenerateReport.addActionListener(e -> generateReport());
+    }
+
+    private void setDefaultDate() {
+        java.time.LocalDate now = java.time.LocalDate.now();
+        cmbMonth.setSelectedIndex(now.getMonthValue() - 1);
+        txtYear.setText(String.valueOf(now.getYear()));
+    }
+
+    public void generateReport() {
+        String yearStr = txtYear.getText().trim();
+        int year;
+        try {
+            year = Integer.parseInt(yearStr);
+            if (year < 2000 || year > 2100) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Por favor ingrese un año válido entre 2000 y 2100.", "Año inválido", javax.swing.JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        } catch (NumberFormatException e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "El año debe ser un número entero válido.", "Año inválido", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int month = cmbMonth.getSelectedIndex() + 1;
+
+        double totalSales = 0.0;
+        java.util.List<com.gamezone.model.Sale> salesInPeriod = new java.util.ArrayList<>();
+        if (saleService != null) {
+            for (com.gamezone.model.Sale s : saleService.viewAllSales()) {
+                if (s.getDate() != null && s.getDate().getMonthValue() == month && s.getDate().getYear() == year) {
+                    totalSales += s.getTotalAmount();
+                    salesInPeriod.add(s);
+                }
+            }
+        }
+
+        double totalReturns = 0.0;
+        java.util.List<com.gamezone.model.Return> returnsInPeriod = new java.util.ArrayList<>();
+        if (returnService != null) {
+            for (com.gamezone.model.Return r : returnService.viewAllReturns()) {
+                if (r.getReturnDate() != null && r.getReturnDate().getMonthValue() == month && r.getReturnDate().getYear() == year) {
+                    totalReturns += r.getRefundAmount();
+                    returnsInPeriod.add(r);
+                }
+            }
+        }
+
+        double netBalance = totalSales - totalReturns;
+
+        lblTotalSalesValue.setText(String.format(java.util.Locale.US, "$%,.2f", totalSales));
+        lblTotalReturnsValue.setText(String.format(java.util.Locale.US, "$%,.2f", totalReturns));
+        lblNetBalanceValue.setText(String.format(java.util.Locale.US, "$%,.2f", netBalance));
+
+        if (netBalance >= 0) {
+            lblNetBalanceValue.setForeground(new java.awt.Color(46, 125, 50));
+        } else {
+            lblNetBalanceValue.setForeground(new java.awt.Color(229, 57, 53));
+        }
+
+        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tblReports.getModel();
+        model.setRowCount(0);
+
+        for (com.gamezone.model.Sale s : salesInPeriod) {
+            String custName = (s.getCustomer() != null) ? s.getCustomer().getFullName() : "-";
+            model.addRow(new Object[]{
+                s.getId(),
+                s.getDate(),
+                "Venta",
+                custName,
+                String.format(java.util.Locale.US, "+$%,.2f", s.getTotalAmount())
+            });
+        }
+
+        for (com.gamezone.model.Return r : returnsInPeriod) {
+            String custName = (r.getOriginalSale() != null && r.getOriginalSale().getCustomer() != null)
+                    ? r.getOriginalSale().getCustomer().getFullName() : "-";
+            model.addRow(new Object[]{
+                r.getReturnId(),
+                r.getReturnDate(),
+                "Devolución",
+                custName,
+                String.format(java.util.Locale.US, "-$%,.2f", r.getRefundAmount())
+            });
+        }
     }
 
     /**

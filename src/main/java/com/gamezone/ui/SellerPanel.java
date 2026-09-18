@@ -4,19 +4,49 @@
  */
 package com.gamezone.ui;
 
+import com.gamezone.model.Seller;
+import com.gamezone.service.PersonService;
+import javax.swing.table.DefaultTableModel;
+
 /**
  *
  * @author USUARIO
  */
 public class SellerPanel extends javax.swing.JPanel {
 
+    private PersonService personService;
     /**
      * Creates new form SellerPanel
      */
-    public SellerPanel() {
+    public SellerPanel () {
         initComponents();
     }
 
+    public SellerPanel(PersonService personService) {
+        this.personService = personService;
+        initComponents();
+        loadSellers(); // Llena la tabla apenas se abre
+    }
+    
+    public void loadSellers() {
+        if (personService == null) {
+            return;
+        }
+        DefaultTableModel model = (DefaultTableModel) tblVendedores.
+                getModel();
+        model.setRowCount(0); // Limpia filas viejas
+
+        for (Seller s : personService.listAllSellers()) {
+            model.addRow(new Object[]{
+                s.getId(),
+                s.getFirstName(),
+                s.getLastName(),
+                s.getPhone(),
+                s.getEmployeecode(),
+                s.getShift()
+            });
+        }
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -57,6 +87,7 @@ public class SellerPanel extends javax.swing.JPanel {
         pnlContenidoVendedores.add(lblBuscarVendedor, new org.netbeans.lib.awtextra.AbsoluteConstraints(25, 25, 140, 25));
 
         txtBuscarVendedor.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        txtBuscarVendedor.addActionListener(this::txtBuscarVendedorActionPerformed);
         pnlContenidoVendedores.add(txtBuscarVendedor, new org.netbeans.lib.awtextra.AbsoluteConstraints(175, 20, 300, 35));
 
         btnBuscarVendedor.setBackground(new java.awt.Color(30, 136, 229));
@@ -65,6 +96,7 @@ public class SellerPanel extends javax.swing.JPanel {
         btnBuscarVendedor.setText("Buscar");
         btnBuscarVendedor.setBorderPainted(false);
         btnBuscarVendedor.setFocusPainted(false);
+        btnBuscarVendedor.addActionListener(this::btnBuscarVendedorActionPerformed);
         pnlContenidoVendedores.add(btnBuscarVendedor, new org.netbeans.lib.awtextra.AbsoluteConstraints(490, 20, 110, 35));
 
         tblVendedores.setModel(new javax.swing.table.DefaultTableModel(
@@ -81,6 +113,46 @@ public class SellerPanel extends javax.swing.JPanel {
 
         add(pnlContenidoVendedores, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 130, 920, 520));
     }// </editor-fold>//GEN-END:initComponents
+
+    private void btnBuscarVendedorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarVendedorActionPerformed
+        if (personService == null) {
+            return;
+        }
+
+        String query = txtBuscarVendedor.getText().trim().toLowerCase();
+
+        // Si la caja está vacía, recarga la lista completa:
+        if (query.isEmpty()) {
+            loadSellers();
+            return;
+        }
+
+        DefaultTableModel model = (DefaultTableModel) tblVendedores.
+                getModel();
+        model.setRowCount(0); // Limpia la tabla para mostrar solo los que coinciden
+
+        // Filtra por ID, Nombre, Apellido o Código de empleado:
+        for (Seller s : personService.listAllSellers()) {
+            if (s.getId().toLowerCase().contains(query)
+                    || s.getFirstName().toLowerCase().contains(query)
+                    || s.getLastName().toLowerCase().contains(query)
+                    || s.getEmployeecode().toLowerCase().contains(query)) {
+
+                model.addRow(new Object[]{
+                    s.getId(),
+                    s.getFirstName(),
+                    s.getLastName(),
+                    s.getPhone(),
+                    s.getEmployeecode(),
+                    s.getShift()
+                });
+            }
+        }
+    }//GEN-LAST:event_btnBuscarVendedorActionPerformed
+
+    private void txtBuscarVendedorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtBuscarVendedorActionPerformed
+        btnBuscarVendedorActionPerformed(evt);
+    }//GEN-LAST:event_txtBuscarVendedorActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

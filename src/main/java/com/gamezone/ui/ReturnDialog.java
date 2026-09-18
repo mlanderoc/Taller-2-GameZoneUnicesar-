@@ -12,13 +12,26 @@ public class ReturnDialog extends javax.swing.JDialog {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(ReturnDialog.class.getName());
 
+    private com.gamezone.service.ReturnService returnService;
+    private com.gamezone.service.SaleService saleService;
+    private ReturnPanel returnPanel;
+
     /**
      * Creates new form ReturnDialog
      */
     public ReturnDialog(java.awt.Frame parent, boolean modal) {
+        this(parent, modal, null, null, null);
+    }
+
+    public ReturnDialog(java.awt.Frame parent, boolean modal, com.gamezone.service.ReturnService returnService, com.gamezone.service.SaleService saleService, ReturnPanel returnPanel) {
         super(parent, modal);
+        this.returnService = returnService;
+        this.saleService = saleService;
+        this.returnPanel = returnPanel;
         initComponents();
         setLocationRelativeTo(null);
+        setupDynamicCalculation();
+        btnSave.addActionListener(this::btnSaveActionPerformed);
     }
 
     /**
@@ -121,8 +134,118 @@ public class ReturnDialog extends javax.swing.JDialog {
 
     private void btnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelActionPerformed
         dispose();
-        
     }//GEN-LAST:event_btnCancelActionPerformed
+
+    private void setupDynamicCalculation() {
+        java.awt.event.FocusAdapter updater = new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                updateEstimatedRefund();
+            }
+        };
+        txtSaleId.addFocusListener(updater);
+        txtProducts.addFocusListener(updater);
+        txtRefundAmount.setEditable(false);
+    }
+
+    private void updateEstimatedRefund() {
+        if (saleService == null) return;
+        String saleId = txtSaleId.getText().trim();
+        String productsText = txtProducts.getText().trim();
+        if (saleId.isEmpty() || productsText.isEmpty()) return;
+
+        com.gamezone.model.Sale sale = saleService.findSaleById(saleId);
+        if (sale == null) return;
+
+        java.util.List<String> prodIds = java.util.Arrays.stream(productsText.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(java.util.stream.Collectors.toList());
+
+        double total = 0.0;
+        for (String pid : prodIds) {
+            for (com.gamezone.model.Product p : sale.getProducts()) {
+                if (p.getId().equalsIgnoreCase(pid) || p.getTitle().equalsIgnoreCase(pid)) {
+                    total += p.getPrice();
+                    break;
+                }
+            }
+        }
+        txtRefundAmount.setText(String.format(java.util.Locale.US, "%.2f", total));
+    }
+
+    private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {
+        if (returnService == null || saleService == null) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Servicios no disponibles.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String saleId = txtSaleId.getText().trim();
+        String prodInput = txtProducts.getText().trim();
+        String reason = txtReason.getText().trim();
+
+        if (saleId.isEmpty() || prodInput.isEmpty() || reason.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Por favor complete todos los campos obligatorios (*).", "Campos incompletos", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        com.gamezone.model.Sale sale = saleService.findSaleById(saleId);
+        if (sale == null) {
+            javax.swing.JOptionPane.showMessageDialog(this, "No se encontró ninguna venta registrada con el ID: " + saleId, "Venta no encontrada", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!sale.canBeReturned()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "El plazo límite de 30 días para devoluciones ha expirado.\nFecha de venta: " + sale.getDate(), "Plazo expirado", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        java.util.List<String> inputIds = java.util.Arrays.stream(prodInput.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(java.util.stream.Collectors.toList());
+
+        if (inputIds.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Debe ingresar al menos un ID de producto a devolver.", "Error de validación", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        java.util.List<String> resolvedProductIds = new java.util.ArrayList<>();
+        for (String token : inputIds) {
+            com.gamezone.model.Product matched = null;
+            for (com.gamezone.model.Product p : sale.getProducts()) {
+                if (p.getId().equalsIgnoreCase(token) || p.getTitle().equalsIgnoreCase(token)) {
+                    matched = p;
+                    break;
+                }
+            }
+            if (matched == null) {
+                StringBuilder sb = new StringBuilder();
+                for (com.gamezone.model.Product p : sale.getProducts()) {
+                    sb.append("\n - ").append(p.getId()).append(": ").append(p.getTitle());
+                }
+                javax.swing.JOptionPane.showMessageDialog(this, "El producto '" + token + "' no pertenece a la venta indicada.\nProductos válidos en esta venta:" + sb.toString(), "Producto no coincide", javax.swing.JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            resolvedProductIds.add(matched.getId());
+        }
+
+        try {
+            com.gamezone.model.Return ret = returnService.registerReturn(saleId, resolvedProductIds, reason);
+            javax.swing.JOptionPane.showMessageDialog(this,
+                    "Devolución registrada exitosamente.\nID Devolución: " + ret.getReturnId()
+                    + "\nMonto Reembolsado: $" + String.format(java.util.Locale.US, "%.2f", ret.getRefundAmount())
+                    + "\nEl stock de los productos devueltos ha sido restaurado en inventario.",
+                    "Éxito", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+
+            if (returnPanel != null) {
+                returnPanel.loadReturns();
+            }
+            dispose();
+        } catch (Exception ex) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error al registrar la devolución: " + ex.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     /**
      * @param args the command line arguments

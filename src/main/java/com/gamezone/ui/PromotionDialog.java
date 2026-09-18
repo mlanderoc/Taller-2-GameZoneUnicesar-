@@ -4,6 +4,11 @@
  */
 package com.gamezone.ui;
 
+import com.gamezone.service.PromotionService;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import javax.swing.JOptionPane;
+
 /**
  *
  * @author USUARIO
@@ -11,6 +16,8 @@ package com.gamezone.ui;
 public class PromotionDialog extends javax.swing.JDialog {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(PromotionDialog.class.getName());
+    private PromotionService promotionService;
+    private PromotionPanel promotionPanel;
 
     /**
      * Creates new form PromotionDialog
@@ -19,6 +26,16 @@ public class PromotionDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         setLocationRelativeTo(null);
+        btnSave.addActionListener(e -> savePromotion());
+    }
+
+    public PromotionDialog(java.awt.Frame parent, boolean modal, PromotionService promotionService, PromotionPanel promotionPanel) {
+        super(parent, modal);
+        this.promotionService = promotionService;
+        this.promotionPanel = promotionPanel;
+        initComponents();
+        setLocationRelativeTo(null);
+        btnSave.addActionListener(e -> savePromotion());
     }
 
     /**
@@ -173,6 +190,88 @@ public class PromotionDialog extends javax.swing.JDialog {
         }
 
     }//GEN-LAST:event_cmbPromotionTypeActionPerformed
+
+    private void savePromotion() {
+        if (promotionService == null) {
+            JOptionPane.showMessageDialog(this, "Servicio de promociones no disponible.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String id = txtId.getText().trim();
+        String name = txtName.getText().trim();
+        String startStr = txtStartDate.getText().trim();
+        String endStr = txtEndDate.getText().trim();
+        String discountStr = txtDiscount.getText().trim();
+        String conditionStr = txtCondition.getText().trim();
+
+        if (id.isEmpty() || name.isEmpty() || startStr.isEmpty() || endStr.isEmpty() || discountStr.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Por favor completa todos los campos obligatorios.", "Campos vacíos", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Validación de fechas
+        LocalDate startDate;
+        LocalDate endDate;
+        try {
+            startDate = LocalDate.parse(startStr);
+            endDate = LocalDate.parse(endStr);
+            if (startDate.isAfter(endDate)) {
+                JOptionPane.showMessageDialog(this, "La fecha de inicio no puede ser posterior a la fecha de fin.", "Fechas inválidas", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        } catch (DateTimeParseException e) {
+            JOptionPane.showMessageDialog(this, "Formato de fecha inválido. Usa el formato AAAA-MM-DD (ejemplo: 2026-09-01).", "Fecha inválida", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Validación de porcentaje
+        double discount;
+        try {
+            discount = Double.parseDouble(discountStr);
+            if (discount <= 0 || discount > 100) {
+                JOptionPane.showMessageDialog(this, "El porcentaje de descuento debe estar entre 0.1% y 100%.", "Descuento inválido", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "El porcentaje debe ser un número válido (ejemplo: 15 o 20.5).", "Número inválido", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String type = cmbPromotionType.getSelectedItem().toString().trim();
+        try {
+            if ("Categoría".equalsIgnoreCase(type)) {
+                String cat = conditionStr.toUpperCase();
+                if (!"VIDEOGAME".equals(cat) && !"CONSOLE".equals(cat)) {
+                    JOptionPane.showMessageDialog(this, "La categoría debe ser exactamente VIDEOGAME o CONSOLE.", "Categoría inválida", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                promotionService.registerCategoryDiscount(id, name, startDate, endDate, discount, cat);
+            } else if ("Volumen".equalsIgnoreCase(type)) {
+                int minQty;
+                try {
+                    minQty = Integer.parseInt(conditionStr);
+                    if (minQty < 1) {
+                        JOptionPane.showMessageDialog(this, "La cantidad mínima debe ser al menos 1.", "Cantidad inválida", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    JOptionPane.showMessageDialog(this, "La cantidad mínima de productos debe ser un número entero (ejemplo: 3).", "Cantidad inválida", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                promotionService.registerBulkPurchaseDiscount(id, name, startDate, endDate, minQty, discount);
+            } else { // Porcentaje directo
+                promotionService.registerPercentageDiscount(id, name, startDate, endDate, discount);
+            }
+
+            JOptionPane.showMessageDialog(this, "¡Promoción registrada exitosamente!", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            if (promotionPanel != null) {
+                promotionPanel.loadPromotions();
+            }
+            dispose();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al registrar la promoción: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     /**
      * @param args the command line arguments

@@ -1,9 +1,21 @@
 
 package com.gamezone.ui;
 
+import com.gamezone.Main;
+import com.gamezone.model.*;
+import com.gamezone.persistence.*;
+import com.gamezone.service.*;
 
 public class MainFrame extends javax.swing.JFrame {
    
+    private ProductService productService;
+    private PersonService personService;
+    private SaleService saleService;
+    private AccessoryService accessoryService;
+    private PromotionService promotionService;
+    private ReturnService returnService;
+    private WarrantyService warrantyService;
+
     private ProductPanel productPanel;
     private CustomerPanel customerPanel;
     private SellerPanel sellerPanel;
@@ -17,21 +29,72 @@ public class MainFrame extends javax.swing.JFrame {
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(MainFrame.class.getName());
 
     /**
-     * Creates new form MainFrame
+     * Creates new form MainFrame with default standalone services
      */
     public MainFrame() {
+        ProductRepository productRepository = new ProductRepository();
+        PersonRepository personRepository = new PersonRepository();
+        SaleRepository saleRepository = new SaleRepository();
+        PromotionRepository promotionRepository = new PromotionRepository();
+        AccessoryRepository accessoryRepository = new AccessoryRepository();
+        ReturnRepository returnRepository = new ReturnRepository();
+        WarrantyRepository warrantyRepository = new WarrantyRepository();
+
+        ProductService prodService = new ProductService(productRepository);
+        PersonService perService = new PersonService(personRepository);
+        PromotionService promoService = new PromotionService(promotionRepository);
+        AccessoryService accService = new AccessoryService(accessoryRepository, accessoryRepository.loadAll());
+        SaleService salService = new SaleService(saleRepository, prodService, perService, promoService, accService);
+        WarrantyService warService = new WarrantyService(warrantyRepository, salService, prodService);
+        salService.setWarrantyService(warService);
+        ReturnService retService = new ReturnService(returnRepository, salService, prodService, accService);
+
+        Main.preloadSellersIfNeeded(perService);
+        Main.preloadPromotionsIfNeeded(promoService);
+        Main.preloadAccessoriesIfNeeded(accService);
+
+        initAll(prodService, perService, salService, accService, promoService, retService, warService);
+    }
+
+    public MainFrame(ProductService productService,
+                     PersonService personService,
+                     SaleService saleService,
+                     AccessoryService accessoryService,
+                     PromotionService promotionService,
+                     ReturnService returnService,
+                     WarrantyService warrantyService) {
+        initAll(productService, personService, saleService, accessoryService, promotionService, returnService, warrantyService);
+    }
+
+    private void initAll(ProductService productService,
+                         PersonService personService,
+                         SaleService saleService,
+                         AccessoryService accessoryService,
+                         PromotionService promotionService,
+                         ReturnService returnService,
+                         WarrantyService warrantyService) {
+        this.productService = productService;
+        this.personService = personService;
+        this.saleService = saleService;
+        this.accessoryService = accessoryService;
+        this.promotionService = promotionService;
+        this.returnService = returnService;
+        this.warrantyService = warrantyService;
+
         initComponents();
-        this.setLocationRelativeTo(null); // Opcional: centra la ventana en pantalla    
-        this.productPanel = new ProductPanel(); 
-        this.customerPanel = new CustomerPanel();
-        this.sellerPanel = new SellerPanel();
-        this.salePanel = new SalePanel();
-        this.promotionPanel = new PromotionPanel();
-        this.accessoryPanel = new AccessoryPanel();
-        this.warrantyPanel = new WarrantyPanel();
-        this.returnPanel = new ReturnPanel();
-        this.reportsPanel = new ReportsPanel();
-     
+        this.setLocationRelativeTo(null);
+
+        this.productPanel = new ProductPanel(productService);
+        this.customerPanel = new CustomerPanel(personService);
+        this.sellerPanel = new SellerPanel(personService);
+        this.salePanel = new SalePanel(saleService, personService, productService, accessoryService, promotionService);
+        this.promotionPanel = new PromotionPanel(promotionService);
+        this.accessoryPanel = new AccessoryPanel(accessoryService);
+        this.warrantyPanel = new WarrantyPanel(warrantyService);
+        this.returnPanel = new ReturnPanel(returnService, saleService);
+        this.reportsPanel = new ReportsPanel(saleService, returnService);
+
+        actualizarDashboard();
     }
 
     /**
@@ -391,8 +454,9 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_botonVentas1ActionPerformed
 
     private void botonNuevaVentaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonNuevaVentaActionPerformed
-        SaleDialog dialog = new SaleDialog(this, true);
+        SaleDialog dialog = new SaleDialog(this, true, saleService, personService, productService, accessoryService, promotionService, salePanel);
         dialog.setVisible(true);
+        actualizarDashboard();
     }//GEN-LAST:event_botonNuevaVentaActionPerformed
 
     private void botonPromociones1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonPromociones1ActionPerformed
@@ -463,6 +527,50 @@ public class MainFrame extends javax.swing.JFrame {
 
         panelContenido.revalidate();
         panelContenido.repaint();
+
+        actualizarDashboard();
+    }
+
+    public void actualizarDashboard() {
+        if (productService != null && accessoryService != null) {
+            int totalProds = productService.listAllProducts().size() + accessoryService.listAllaccessories().size();
+            valorProductos.setText(String.valueOf(totalProds));
+        }
+        if (personService != null) {
+            valorClientes.setText(String.valueOf(personService.listAllCustomers().size()));
+        }
+        if (returnService != null) {
+            java.time.LocalDate now = java.time.LocalDate.now();
+            long returnsMonth = returnService.viewAllReturns().stream()
+                    .filter(r -> r.getReturnDate() != null && r.getReturnDate().getMonthValue() == now.getMonthValue() && r.getReturnDate().getYear() == now.getYear())
+                    .count();
+            valorDevolucionesMes.setText(String.valueOf(returnsMonth));
+        }
+        if (promotionService != null) {
+            java.time.LocalDate now = java.time.LocalDate.now();
+            long activePromos = promotionService.listAllPromotions().stream()
+                    .filter(p -> p.isActive(now))
+                    .count();
+            valorPromocionesActivas.setText(String.valueOf(activePromos));
+        }
+        if (saleService != null) {
+            javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tablaVentasRecientes.getModel();
+            model.setRowCount(0);
+            java.util.List<com.gamezone.model.Sale> sales = saleService.viewAllSales();
+            int start = Math.max(0, sales.size() - 5);
+            for (int i = sales.size() - 1; i >= start; i--) {
+                com.gamezone.model.Sale s = sales.get(i);
+                String cust = (s.getCustomer() != null) ? s.getCustomer().getFullName() : "-";
+                String seller = (s.getSeller() != null) ? s.getSeller().getFullName() : "-";
+                model.addRow(new Object[]{
+                    s.getId(),
+                    cust,
+                    seller,
+                    String.format(java.util.Locale.US, "$%.2f", s.getTotalAmount()),
+                    s.getDate()
+                });
+            }
+        }
     }   
     /**
      * @param args the command line arguments

@@ -4,17 +4,129 @@
  */
 package com.gamezone.ui;
 
+import com.gamezone.model.Accessory;
+import com.gamezone.model.Cable;
+import com.gamezone.model.Controller;
+import com.gamezone.model.Memory;
+import com.gamezone.service.AccessoryService;
+import java.util.List;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+
 /**
  *
  * @author USUARIO
  */
 public class AccessoryPanel extends javax.swing.JPanel {
 
+    private AccessoryService accessoryService;
+
     /**
      * Creates new form AccessoryPanel
      */
     public AccessoryPanel() {
         initComponents();
+        setupEvents();
+    }
+
+    public AccessoryPanel(AccessoryService accessoryService) {
+        this.accessoryService = accessoryService;
+        initComponents();
+        setupEvents();
+        loadAccessories();
+    }
+
+    private void setupEvents() {
+        btnBuscarAccesorio.addActionListener(e -> searchAccessories());
+        txtBuscarAccesorio.addActionListener(e -> searchAccessories());
+        cmbFiltrarTipo.addActionListener(e -> filterAccessoriesByType());
+        btnCompatibilidad.addActionListener(e -> checkConsoleCompatibility());
+    }
+
+    public void loadAccessories() {
+        if (accessoryService == null) return;
+        renderAccessoriesTable(accessoryService.listAllaccessories());
+    }
+
+    private void filterAccessoriesByType() {
+        if (accessoryService == null) return;
+        String selected = cmbFiltrarTipo.getSelectedItem().toString().trim();
+        if (selected.startsWith("Todos")) {
+            loadAccessories();
+            return;
+        }
+
+        String typeQuery = selected.startsWith("Control") ? "Controller" : (selected.startsWith("Cable") ? "Cable" : "Memory");
+        renderAccessoriesTable(accessoryService.listAccesoriesByType(typeQuery));
+    }
+
+    private void renderAccessoriesTable(List<Accessory> list) {
+        DefaultTableModel model = (DefaultTableModel) tblAccesorios.getModel();
+        model.setRowCount(0);
+
+        for (Accessory a : list) {
+            String typeName;
+            String spec;
+
+            if (a instanceof Controller) {
+                typeName = "Control";
+                spec = ((Controller) a).getConnectionType();
+            } else if (a instanceof Cable) {
+                typeName = "Cable";
+                Cable c = (Cable) a;
+                spec = c.getLengthInMeters() + "m (" + c.getConnectorType() + ")";
+            } else if (a instanceof Memory) {
+                typeName = "Memoria";
+                Memory m = (Memory) a;
+                spec = m.getStorageCapacityGb() + "GB (" + m.getMemoryType() + ")";
+            } else {
+                typeName = "Accesorio";
+                spec = "-";
+            }
+
+            String consoles = (a.getCompatibleConsoleIds() != null && !a.getCompatibleConsoleIds().isEmpty())
+                    ? String.join(", ", a.getCompatibleConsoleIds())
+                    : "Universal";
+
+            model.addRow(new Object[]{
+                a.getId(),
+                a.getTitle(),
+                typeName,
+                String.format("$%,.0f", a.getPrice()),
+                a.getStock(),
+                spec,
+                consoles
+            });
+        }
+    }
+
+    private void searchAccessories() {
+        if (accessoryService == null) return;
+        String query = txtBuscarAccesorio.getText().trim().toLowerCase();
+        if (query.isEmpty()) {
+            loadAccessories();
+            return;
+        }
+
+        List<Accessory> filtered = accessoryService.listAllaccessories().stream()
+                .filter(a -> a.getId().toLowerCase().contains(query) || a.getTitle().toLowerCase().contains(query))
+                .toList();
+
+        renderAccessoriesTable(filtered);
+    }
+
+    private void checkConsoleCompatibility() {
+        if (accessoryService == null) return;
+        String consoleId = JOptionPane.showInputDialog(this, "Ingresa el ID de la consola (ejemplo: C001):", "Consultar Compatibilidad", JOptionPane.QUESTION_MESSAGE);
+        if (consoleId == null || consoleId.trim().isEmpty()) return;
+
+        List<Accessory> compatible = accessoryService.findAcessoriesCOmpatibleWith(consoleId.trim());
+        if (compatible.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No se encontraron accesorios compatibles con la consola: " + consoleId, "Sin resultados", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            renderAccessoriesTable(compatible);
+            JOptionPane.showMessageDialog(this, "Mostrando " + compatible.size() + " accesorios compatibles con " + consoleId, "Compatibilidad", JOptionPane.INFORMATION_MESSAGE);
+        }
     }
 
     /**
@@ -120,7 +232,7 @@ public class AccessoryPanel extends javax.swing.JPanel {
 
     private void btnNuevoAccesorioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoAccesorioActionPerformed
         java.awt.Frame parentFrame = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
-        AccessoryDialog dialog = new AccessoryDialog(parentFrame, true);
+        AccessoryDialog dialog = new AccessoryDialog(parentFrame, true, accessoryService, this);
         dialog.setVisible(true);
     }//GEN-LAST:event_btnNuevoAccesorioActionPerformed
 
