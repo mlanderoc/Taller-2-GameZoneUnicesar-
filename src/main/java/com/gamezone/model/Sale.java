@@ -81,7 +81,7 @@ public class Sale {
     }
 
     public double getTotalAmount() {
-        return totalAmount;//change
+        return subtotal - discountAmount;
     }
 
     public String getAppliedPromotionName() {
