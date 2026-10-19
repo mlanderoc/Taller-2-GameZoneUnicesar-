@@ -151,3 +151,12 @@ I used Artificial Intelligence as a support tool during the development of the p
 - **Consultation:** I asked for a conceptual explanation of how service and repository classes relate to the *Controller*, *Pure Fabrication*, and *Indirection* patterns in GRASP.
 - **What I learned:** Repository classes (`PersonRepository`, `AccessoryRepository`, `ReturnRepository`, `WarrantyRepository`, `PromotionRepository`) and DTO records (`ReturnRecord`, `WarrantyRecord`) are *Pure Fabrications* that also provide *Indirection* between business logic and binary file I/O, while service classes act as use-case *Controllers* coordinating domain objects behind the UI.
 - **How I applied it:** I used these definitions to evaluate my persistence and service classes in `docs/grasp-audit/developer2-audit.md` and to document the boundary findings in Question 2 of `docs/grasp-analysis.md`.
+
+### Phase 2 - Refactoring
+
+#### Delegating Domain Lookups and Centralizing Validations (`V-03`, `V-04`, `V-05`, `V-06`)
+- **Topic:** Applying *Information Expert*, *Pure Fabrication*, *High Cohesion*, and *Low Coupling* in `AccessoryService`, `PromotionService`, `ReturnService`, and `Sale`.
+- **Consultation:** I asked how to refactor service-layer methods that manually traversed internal collections of domain entities (`Accessory.getCompatibleConsoleIds()`, `Sale.getProducts()`) and how to reduce coupling in `AccessoryService` initialization.
+- **What I learned:** Under *Information Expert*, the class that owns a collection (`Accessory` for `compatibleConsoleIds`, `Sale` for `products`) should expose the query method (`isCompatibleWith(String)`, `findProductById(String)`), while the service simply delegates to it. Furthermore, overloading `AccessoryService(AccessoryRepository)` so the service loads its own initial list from the repository eliminates unnecessary coupling in `Main` (*Low Coupling*), and delegating inline input checks to `ProductValidator` restores *High Cohesion* in `AccessoryService` and `PromotionService`.
+- **How I applied it:** I refactored `AccessoryService.findCompatibleWithConsole` (`V-03`), added `Sale.findProductById` and delegated `ReturnService.findInSale` (`V-04`), replaced inline subtype and promotion validations in `AccessoryService` and `PromotionService` with calls to `ProductValidator` (`V-05`), and added the single-argument constructor `AccessoryService(AccessoryRepository)` (`V-06`).
+

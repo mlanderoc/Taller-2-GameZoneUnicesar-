@@ -205,15 +205,11 @@ public class ReturnService {
     }
 
     /**
-     * Finds a product with the given id within a sale's product list.
+     * Finds a product with the given id within a sale's product list
+     * by delegating to the Sale Information Expert.
      */
     private Product findInSale(Sale sale, String productId) {
-        for (Product product : sale.getProducts()) {
-            if (product.getId().equals(productId)) {
-                return product;
-            }
-        }
-        return null;
+        return sale != null ? sale.findProductById(productId) : null;
     }
 
     private ReturnRecord toRecord(Return returnObj) {

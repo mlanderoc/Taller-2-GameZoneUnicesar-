@@ -194,5 +194,24 @@ public class Sale {
         return daysPassed >= 0 && daysPassed <= 30;
     
     }
+
+    /**
+     * Finds a product within this sale by its identifier.
+     *
+     * @param productId the identifier of the product to search for
+     * @return the matching {@link Product}, or {@code null} if not found in this sale
+     */
+    public Product findProductById(String productId) {
+        if (productId == null || products == null) {
+            return null;
+        }
+        for (Product product : products) {
+            if (product != null && productId.equals(product.getId())) {
+                return product;
+            }
+        }
+        return null;
+    }
     
 }
+

@@ -16,9 +16,18 @@ public class AccessoryService {
     private final AccessoryRepository repository;
     private final List<Accessory> accessories;
 
-    public AccessoryService(AccessoryRepository repository, List<Accessory> accessories) {
+    /**
+     * Creates the accessory service loading the initial catalog from the repository.
+     *
+     * @param repository the accessory repository
+     */
+    public AccessoryService(AccessoryRepository repository) {
         this.repository = repository;
         this.accessories = repository.loadAll();
+    }
+
+    public AccessoryService(AccessoryRepository repository, List<Accessory> accessories) {
+        this(repository);
     }
     
     
@@ -35,9 +44,7 @@ public class AccessoryService {
     public void registerCable(double lengthInMeters, String connectorType, List<String> compatibleConsoleIds, String id, String title, double price, int stock) {
         ProductValidator.validateProductData(id, title, price, stock);
         ProductValidator.validateUniqueProduct(findById(id), id);
-        if (lengthInMeters <= 0) {
-            throw new InvalidDataException("longitud", "La longitud del cable debe ser mayor que cero.");
-        }
+        ProductValidator.validateCableData(lengthInMeters);
         Cable cable = new Cable(lengthInMeters, connectorType, compatibleConsoleIds, id, title, price, stock);
         accessories.add(cable);
         repository.saveAll(accessories);
@@ -54,9 +61,7 @@ public class AccessoryService {
     public void registerMemory(int storageCapacityGb, String memoryType, List<String> compatibleConsoleIds, String id, String title, double price, int stock) {
         ProductValidator.validateProductData(id, title, price, stock);
         ProductValidator.validateUniqueProduct(findById(id), id);
-        if (storageCapacityGb <= 0) {
-            throw new InvalidDataException("capacidad", "La capacidad de almacenamiento debe ser mayor que cero.");
-        }
+        ProductValidator.validateMemoryData(storageCapacityGb);
         Memory memory = new Memory(storageCapacityGb, memoryType, compatibleConsoleIds, id, title, price, stock);
         accessories.add(memory);
         repository.saveAll(accessories);
@@ -71,9 +76,7 @@ public class AccessoryService {
     }
     public List<Accessory> findAcessoriesCOmpatibleWith(String consoleId) {
         return accessories.stream()
-                .filter(accessory ->
-                        accessory.getCompatibleConsoleIds() != null &&
-                        accessory.getCompatibleConsoleIds().contains(consoleId))
+                .filter(accessory -> accessory != null && accessory.isCompatibleWith(consoleId))
                 .collect(Collectors.toList());
     }
     /**

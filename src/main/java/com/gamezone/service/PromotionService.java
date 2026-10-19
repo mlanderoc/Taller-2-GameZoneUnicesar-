@@ -1,13 +1,12 @@
 package com.gamezone.service;
 
-import com.gamezone.exceptions.BusinessRuleException;
-import com.gamezone.exceptions.InvalidDataException;
 import com.gamezone.persistence.PromotionRepository;
 import com.gamezone.model.BulkPurchaseDiscount;
 import com.gamezone.model.CategoryDiscount;
 import com.gamezone.model.PercentageDiscount;
 import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
+import com.gamezone.validation.ProductValidator;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,12 +49,7 @@ public class PromotionService {
      */
     public void registerCategoryDiscount(String id, String name, LocalDate startDate, LocalDate endDate, double discountPercentage, String categoryObjective) {
         validatePromotionBase(id, name, startDate, endDate, discountPercentage);
-        if (categoryObjective == null
-                || (!"VIDEOGAME".equalsIgnoreCase(categoryObjective.trim())
-                && !"CONSOLE".equalsIgnoreCase(categoryObjective.trim())
-                && !"ACCESSORY".equalsIgnoreCase(categoryObjective.trim()))) {
-            throw new InvalidDataException("categoría", "Categoría inválida. Categorías permitidas: VIDEOGAME, CONSOLE, ACCESSORY.");
-        }
+        ProductValidator.validateCategoryObjective(categoryObjective);
         CategoryDiscount categoryDiscount = new CategoryDiscount(id, name, startDate, endDate, discountPercentage, categoryObjective.trim().toUpperCase());
         promotions.add(categoryDiscount);
         repository.saveAll(promotions);
@@ -63,30 +57,14 @@ public class PromotionService {
 
     public void registerBulkPurchaseDiscount(String id, String name, LocalDate startDate, LocalDate endDate, int minimumQuantity, double discountPercentage) {
         validatePromotionBase(id, name, startDate, endDate, discountPercentage);
-        if (minimumQuantity <= 0) {
-            throw new InvalidDataException("cantidad mínima", "La cantidad mínima de productos debe ser mayor que cero.");
-        }
+        ProductValidator.validateMinimumQuantity(minimumQuantity);
         BulkPurchaseDiscount bulkPurchaseDiscount = new BulkPurchaseDiscount(id, name, startDate, endDate, minimumQuantity, discountPercentage);
         promotions.add(bulkPurchaseDiscount);
         repository.saveAll(promotions);
     }
 
     private void validatePromotionBase(String id, String name, LocalDate startDate, LocalDate endDate, double discountPercentage) {
-        if (id == null || id.trim().isEmpty()) {
-            throw new InvalidDataException("id", "El identificador de la promoción no puede estar vacío.");
-        }
-        if (name == null || name.trim().isEmpty()) {
-            throw new InvalidDataException("nombre", "El nombre de la promoción no puede estar vacío.");
-        }
-        if (startDate == null || endDate == null || endDate.isBefore(startDate)) {
-            throw new InvalidDataException("fechas", "La fecha de fin no puede ser anterior a la fecha de inicio.");
-        }
-        if (discountPercentage <= 0 || discountPercentage > 100) {
-            throw new InvalidDataException("porcentaje", "El porcentaje de descuento debe estar entre 1 y 100.");
-        }
-        if (findById(id) != null) {
-            throw new BusinessRuleException("Ya existe una promoción registrada con el ID: " + id);
-        }
+        ProductValidator.validatePromotionBase(id, name, startDate, endDate, discountPercentage, findById(id));
     }
 
     public List<Promotion> listAllPromotions() {
