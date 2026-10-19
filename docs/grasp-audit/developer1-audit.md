@@ -130,3 +130,70 @@ for(Product product : sale.getProducts()){
 | **Consequence** | Adding any new product category to the store catalog in the future forces developers to modify `CategoryDiscount.calculateDiscount` to add a new `if (... && product instanceof NewType)` branch, coupling `CategoryDiscount` to every concrete subclass of `Product`. |
 | **Proposed Solution** | Apply **Polymorphism** (and **Information Expert**) by declaring `public abstract String getCategory();` and `public boolean belongsToCategory(String category)` in `Product`, overriding `getCategory()` in `VideoGame` (`"VIDEOGAME"`), `Console` (`"CONSOLE"`), and `Accessory` (`"ACCESSORY"`), and simplifying `CategoryDiscount.calculateDiscount(Sale)` to iterate with `if (product.belongsToCategory(categoryObjective))`. |
 | **Other Member's Code** | **No:** `Product`, `VideoGame`, `Console`, `Accessory`, and `CategoryDiscount` are all under the responsibility of **Developer 1 (`craulgomez`)**. |
+
+---
+
+### 2.7 Pure Fabrication
+
+- **Verdict:** **Violation** (1 incomplete Pure Fabrication coverage in `ProductValidator`; properly applied in `ProductRepository`, `ProductValidator`, `PersonValidator`, and `SaleValidator`).
+
+#### Correct Applications
+- **`ProductRepository` (`com.gamezone.persistence.ProductRepository`):** Created as a Pure Fabrication class so that `Product`, `VideoGame`, and `Console` do not contain file serialization (`ObjectOutputStream` / `ObjectInputStream`) logic, preserving High Cohesion and Low Coupling in the domain model.
+- **`ProductValidator`, `PersonValidator`, `SaleValidator` (`com.gamezone.validation`):** Created in Requirement 6 as Pure Fabrication classes to house cross-field format, range, and precondition validation rules outside domain entities and service workflows.
+
+#### Identified Violation (`V-03`)
+
+| Field | Content |
+| :--- | :--- |
+| **ID** | `V-03` |
+| **Pattern** | Pure Fabrication (`Fabricación Pura`) |
+| **Module** | Exceptions & Validations (Requirement 6) / Accessories Hierarchy (Requirement 1) |
+| **Evidence** | `com.gamezone.validation.ProductValidator` (`ProductValidator.java`, lines 18–79) only provides `validateProductData(id, title, price, stock)` for base `Product` attributes, leaving out subtype validation rules for `Accessory` subclasses (`Cable` length > 0 and connector type, `Controller` connection type, `Memory` storage capacity > 0 and memory type). Consequently, `AccessoryService` (`AccessoryService.java`, lines 38–40 & 57–59) had to keep inline `InvalidDataException` checks:<br>```java
+if (lengthInMeters <= 0) {
+    throw new InvalidDataException("longitud", "La longitud del cable debe ser mayor que cero.");
+}
+...
+if (storageCapacityGb <= 0) {
+    throw new InvalidDataException("capacidad", "La capacidad de almacenamiento debe ser mayor que cero.");
+}
+``` |
+| **Explanation** | `ProductValidator` was designed as the Pure Fabrication validator for the entire `Product` hierarchy (which includes `Accessory`, `Cable`, `Controller`, and `Memory`). Because `ProductValidator` omitted subtype validation methods for accessories, `AccessoryService` could not fully delegate its input validation to the validation layer. |
+| **Consequence** | Scatters product/accessory validation rules across `com.gamezone.validation.ProductValidator` and `com.gamezone.service.AccessoryService`, lowering service cohesion. |
+| **Proposed Solution** | Apply **Pure Fabrication** by adding `validateCableData(double lengthInMeters, String connectorType)`, `validateControllerData(String connectionType)`, and `validateMemoryData(int storageCapacityGb, String memoryType)` to `ProductValidator` (Developer 1), and delegating to them from `AccessoryService` (Developer 2). |
+| **Other Member's Code** | **Yes (Boundary Finding):** Involves `ProductValidator` (**Developer 1 — `craulgomez`**) and `AccessoryService` (**Developer 2 — `Hectorguevara22`**). |
+
+---
+
+### 2.8 Indirection
+
+- **Verdict:** **Correct**
+
+#### Justification & Evidence
+- **`ProductRepository` as an Indirection Layer between `ProductService` and File Storage (`ProductRepository.java`, lines 16–122):** `ProductService` does not interact with `java.io.File`, `FileInputStream`, or `ObjectOutputStream`. Instead, `ProductRepository` acts as an intermediary that decouples product business operations from the underlying binary file `data/products.dat`.
+- **Validators (`ProductValidator`, `PersonValidator`, `SaleValidator`) as Indirection for Rule Verification:** Services invoke static validator methods instead of coupling business workflows directly to low-level formatting checks.
+
+---
+
+### 2.9 Protected Variations
+
+- **Verdict:** **Correct** *(with the category variation point covered under `V-02` Polymorphism above)*
+
+#### Justification & Evidence
+- **`Repository<T>` Implementation in `ProductRepository` (`ProductRepository.java`, line 16: `public class ProductRepository implements Repository<Product>`):** Shields callers from changes in the persistence mechanism behind the standard `save`, `findAll`, `findById`, and `saveAll` contract.
+- **Abstract Hierarchies (`Product`, `Accessory`, `Promotion`, `Warranty`, `GameZoneException`):** Protect client layers (`service` and `ui`) against variations in product descriptions (`getDescription()`), promotional discount formulas (`calculateDiscount(Sale)`), warranty durations/costs (`getDurationInMonths()`, `getAdditionalCost()`), and error categories (`getErrorCode()`). Once `V-02` (`CategoryDiscount` `instanceof` checks) is resolved via polymorphic `Product.belongsToCategory(String)`, category-based discounts are also fully protected against new `Product` subclasses.
+
+---
+
+## 3. Summary of Verdicts (Developer 1)
+
+| # | GRASP Pattern | Verdict | Findings |
+| :--- | :--- | :--- | :--- |
+| 1 | **Information Expert** | **Violation** | `V-01`: `Return.getDiscountRatio()` calculates the discount ratio from `Sale`'s raw attributes instead of delegating to `Sale`. |
+| 2 | **Creator** | **Correct** | Properly applied in `ProductService`, `ProductRepository`, and validators. |
+| 3 | **Controller** | **Not Applicable** | Domain entities, exceptions, and validators do not receive UI system events. |
+| 4 | **Low Coupling** | **Correct** | `model`, `exceptions`, and `validation` respect strict one-directional dependencies. |
+| 5 | **High Cohesion** | **Correct** | Domain classes, exceptions, validators, and `ProductService` are focused on single responsibilities. |
+| 6 | **Polymorphism** | **Violation** | `V-02`: `CategoryDiscount.calculateDiscount(Sale)` uses `instanceof VideoGame`, `Console`, and `Accessory` instead of polymorphic dispatch on `Product`. |
+| 7 | **Pure Fabrication** | **Violation** | `V-03`: `ProductValidator` lacks subtype validation methods for `Accessory` subclasses (`Cable`, `Controller`, `Memory`), leaving inline checks in `AccessoryService`. |
+| 8 | **Indirection** | **Correct** | `ProductRepository` decouples `ProductService` from binary file I/O. |
+| 9 | **Protected Variations** | **Correct** | Abstract hierarchies (`Product`, `Promotion`, `Warranty`, `GameZoneException`) and `Repository<Product>` shield clients from variations. |
