@@ -38,11 +38,27 @@ public class PromotionService {
         repository.saveAll(promotions);
     }
 
+    /**
+     * Registers a new category discount promotion after validating the target category.
+     *
+     * @param id the promotion identifier
+     * @param name the promotion name
+     * @param startDate the start date of the promotion
+     * @param endDate the expiration date of the promotion
+     * @param discountPercentage the discount percentage to apply
+     * @param categoryObjective the target category ("VIDEOGAME", "CONSOLE", or "ACCESSORY")
+     */
     public void registerCategoryDiscount(String id, String name, LocalDate startDate, LocalDate endDate, double discountPercentage, String categoryObjective) {
         if (findById(id) != null) {
             throw new IllegalArgumentException("A promotion with this ID already exists");
         }
-        CategoryDiscount categoryDiscount = new CategoryDiscount(id, name, startDate, endDate, discountPercentage, categoryObjective);
+        if (categoryObjective == null
+                || (!"VIDEOGAME".equalsIgnoreCase(categoryObjective.trim())
+                && !"CONSOLE".equalsIgnoreCase(categoryObjective.trim())
+                && !"ACCESSORY".equalsIgnoreCase(categoryObjective.trim()))) {
+            throw new IllegalArgumentException("Invalid target category. Allowed categories: VIDEOGAME, CONSOLE, ACCESSORY");
+        }
+        CategoryDiscount categoryDiscount = new CategoryDiscount(id, name, startDate, endDate, discountPercentage, categoryObjective.trim().toUpperCase());
         promotions.add(categoryDiscount);
         repository.saveAll(promotions);
     }

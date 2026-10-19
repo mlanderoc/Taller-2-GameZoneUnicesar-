@@ -71,6 +71,7 @@ classDiagram
         -subtotal: double
         -appliedPromotionName: String
         -discountAmount: double
+        -extendedWarrantyCost: double
         +calculateTotal() double
         +getTotalAmount() double
         +applyDiscount(promotionName String, discountAmount double) void
@@ -108,7 +109,8 @@ classDiagram
         -originalSale: Sale
         -returnedProducts: List~Product~
         -reason: String
-        -refundedAmount: double
+        -warrantyRefundAmount: double
+        -refundAmount: double
         +calculateRefundAmount() double
         +generateReturnReceipt() String
     }
@@ -183,6 +185,7 @@ classDiagram
         -subtotal: double
         -appliedPromotionName: String
         -discountAmount: double
+        -extendedWarrantyCost: double
     }
     class SaleRepository {
         +saveAll(records List~SaleRecord~) void
@@ -254,6 +257,7 @@ classDiagram
         +listAccessoriesByType(type String) List~Accessory~
         +findAccessoriesCompatibleWith(consoleId String) List~Accessory~
         +updateStock(accessoryId String, quantity int) void
+        +restoreStock(accessoryId String, quantity int) void
         +findById(id String) Accessory
     }
     class PromotionService {
@@ -268,12 +272,15 @@ classDiagram
     }
     class WarrantyService {
         -repository: WarrantyRepository
+        -saleRepository: SaleRepository
+        -productService: ProductService
         +assignBasicWarranty(product Product, sale Sale, startDate LocalDate) BasicWarranty
         +assignExtendedWarranty(product Product, sale Sale, startDate LocalDate) ExtendedWarranty
         +findWarrantyByProduct(productId String, saleId String) Warranty
         +listAllWarranties() List~Warranty~
         +listActiveWarranties() List~Warranty~
         +listWarrantiesExpiringSoon(daysAhead int) List~Warranty~
+        +cancelWarranties(productId String, saleId String) double
     }
     class SaleService {
         -saleRepository: SaleRepository
@@ -291,10 +298,14 @@ classDiagram
         -returnRepository: ReturnRepository
         -saleService: SaleService
         -productService: ProductService
+        -accessoryService: AccessoryService
+        -warrantyService: WarrantyService
         +registerReturn(saleId String, productIds List~String~, reason String) Return
         +viewAllReturns() List~Return~
         +viewReturnsByCustomer(customerId String) List~Return~
         +viewReturnsBySale(saleId String) List~Return~
+        +calculateMonthlySales(month int, year int) double
+        +calculateMonthlyReturns(month int, year int) double
         +generateMonthlyBalance(month int, year int) double
     }
  
@@ -305,6 +316,8 @@ classDiagram
     AccessoryService ..> Accessory
     PromotionService "1" --> "1" PromotionRepository
     WarrantyService "1" --> "1" WarrantyRepository
+    WarrantyService "1" --> "1" SaleRepository
+    WarrantyService "1" --> "1" ProductService
     WarrantyService ..> Warranty
  
     SaleService "1" --> "1" SaleRepository
@@ -319,6 +332,8 @@ classDiagram
     ReturnService "1" --> "1" ReturnRepository
     ReturnService "1" --> "1" SaleService
     ReturnService "1" --> "1" ProductService
+    ReturnService "1" --> "1" AccessoryService
+    ReturnService "1" --> "1" WarrantyService
     ReturnService ..> Return
     ReturnService ..> ReturnRecord
  

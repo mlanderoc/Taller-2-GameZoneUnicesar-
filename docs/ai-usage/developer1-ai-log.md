@@ -79,4 +79,22 @@ I used Artificial Intelligence as a support tool during the development of the p
  
  **How ​​I applied it:** I applied the corresponding translations to each task I was assigned.
 
+### Category discount for accessories (Adjustment A1)
 
+ **Topic:** Polymorphic type checking with `instanceof` in `CategoryDiscount`
+ 
+ **Consultation:** I asked whether `product instanceof Accessory` also matches subclasses such as `Controller`, `Cable`, and `Memory` when calculating category discounts.
+ 
+ **What I learned:** In Java, `instanceof` evaluates to `true` for any concrete subclass of `Accessory`, so a single check covers all accessory types.
+ 
+ **How I applied it:** I added the `"ACCESSORY"` condition in `CategoryDiscount.calculateDiscount` and validated the allowed category names in `PromotionService.registerCategoryDiscount`.
+
+### Proportional refund calculation (Adjustment A5)
+
+ **Topic:** Proportional discount formula in `Return.calculateRefundAmount`
+ 
+ **Consultation:** I reviewed how to avoid division by zero when calculating the discount ratio `discount / subtotal` for a returned sale.
+ 
+ **What I learned:** Checking `originalSale != null && originalSale.getSubtotal() > 0` before dividing ensures safe calculation of `price * (1 - discount / subtotal)`.
+ 
+ **How I applied it:** I updated `calculateRefundAmount` and `generateReturnReceipt` in `Return` to compute and display the list price, proportional discount, and net refund per item.

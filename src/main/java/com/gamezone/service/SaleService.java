@@ -31,49 +31,94 @@ public class SaleService {
     private AccessoryService accessoryService;
     private WarrantyService warrantyService;
 
-    public SaleService(SaleRepository saleRepository, ProductService productService, PersonService personService,PromotionService promotionService,AccessoryService accessoryService) {
+    public SaleService(SaleRepository saleRepository, ProductService productService, PersonService personService, PromotionService promotionService, AccessoryService accessoryService) {
+        this(saleRepository, productService, personService, promotionService, accessoryService, null);
+    }
+
+    public SaleService(SaleRepository saleRepository, ProductService productService, PersonService personService,
+                       PromotionService promotionService, AccessoryService accessoryService, WarrantyService warrantyService) {
         this.saleRepository = saleRepository;
         this.productService = productService;
         this.personService = personService;
         this.promotionService = promotionService;
-        this.accessoryService= accessoryService;
+        this.accessoryService = accessoryService;
+        this.warrantyService = warrantyService;
     }
 
     public void setWarrantyService(WarrantyService warrantyService) {
         this.warrantyService = warrantyService;
     }
-  /**
-     * Registers a new sale: validates that there is at least one product,
-     * verifies and updates stock for each product, and persists the sale.
+    /**
+     * Registers a new sale following the unified 8-step registration flow:
+     * 1. Validate that the sale has at least one item.
+     * 2. Resolve each item as a product or accessory and validate its stock.
+     * 3. Create the sale and calculate the item subtotal.
+     * 4. Query the best active promotion and apply the discount over the subtotal.
+     * 5. Generate basic warranties for consoles and requested extended warranties, summing their cost.
+     * 6. Calculate the final total: subtotal - discount + extended warranty cost.
+     * 7. Update inventory delegating to ProductService or AccessoryService according to item type.
+     * 8. Persist the sale and warranties.
      *
      * @param customer the customer making the purchase
      * @param seller   the seller attending the sale
-     * @param items the products included in the sale
+     * @param items    the products and accessories included in the sale
+     * @param productIdsWithExtendedWarranty console IDs that requested an extended warranty
      * @return the registered Sale
-     * @throws IllegalArgumentException if products is null/empty or stock is insufficient
-     */ 
-    
-    public Sale registerSale(Customer customer, Seller seller, List<Product> items,List<String> productIdsWithExtendedWarranty) {
+     * @throws IllegalArgumentException if items is null/empty or stock is insufficient
+     */
+    public Sale registerSale(Customer customer, Seller seller, List<Product> items, List<String> productIdsWithExtendedWarranty) {
+        // 1. Validate that the sale has at least one item
         if (items == null || items.isEmpty()) {
-            throw new IllegalArgumentException("Una venyta dbe contener al menos un producto");
+            throw new IllegalArgumentException("Una venta debe contener al menos un producto");
         }
-           //it need to know the product type to valide the stock
+
+        // 2. Resolve each item as product or accessory and validate its stock
+        List<Product> resolvedItems = new ArrayList<>();
         for (Product item : items) {
             Product current;
-            if (item instanceof Accessory){
+            if (item instanceof Accessory) {
                 current = accessoryService.findById(item.getId());
-                
-            }else{
+            } else {
                 current = productService.findById(item.getId());
             }
-            
+
+            if (current == null) {
+                throw new IllegalArgumentException("Producto o accesorio no encontrado: " + item.getId());
+            }
             if (current.getStock() <= 0) {
-                throw new IllegalArgumentException(
-                        "Inventario insuficiente: " + current.getTitle());
+                throw new IllegalArgumentException("Inventario insuficiente: " + current.getTitle());
+            }
+            resolvedItems.add(current);
+        }
+
+        // 3. Create the sale and calculate the subtotal
+        String saleId = UUID.randomUUID().toString();
+        Sale sale = new Sale(saleId, LocalDate.now(), customer, seller, resolvedItems);
+
+        // 4. Query PromotionService.findBestPromotionFor(sale) and register discount over item subtotal
+        Promotion bestPromotion = promotionService.findBestPromotionFor(sale);
+        if (bestPromotion != null) {
+            double discount = bestPromotion.calculateDiscount(sale);
+            sale.applyDiscount(bestPromotion.getName(), discount);
+        }
+
+        // 5. Generate basic warranty for each console and requested extended warranties, summing their cost
+        double extendedWarrantyCost = 0.0;
+        for (Product item : resolvedItems) {
+            if (item instanceof Console && warrantyService != null) {
+                warrantyService.assignBasicWarranty(item, sale, sale.getDate());
+                if (productIdsWithExtendedWarranty != null && productIdsWithExtendedWarranty.contains(item.getId())) {
+                    ExtendedWarranty warranty = warrantyService.assignExtendedWarranty(item, sale, sale.getDate());
+                    extendedWarrantyCost += warranty.getAdditionalCost();
+                }
             }
         }
-        //discount in the stock if they pass te validation
-        for (Product item : items) {
+
+        // 6. Calculate final total: subtotal - discount + extended warranty cost
+        sale.setExtendedWarrantyCost(extendedWarrantyCost);
+
+        // 7. Update inventory delegating to ProductService or AccessoryService according to item type
+        for (Product item : resolvedItems) {
             if (item instanceof Accessory) {
                 accessoryService.updateStock(item.getId(), -1);
             } else {
@@ -81,28 +126,7 @@ public class SaleService {
             }
         }
 
-        //Create the SALE
-        String saleId = UUID.randomUUID().toString();
-        Sale sale = new Sale(saleId, LocalDate.now(), customer, seller, items);
-        
-        //Apply promotion
-        Promotion bestPromotion = promotionService.findBestPromotionFor(sale);
-        
-        if (bestPromotion != null) {
-            double discount = bestPromotion.calculateDiscount(sale);
-            sale.applyDiscount(bestPromotion.getName(), discount);
-        } 
-        // 5. Warranty
-        for (Product item : items) {
-            if (item instanceof Console) {
-                warrantyService.assignBasicWarranty(item, sale, sale.getDate());
-            }
-            if (productIdsWithExtendedWarranty != null && productIdsWithExtendedWarranty.contains(item.getId())) {
-                ExtendedWarranty warranty = warrantyService.assignExtendedWarranty(item, sale, sale.getDate());
-                sale.setSubtotal(sale.getSubtotal() + warranty.getAdditionalCost());
-            }
-        }
-        //SAVE SALE
+        // 8. Persist the sale (warranties were persisted upon assignment)
         SaleRecord record = toRecord(sale);
         List<SaleRecord> records = saleRepository.loadAll();
         records.add(record);
@@ -190,7 +214,8 @@ public class SaleService {
                 productIds,
                 sale.getSubtotal(),
                 sale.getAppliedPromotionName(),
-                sale.getDiscountAmount()
+                sale.getDiscountAmount(),
+                sale.getExtendedWarrantyCost()
         );
     }
     
@@ -211,13 +236,16 @@ public class SaleService {
             if (item == null) {
                 item = accessoryService.findById(productId);
             }
-            products.add(item);
+            if (item != null) {
+                products.add(item);
+            }
         }
 
         Sale sale = new Sale(record.getSaleId(), record.getDate(), customer, seller, products);
         sale.setSubtotal(record.getSubtotal());
         sale.setAppliedPromotionName(record.getAppliedPromotionName());
         sale.setDiscountAmount(record.getDiscountAmount());
+        sale.setExtendedWarrantyCost(record.getExtendedWarrantyCost());
         
         return sale;
     }

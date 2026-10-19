@@ -20,22 +20,42 @@ public class SaleRecord implements Serializable {
     private double subtotal;
     private String appliedPromotionName;
     private double discountAmount;
+    private double extendedWarrantyCost;
     
-    
-    
-     /**
+    /**
      * Creates a new SaleRecord.
      *
-     * @param saleId      unique identifier of the sale
-     * @param date        date the sale was made
-     * @param customerId  id of the customer who made the purchase
-     * @param sellerId    id of the seller who attended the sale
-     * @param productIds  ids of the products included in the sale
-     * @param  subtotal of the sale
+     * @param saleId               unique identifier of the sale
+     * @param date                 date the sale was made
+     * @param customerId           id of the customer who made the purchase
+     * @param sellerId             id of the seller who attended the sale
+     * @param productIds           ids of the products included in the sale
+     * @param subtotal             subtotal of the sale
+     * @param appliedPromotionName name of the applied promotion, if any
+     * @param discountAmount       monetary discount applied
      */
-    
     public SaleRecord(String saleId, LocalDate date, String customerId,
-                       String sellerId, List<String> productIds, double subtotal,String appliedPromotionName,double discountAmount) {
+                      String sellerId, List<String> productIds, double subtotal,
+                      String appliedPromotionName, double discountAmount) {
+        this(saleId, date, customerId, sellerId, productIds, subtotal, appliedPromotionName, discountAmount, 0.0);
+    }
+
+    /**
+     * Creates a new SaleRecord including extended warranty cost.
+     *
+     * @param saleId               unique identifier of the sale
+     * @param date                 date the sale was made
+     * @param customerId           id of the customer who made the purchase
+     * @param sellerId             id of the seller who attended the sale
+     * @param productIds           ids of the products included in the sale
+     * @param subtotal             subtotal of the sale
+     * @param appliedPromotionName name of the applied promotion, if any
+     * @param discountAmount       monetary discount applied
+     * @param extendedWarrantyCost additional cost of extended warranties
+     */
+    public SaleRecord(String saleId, LocalDate date, String customerId,
+                      String sellerId, List<String> productIds, double subtotal,
+                      String appliedPromotionName, double discountAmount, double extendedWarrantyCost) {
         this.saleId = saleId;
         this.date = date;
         this.customerId = customerId;
@@ -44,7 +64,7 @@ public class SaleRecord implements Serializable {
         this.subtotal = subtotal;
         this.appliedPromotionName = appliedPromotionName;
         this.discountAmount = discountAmount;
-        
+        this.extendedWarrantyCost = extendedWarrantyCost;
     }
     //GETTERS and SETTERS
     public String getSaleId() {
@@ -103,6 +123,12 @@ public class SaleRecord implements Serializable {
     public void setDiscountAmount(double discountAmount) {
         this.discountAmount = discountAmount;
     }
-    
-    
+
+    public double getExtendedWarrantyCost() {
+        return extendedWarrantyCost;
+    }
+
+    public void setExtendedWarrantyCost(double extendedWarrantyCost) {
+        this.extendedWarrantyCost = extendedWarrantyCost;
+    }
 }

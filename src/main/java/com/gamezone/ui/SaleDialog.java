@@ -358,10 +358,11 @@ public class SaleDialog extends javax.swing.JDialog {
 
     private void updateTotals() {
         double subtotal = 0.0;
+        double extWarrantyCost = 0.0;
         for (CartItem ci : cartItems) {
             subtotal += ci.product.getPrice();
             if (ci.extendedWarranty && (ci.product instanceof com.gamezone.model.Console)) {
-                subtotal += (ci.product.getPrice() * 0.10);
+                extWarrantyCost += (ci.product.getPrice() * 0.10);
             }
         }
 
@@ -387,9 +388,9 @@ public class SaleDialog extends javax.swing.JDialog {
             }
         }
 
-        double total = Math.max(0.0, subtotal - discount);
+        double total = Math.max(0.0, subtotal - discount) + extWarrantyCost;
 
-        lblSubtotalValue.setText(String.format(java.util.Locale.US, "$%.2f", subtotal));
+        lblSubtotalValue.setText(String.format(java.util.Locale.US, "$%.2f", subtotal + extWarrantyCost));
         if (discount > 0) {
             lblDiscountValue.setText(String.format(java.util.Locale.US, "-$%.2f (%s)", discount, promoName != null ? promoName : "Promo"));
         } else {

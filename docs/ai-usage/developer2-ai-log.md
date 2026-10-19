@@ -87,3 +87,45 @@ I used Artificial Intelligence as a support tool during the development of the p
 **What I learned:** Git status messages indicate whether files are untracked, modified, staged, or ready to be committed. Understanding these states helps prevent mistakes when managing project changes.
 
 **How I applied it:** I used the explanations to correctly add my files, create commits, and prepare the changes for pushing to the appropriate branch.
+
+### Circular dependency resolution (Adjustment A2)
+
+**Topic:** Breaking circular dependencies in constructor injection.
+
+**Consultation:** I asked how to avoid the circular dependency between `SaleService` and `WarrantyService` when initializing objects in `Main`.
+
+**What I learned:** If `WarrantyService` receives `SaleRepository` and `ProductService` instead of `SaleService` to resolve persisted IDs, `WarrantyService` can be instantiated first and injected into `SaleService` by constructor.
+
+**How I applied it:** I updated the `WarrantyService` constructor and adjusted the initialization order in `Main`.
+
+### Accessory stock restoration on returns (Adjustment A4)
+
+**Topic:** Delegating inventory restoration by subtype in `ReturnService`.
+
+**Consultation:** I asked how `ReturnService` should restore stock when a returned item is an `Accessory` rather than a `VideoGame` or `Console`.
+
+**What I learned:** Since accessories are stored in `AccessoryRepository` and managed by `AccessoryService`, `ReturnService` should check `product instanceof Accessory` and delegate to `AccessoryService.restoreStock`.
+
+**How I applied it:** I validated `AccessoryService.restoreStock` and ensured `ReturnService` delegates stock restoration and record resolution across both `ProductService` and `AccessoryService`.
+
+### Monthly balance breakdown methods (Adjustment A6)
+
+**Topic:** Filtering dates with `LocalDate.getMonthValue()` and `getYear()` in `ReturnService`.
+
+**Consultation:** I asked how to separate the monthly balance calculation into helper methods so the UI can display total sales, total returns, and net balance independently.
+
+**What I learned:** Extracting `calculateMonthlySales(int month, int year)` and `calculateMonthlyReturns(int month, int year)` allows `generateMonthlyBalance(month, year)` to reuse both methods while exposing the intermediate totals to `ConsoleMenu` and `ReportsPanel`.
+
+**How I applied it:** I implemented `calculateMonthlySales` and `calculateMonthlyReturns` in `ReturnService` and updated the UI to display all three values.
+
+### Warranty cancellation on console return (Adjustment A7)
+
+**Topic:** Filtering and persisting remaining records in `WarrantyService.cancelWarranties`.
+
+**Consultation:** I asked how to remove all warranty records (`BasicWarranty` and `ExtendedWarranty`) matching a returned `Console` and `saleId` while accumulating the refundable extended warranty cost.
+
+**What I learned:** Iterating through `repository.loadAll()`, summing `warranty.getAdditionalCost()` for matching `(productId, saleId)` records (`0.0` for basic, `10%` of console price for extended), and saving only the non-matching records cleanly cancels the warranties and returns the exact refundable amount.
+
+**How I applied it:** I implemented `cancelWarranties(String productId, String saleId)` in `WarrantyService` and invoked it from `ReturnService.registerReturn` whenever a returned product is a `Console`.
+
+

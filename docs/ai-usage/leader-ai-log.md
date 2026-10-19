@@ -35,6 +35,17 @@ Asked for help implementing `SaleService` (registerSale with stock validation be
 
 Used AI guidance to confirm the correct commit type for structural changes (`chore:`, per the Conventional Commits examples already given in the workshop guide) when creating the four-layer package structure, and to fix a workflow mistake where package folders had been created directly on `develop` before realizing it was branch-protected — resolved by moving the uncommitted files to a new `feature/project-structure` branch instead of committing to `develop` directly. Also used AI guidance on syncing a teammate's feature branch with an updated `develop` after a structural fix, without merging feature branches into each other directly.
 
-## 7. Other tools
-
 Used GitHub Copilot to translate commit messages and code comments into English where needed, to keep the Conventional Commits convention and JavaDoc consistent with the workshop's English-only requirement for commit messages and documentation.
+
+## 8. Unified sale registration flow (Adjustment A3)
+
+**Context:** Integrating promotions and extended warranties into `SaleService.registerSale` required defining whether percentage discounts apply before or after extended warranty costs.
+
+**Outcome:** Kept `subtotal` strictly as the sum of item prices so `PromotionService.findBestPromotionFor(sale)` calculates discounts only over the items, and stored `extendedWarrantyCost` separately in `Sale` and `SaleRecord` so the final total is `subtotal - discountAmount + extendedWarrantyCost`.
+
+## 9. Integrated Mermaid diagrams and documentation translation (Adjustment A8)
+
+**Context:** Consolidating all four modules (`Accessory`, `Promotion`, `Return`, `Warranty`) into `docs/integrated-class-diagram.md` and `docs/integration-analysis.md`.
+
+**Outcome:** Checked Mermaid `classDiagram` generic syntax (`List~Product~`, `List~String~`) and used Copilot to review the English phrasing of the seven integration adjustment summaries (`A1`–`A7`).
+

@@ -5,10 +5,11 @@ config:
   theme: base
 ---
 flowchart TB
- subgraph UI["UI"]
-        ConsoleMenu["ConsoleMenu / MainApp"]
+ subgraph UI["UI Layer (com.gamezone.ui)"]
+        MainFrame["MainFrame (Swing GUI & Panels/Dialogs)"]
+        ConsoleMenu["ConsoleMenu"]
  end
- subgraph Service["Service"]
+ subgraph Service["Service Layer (com.gamezone.service)"]
         PersonService["PersonService"]
         SaleService["SaleService"]
         ProductService["ProductService"]
@@ -17,37 +18,39 @@ flowchart TB
         ReturnService["ReturnService"]
         WarrantyService["WarrantyService"]
  end
- subgraph DAOLayer["DAO/Repository"]
+ subgraph DAOLayer["Persistence Layer (com.gamezone.persistence)"]
         SaleRepository["SaleRepository"]
+        SaleRecord["SaleRecord"]
         PersonRepository["PersonRepository"]
         ProductRepository["ProductRepository"]
         PromotionRepository["PromotionRepository"]
         AccessoryRepository["AccessoryRepository"]
         ReturnRepository["ReturnRepository"]
+        ReturnRecord["ReturnRecord"]
         WarrantyRepository["WarrantyRepository"]
+        WarrantyRecord["WarrantyRecord"]
  end
  subgraph ModVentas["Sale module"]
         Sale["Sale"]
-        SaleRecord["SaleRecord"]
  end
  subgraph ModPersonas["People module"]
-        Person["«abstract»Person"]
+        Person["«abstract» Person"]
         Customer["Customer"]
         Seller["Seller"]
  end
  subgraph ModProductos["Products module"]
-        Product["«abstract»Product"]
+        Product["«abstract» Product"]
         VideoGame["VideoGame"]
         Console["Console"]
  end
  subgraph ModPromociones["Promotion module"]
-        Promotion["«abstract»Promotion"]
+        Promotion["«abstract» Promotion"]
         PercentageDiscount["PercentageDiscount"]
         CategoryDiscount["CategoryDiscount"]
         BulkPurchaseDiscount["BulkPurchaseDiscount"]
  end
  subgraph ModAccessories["Accessory module"]
-        Accessory["«abstract»Accessory"]
+        Accessory["«abstract» Accessory"]
         Controller["Controller"]
         Cable["Cable"]
         Memory["Memory"]
@@ -56,11 +59,11 @@ flowchart TB
         Return["Return"]
  end
  subgraph ModWarranties["Warranty module"]
-        Warranty["«abstract»Warranty"]
+        Warranty["«abstract» Warranty"]
         BasicWarranty["BasicWarranty"]
         ExtendedWarranty["ExtendedWarranty"]
  end
- subgraph Model["Model"]
+ subgraph Model["Model Layer (com.gamezone.model)"]
         ModVentas
         ModPersonas
         ModProductos
@@ -74,3 +77,4 @@ flowchart TB
     DAOLayer --> Model
 
     L_Service_Model_0@{ curve: natural }
+```

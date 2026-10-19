@@ -176,7 +176,7 @@ public class PromotionDialog extends javax.swing.JDialog {
                 trim();
 
         if ("Categoría".equalsIgnoreCase(selected)) {
-            lblCondition.setText("Categoría (VIDEOGAME/CONSOLE):*");
+            lblCondition.setText("Categoría (VIDEOGAME/CONSOLE/ACCESSORY):*");
             txtCondition.setText("VIDEOGAME");
             txtCondition.setEnabled(true);
         } else if ("Volumen".equalsIgnoreCase(selected)) {
@@ -241,8 +241,8 @@ public class PromotionDialog extends javax.swing.JDialog {
         try {
             if ("Categoría".equalsIgnoreCase(type)) {
                 String cat = conditionStr.toUpperCase();
-                if (!"VIDEOGAME".equals(cat) && !"CONSOLE".equals(cat)) {
-                    JOptionPane.showMessageDialog(this, "La categoría debe ser exactamente VIDEOGAME o CONSOLE.", "Categoría inválida", JOptionPane.WARNING_MESSAGE);
+                if (!"VIDEOGAME".equals(cat) && !"CONSOLE".equals(cat) && !"ACCESSORY".equals(cat)) {
+                    JOptionPane.showMessageDialog(this, "La categoría debe ser exactamente VIDEOGAME, CONSOLE o ACCESSORY.", "Categoría inválida", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
                 promotionService.registerCategoryDiscount(id, name, startDate, endDate, discount, cat);

@@ -55,29 +55,27 @@ public class ReportsPanel extends javax.swing.JPanel {
 
         int month = cmbMonth.getSelectedIndex() + 1;
 
-        double totalSales = 0.0;
+        double totalSales = (returnService != null) ? returnService.calculateMonthlySales(month, year) : 0.0;
         java.util.List<com.gamezone.model.Sale> salesInPeriod = new java.util.ArrayList<>();
         if (saleService != null) {
             for (com.gamezone.model.Sale s : saleService.viewAllSales()) {
                 if (s.getDate() != null && s.getDate().getMonthValue() == month && s.getDate().getYear() == year) {
-                    totalSales += s.getTotalAmount();
                     salesInPeriod.add(s);
                 }
             }
         }
 
-        double totalReturns = 0.0;
+        double totalReturns = (returnService != null) ? returnService.calculateMonthlyReturns(month, year) : 0.0;
         java.util.List<com.gamezone.model.Return> returnsInPeriod = new java.util.ArrayList<>();
         if (returnService != null) {
             for (com.gamezone.model.Return r : returnService.viewAllReturns()) {
                 if (r.getReturnDate() != null && r.getReturnDate().getMonthValue() == month && r.getReturnDate().getYear() == year) {
-                    totalReturns += r.getRefundAmount();
                     returnsInPeriod.add(r);
                 }
             }
         }
 
-        double netBalance = totalSales - totalReturns;
+        double netBalance = (returnService != null) ? returnService.generateMonthlyBalance(month, year) : (totalSales - totalReturns);
 
         lblTotalSalesValue.setText(String.format(java.util.Locale.US, "$%,.2f", totalSales));
         lblTotalReturnsValue.setText(String.format(java.util.Locale.US, "$%,.2f", totalReturns));
