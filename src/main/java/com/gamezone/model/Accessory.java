@@ -53,13 +53,16 @@ public abstract class Accessory extends Product {
      * @return true if the accessory is compatible with the console; otherwise
      * false
      */
-    public boolean isCompatibleWith(String ConsoleId){
-        for(String compatibleId : compatibleConsoleIds){
-            if(compatibleId.equals(ConsoleId))
-                return true; 
+    public boolean isCompatibleWith(String consoleId) {
+        if (compatibleConsoleIds == null || consoleId == null) {
+            return false;
         }
-        
-        return false; 
+        for (String compatibleId : compatibleConsoleIds) {
+            if (consoleId.equals(compatibleId)) {
+                return true;
+            }
+        }
+        return false;
     }
     
     /**
@@ -72,6 +75,14 @@ public abstract class Accessory extends Product {
         return "Title: " + getTitle()
         + ", Compatible console: " + compatibleConsoleIds;
     }
-    
-    
+
+    /**
+     * Returns the product category identifier for accessories.
+     *
+     * @return {@code "ACCESSORY"}
+     */
+    @Override
+    public String getCategory() {
+        return "ACCESSORY";
+    }
 }

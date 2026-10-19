@@ -101,4 +101,14 @@ public class VideoGame extends Product {
                 + ", Age rating: " + ageRating; 
                 
     }
+
+    /**
+     * Returns the product category identifier for video games.
+     *
+     * @return {@code "VIDEOGAME"}
+     */
+    @Override
+    public String getCategory() {
+        return "VIDEOGAME";
+    }
 }

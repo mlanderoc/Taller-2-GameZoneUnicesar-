@@ -137,10 +137,7 @@ public class Return {
     }
 
     private double getDiscountRatio() {
-        if (originalSale != null && originalSale.getSubtotal() > 0) {
-            return originalSale.getDiscountAmount() / originalSale.getSubtotal();
-        }
-        return 0.0;
+        return originalSale != null ? originalSale.getDiscountRatio() : 0.0;
     }
     
     /**

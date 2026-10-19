@@ -96,4 +96,14 @@ public class Console extends Product {
                 + ", Model: " + model
                 + ", Generation: " + generation;
     }
+
+    /**
+     * Returns the product category identifier for consoles.
+     *
+     * @return {@code "CONSOLE"}
+     */
+    @Override
+    public String getCategory() {
+        return "CONSOLE";
+    }
 }

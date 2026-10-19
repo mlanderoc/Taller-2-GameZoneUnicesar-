@@ -126,3 +126,11 @@ I used Artificial Intelligence as a support tool during the development of the p
 - **Consultation:** I asked for standard English phrasing for terms such as *"hallazgo de frontera"* (*boundary finding*) and *"veredicto"* (*verdict*).
 - **What I learned:** Using consistent terminology across the individual audit tables makes consolidation clearer.
 - **How I applied it:** I used those English terms when writing `docs/grasp-audit/developer1-audit.md` and Questions 1 and 3 in `docs/grasp-analysis.md`.
+
+### Phase 2 - Refactoring
+
+#### Polymorphic category dispatch in `Product` and `CategoryDiscount` (`V-02`)
+- **Topic:** Replacing `instanceof` type checks with an abstract method in the `Product` hierarchy.
+- **Consultation:** I asked for a review of my proposed `getCategory()` and `belongsToCategory(String category)` methods in `Product` to make sure existing serialized `.dat` files remain compatible (`serialVersionUID = 1L`).
+- **What I learned:** Adding methods without modifying serialized instance fields preserves binary serialization compatibility with `products.dat` and `Accessory.dat` while eliminating the `instanceof` branches in `CategoryDiscount.calculateDiscount(Sale)`.
+- **How I applied it:** I implemented `getCategory()` and `belongsToCategory(String)` in `Product`, overrode `getCategory()` in `VideoGame`, `Console`, and `Accessory`, and refactored `CategoryDiscount.calculateDiscount(Sale)` (`V-02`), `Return.getDiscountRatio()` (`V-01`), `Accessory.isCompatibleWith` (`V-03`), and `ProductValidator` (`V-05`).

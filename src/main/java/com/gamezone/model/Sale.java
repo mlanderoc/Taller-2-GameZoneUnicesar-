@@ -170,6 +170,19 @@ public class Sale {
     }
     
     /**
+     * Returns the proportional discount ratio applied over the product subtotal
+     * ({@code discountAmount / subtotal}), or {@code 0.0} when subtotal is zero.
+     *
+     * @return the discount ratio between 0.0 and 1.0
+     */
+    public double getDiscountRatio() {
+        if (subtotal > 0) {
+            return discountAmount / subtotal;
+        }
+        return 0.0;
+    }
+
+    /**
      * Checks whether the sale is still within the 30-day return period.
      *
      * @return true if the sale can be returned; otherwise false

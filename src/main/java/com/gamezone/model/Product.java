@@ -108,7 +108,27 @@ public abstract class Product implements Serializable {
      *
      * @return the product description
      */
-    public abstract String getDescription(); 
+    public abstract String getDescription();
+
+    /**
+     * Returns the catalog category name of this product (e.g., "VIDEOGAME",
+     * "CONSOLE", or "ACCESSORY").
+     *
+     * @return the product category identifier
+     */
+    public abstract String getCategory();
+
+    /**
+     * Checks whether this product belongs to the specified category name,
+     * ignoring case sensitivity.
+     *
+     * @param category the target category name to compare against
+     * @return true if this product belongs to the given category; otherwise false
+     */
+    public boolean belongsToCategory(String category) {
+        return category != null && getCategory() != null
+                && getCategory().equalsIgnoreCase(category.trim());
+    }
     
     /**
      * Updates the available stock by the specified quantity.
