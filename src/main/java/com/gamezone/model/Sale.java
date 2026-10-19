@@ -16,6 +16,7 @@ public class Sale {
     private String appliedPromotionName;
     private double discountAmount;
     private double subtotal;
+    private double extendedWarrantyCost;
     
     /**
      * Creates a new Sale.
@@ -38,9 +39,10 @@ public class Sale {
         this.seller = seller;
         this.products = products;
         this.subtotal = calculateTotal();
-        this.totalAmount = subtotal;
         this.discountAmount = 0.0;
-        this.appliedPromotionName = null; 
+        this.extendedWarrantyCost = 0.0;
+        this.appliedPromotionName = null;
+        this.totalAmount = getTotalAmount();
     }
     // Getters and setters
 
@@ -77,11 +79,11 @@ public class Sale {
         }
         this.products = products;
         this.subtotal = calculateTotal();
-        this.totalAmount = subtotal - discountAmount;
+        this.totalAmount = getTotalAmount();
     }
 
     public double getTotalAmount() {
-        return subtotal - discountAmount;
+        return subtotal - discountAmount + extendedWarrantyCost;
     }
 
     public String getAppliedPromotionName() {
@@ -98,6 +100,7 @@ public class Sale {
 
     public void setDiscountAmount(double discountAmount) {
         this.discountAmount = discountAmount;
+        this.totalAmount = getTotalAmount();
     }
 
     public double getSubtotal() {
@@ -106,16 +109,27 @@ public class Sale {
 
     public void setSubtotal(double subtotal) {
         this.subtotal = subtotal;
+        this.totalAmount = getTotalAmount();
+    }
+
+    public double getExtendedWarrantyCost() {
+        return extendedWarrantyCost;
+    }
+
+    public void setExtendedWarrantyCost(double extendedWarrantyCost) {
+        this.extendedWarrantyCost = extendedWarrantyCost;
+        this.totalAmount = getTotalAmount();
     }
     
     
     public void applyDiscount(String promotionName, double discountAmount) {
         this.appliedPromotionName = promotionName;
         this.discountAmount = discountAmount;
-         this.totalAmount = subtotal - discountAmount;
+        this.totalAmount = getTotalAmount();
     }
     /**
-     * Generates a simple text receipt for the sale.
+     * Generates a simple text receipt for the sale showing subtotal,
+     * applied promotion discount, extended warranty cost, and final total.
      *
      * @return the receipt text
      */
@@ -124,8 +138,8 @@ public class Sale {
         StringBuilder sb = new StringBuilder();
         sb.append("Sale ID: ").append(id).append("\n");
         sb.append("Date: ").append(date).append("\n");
-        sb.append("Customer: ").append(customer.getFullName()).append("\n");
-        sb.append("Seller: ").append(seller.getFullName()).append("\n");
+        sb.append("Customer: ").append(customer != null ? customer.getFullName() : "-").append("\n");
+        sb.append("Seller: ").append(seller != null ? seller.getFullName() : "-").append("\n");
         sb.append("Products:\n");
         for (Product product : products) {
             sb.append(" - ").append(product.getDescription()).append("\n");
@@ -138,7 +152,7 @@ public class Sale {
         } else {
             sb.append("Descuento aplicado: Ninguno\n");
         }
-        
+        sb.append("Costo de garantías extendidas: ").append(extendedWarrantyCost).append("\n");
         sb.append("Total: ").append(getTotalAmount());
         return sb.toString();
     }
