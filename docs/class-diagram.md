@@ -71,6 +71,7 @@ classDiagram
         -subtotal: double
         -appliedPromotionName: String
         -discountAmount: double
+        -extendedWarrantyCost: double
         +calculateTotal() double
         +getTotalAmount() double
         +applyDiscount(promotionName String, discountAmount double) void
@@ -108,7 +109,8 @@ classDiagram
         -originalSale: Sale
         -returnedProducts: List~Product~
         -reason: String
-        -refundedAmount: double
+        -warrantyRefundAmount: double
+        -refundAmount: double
         +calculateRefundAmount() double
         +generateReturnReceipt() String
     }
@@ -183,6 +185,7 @@ classDiagram
         -subtotal: double
         -appliedPromotionName: String
         -discountAmount: double
+        -extendedWarrantyCost: double
     }
     class SaleRepository {
         +saveAll(records List~SaleRecord~) void

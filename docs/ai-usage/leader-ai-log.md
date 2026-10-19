@@ -42,3 +42,10 @@ Used GitHub Copilot to translate commit messages and code comments into English 
 **Context:** Integrating promotions and extended warranties into `SaleService.registerSale` required defining whether percentage discounts apply before or after extended warranty costs.
 
 **Outcome:** Kept `subtotal` strictly as the sum of item prices so `PromotionService.findBestPromotionFor(sale)` calculates discounts only over the items, and stored `extendedWarrantyCost` separately in `Sale` and `SaleRecord` so the final total is `subtotal - discountAmount + extendedWarrantyCost`.
+
+## 9. Integrated Mermaid diagrams and documentation translation (Adjustment A8)
+
+**Context:** Consolidating all four modules (`Accessory`, `Promotion`, `Return`, `Warranty`) into `docs/integrated-class-diagram.md` and `docs/integration-analysis.md`.
+
+**Outcome:** Checked Mermaid `classDiagram` generic syntax (`List~Product~`, `List~String~`) and used Copilot to review the English phrasing of the seven integration adjustment summaries (`A1`–`A7`).
+

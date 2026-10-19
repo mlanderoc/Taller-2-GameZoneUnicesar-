@@ -44,39 +44,40 @@ Entity resolutions and object-graph reconstructions are executed cleanly within 
 - Real-time stock decrement upon sale registration.
 
 ### 2. Accessories Management (RE1)
-- Specialized accessories extending the domain model:
+- Specialized accessories extending the `Product` hierarchy:
   - **Controllers:** Wired/wireless connectivity and compatible console model mapping.
   - **Cables:** Length in meters and connector types (HDMI, USB, Optical, etc.).
   - **Memories:** Storage capacity in GB and format (SD, MicroSD, Internal).
 - Query accessories by category and verify real-time compatibility with specific console models.
+- Preloaded default accessories (`A001`, `A002`, `A003`) on first initialization.
 
-### 3. Promotions & Discounts (RE2)
-- Dynamic promotional rules evaluated at checkout:
-  - **Percentage Discount:** Flat percentage off the entire transaction.
-  - **Category Discount:** Targeted discount applying only to eligible items (e.g., video games only).
+### 3. Promotions & Discounts (RE2 & RE5-A1)
+- Dynamic promotional rules evaluated at checkout over the product subtotal:
+  - **Percentage Discount:** Flat percentage off the entire product subtotal.
+  - **Category Discount:** Targeted discount applying to `"VIDEOGAME"`, `"CONSOLE"`, or `"ACCESSORY"` (`instanceof Accessory` covering `Controller`, `Cable`, and `Memory`).
   - **Bulk Purchase Discount:** Tiered discount triggered when purchasing a minimum volume of items.
 - Automated selection algorithm in `PromotionService.findBestPromotionFor` to grant the highest customer savings.
+- Preloaded default promotions (`PROMO001` through `PROMO004`) on first initialization.
 
-### 4. Returns & Inventory Reintegration (RE3)
-- Formal return processing linked to historical sales.
-- **30-day policy rule:** Rejects returns attempted past 30 calendar days from purchase.
-- **Item-sale verification:** Ensures only items present in the original sale can be returned.
-- **Automated stock restoration:** Restores returned inventory back to active stock via `ProductService.restoreStock`.
-- Partial returns supported with automatic refund calculation.
+### 4. Returns, Proportional Refunds & Warranty Cancellation (RE3, RE5-A4, RE5-A5, RE5-A7)
+- Formal return processing linked to historical sales within the **30-day return window**.
+- **Automated stock restoration:** Restores returned inventory via `ProductService.restoreStock` (for video games and consoles) or `AccessoryService.restoreStock` (for accessories).
+- **Proportional discount refund:** When returning items from a discounted sale, refunds the exact proportional amount paid per item (`price * (1 - discount / subtotal)`).
+- **Automatic warranty cancellation:** Returning a `Console` cancels its `BasicWarranty` and/or `ExtendedWarranty` in `warranties.dat` via `WarrantyService.cancelWarranties` and adds any extended warranty surcharge to the total refund.
 
-### 5. Warranties Management (RE4)
-- **Basic Warranty:** Automatically assigned to console purchases with 6-month coverage at zero additional cost.
-- **Extended Warranty:** Optional 12-month comprehensive coverage applied during checkout with a 10% item price surcharge.
-- Search warranties by sale or product ID, filter currently active warranties, and monitor warranties expiring within 30 days.
+### 5. Warranties Management & Unified Checkout (RE4, RE5-A2, RE5-A3)
+- **Basic Warranty:** Automatically assigned to every console sold (6-month coverage at `$0.0` additional cost).
+- **Extended Warranty:** Optional 12-month coverage applied during checkout with a 10% console price surcharge (`extendedWarrantyCost`), kept separate from product `subtotal` so percentage discounts apply strictly to product prices (`total = subtotal - discount + extendedWarrantyCost`).
+- Acyclic constructor dependency injection across `WarrantyService`, `SaleService`, and `ReturnService`.
 
 ### 6. People Management
 - **Customers:** Personal details, contact information, email, and purchase history.
 - **Sellers:** Employee code, work shifts, and attended sales history.
-- Preloaded staff data on first initialization.
+- Preloaded staff data (`V001`, `V002`, `V003`) on first initialization.
 
-### 7. Reports & Financial Balance
+### 7. Reports & Monthly Financial Balance (RE5-A6)
 - Complete sales, returns, and warranty audit history.
-- **Monthly Financial Balance:** Computes total gross sales, total refunded returns, and net operating revenue for any specified month and year.
+- **Monthly Financial Balance:** Exposes `calculateMonthlySales(month, year)`, `calculateMonthlyReturns(month, year)`, and `generateMonthlyBalance(month, year)` in `ReturnService`, displaying all three values in both `ConsoleMenu` and `ReportsPanel`.
 
 ### 8. Graphical User Interface (Swing GUI)
 - Interactive sidebar navigation with real-time panel switching.
@@ -116,9 +117,9 @@ All data is serialized into binary `.dat` files inside the `data/` folder:
 - `data/sellers.dat` (Preloaded with 3 default sellers on first run)
 - `data/customers.dat`
 - `data/products.dat`
-- `data/accessories.dat`
+- `data/Accessory.dat` (Preloaded with 3 default accessories on first run)
 - `data/sales.dat`
-- `data/promotions.dat`
+- `data/promotion.dat` (Preloaded with 4 default promotions on first run)
 - `data/returns.dat`
 - `data/warranties.dat`
 
@@ -134,8 +135,18 @@ GameZoneUnicesar/
 │   └── (serialized data files)
 ├── docs/
 │   ├── analysis.md
+│   ├── accessory-analysis.md
+│   ├── promotion-analysis.md
+│   ├── return-analysis.md
+│   ├── warranty-analysis.md
+│   ├── integration-analysis.md
 │   ├── hierarchy-diagram.md
 │   ├── class-diagram.md
+│   ├── integrated-class-diagram.md
+│   ├── accessory-class-diagram.md
+│   ├── promotion-class-diagram.md
+│   ├── return-class-diagram.md
+│   ├── warranty-class-diagram.md
 │   ├── layers-diagram.md
 │   └── ai-usage/
 │       ├── leader-ai-log.md
@@ -167,8 +178,9 @@ See [TEAM.md](TEAM.md) for detailed role allocations, module ownership, class di
 ## Documentation & Diagrams
 
 - [TEAM Documentation](TEAM.md)
-- [System Analysis](docs/analysis.md)
-- [Hierarchy Diagram](docs/hierarchy-diagram.md)
-- [Class Diagram](docs/class-diagram.md)
-- [Layers Diagram](docs/layers-diagram.md)
+- [System Analysis](docs/analysis.md) | [Integration Analysis (RE5)](docs/integration-analysis.md)
+- [Integrated Class Diagram](docs/integrated-class-diagram.md) | [Class Diagram](docs/class-diagram.md)
+- [Hierarchy Diagram](docs/hierarchy-diagram.md) | [Layers Diagram](docs/layers-diagram.md)
+- Module Analyses: [Accessories](docs/accessory-analysis.md), [Promotions](docs/promotion-analysis.md), [Returns](docs/return-analysis.md), [Warranties](docs/warranty-analysis.md)
+- Module Diagrams: [Accessories](docs/accessory-class-diagram.md), [Promotions](docs/promotion-class-diagram.md), [Returns](docs/return-class-diagram.md), [Warranties](docs/warranty-class-diagram.md)
 - AI Usage Logs: [Technical Lead](docs/ai-usage/leader-ai-log.md), [Developer 1](docs/ai-usage/developer1-ai-log.md), [Developer 2](docs/ai-usage/developer2-ai-log.md)
