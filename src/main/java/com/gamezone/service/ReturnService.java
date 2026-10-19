@@ -21,11 +21,20 @@ import java.util.UUID;
  */
 public class ReturnService {
 
-    private ReturnRepository returnRepository;
-    private SaleService saleService;
-    private ProductService productService;
-    private AccessoryService accessoryService;
+    private final ReturnRepository returnRepository;
+    private final SaleService saleService;
+    private final ProductService productService;
+    private final AccessoryService accessoryService;
 
+    /**
+     * Creates the return service with access to both product and accessory services
+     * so returned accessories have their stock properly restored and resolved.
+     *
+     * @param returnRepository repository for return records
+     * @param saleService service used to look up original sales
+     * @param productService service used to restore and resolve products
+     * @param accessoryService service used to restore and resolve accessories
+     */
     public ReturnService(ReturnRepository returnRepository, SaleService saleService,
                           ProductService productService, AccessoryService accessoryService) {
         this.returnRepository = returnRepository;
@@ -183,10 +192,12 @@ public class ReturnService {
         List<Product> returnedProducts = new ArrayList<>();
         for (String productId : record.getProductIds()) {
             Product product = productService.findById(productId);
-            if (product == null) {
+            if (product == null && accessoryService != null) {
                 product = accessoryService.findById(productId);
             }
-            returnedProducts.add(product);
+            if (product != null) {
+                returnedProducts.add(product);
+            }
         }
 
         Return returnObj = new Return(record.getReturnId(), record.getReturnDate(),
