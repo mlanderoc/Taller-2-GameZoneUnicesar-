@@ -268,6 +268,8 @@ classDiagram
     }
     class WarrantyService {
         -repository: WarrantyRepository
+        -saleRepository: SaleRepository
+        -productService: ProductService
         +assignBasicWarranty(product Product, sale Sale, startDate LocalDate) BasicWarranty
         +assignExtendedWarranty(product Product, sale Sale, startDate LocalDate) ExtendedWarranty
         +findWarrantyByProduct(productId String, saleId String) Warranty
@@ -305,6 +307,8 @@ classDiagram
     AccessoryService ..> Accessory
     PromotionService "1" --> "1" PromotionRepository
     WarrantyService "1" --> "1" WarrantyRepository
+    WarrantyService "1" --> "1" SaleRepository
+    WarrantyService "1" --> "1" ProductService
     WarrantyService ..> Warranty
  
     SaleService "1" --> "1" SaleRepository

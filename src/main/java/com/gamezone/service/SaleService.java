@@ -31,12 +31,18 @@ public class SaleService {
     private AccessoryService accessoryService;
     private WarrantyService warrantyService;
 
-    public SaleService(SaleRepository saleRepository, ProductService productService, PersonService personService,PromotionService promotionService,AccessoryService accessoryService) {
+    public SaleService(SaleRepository saleRepository, ProductService productService, PersonService personService, PromotionService promotionService, AccessoryService accessoryService) {
+        this(saleRepository, productService, personService, promotionService, accessoryService, null);
+    }
+
+    public SaleService(SaleRepository saleRepository, ProductService productService, PersonService personService,
+                       PromotionService promotionService, AccessoryService accessoryService, WarrantyService warrantyService) {
         this.saleRepository = saleRepository;
         this.productService = productService;
         this.personService = personService;
         this.promotionService = promotionService;
-        this.accessoryService= accessoryService;
+        this.accessoryService = accessoryService;
+        this.warrantyService = warrantyService;
     }
 
     public void setWarrantyService(WarrantyService warrantyService) {
