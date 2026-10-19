@@ -34,6 +34,29 @@ For the Technical Lead to accept any verdict into `docs/grasp-audit/consolidated
 
 ---
 
+## 2. Boundary Findings Between Team Members' Code
+
+**Question:** *Some violations manifest at the boundary between the code of two team members, for example when a class of one member depends inappropriately on a class of another. What findings of this type did the team identify? How were they recorded in the consolidation and to whom was their correction assigned? Present at least one concrete case or, if there were none, explain how you verified that none existed.*
+
+### Boundary Findings Identified by the Team
+
+During the individual audits, the team identified **four concrete boundary findings** where a responsibility crossed the ownership boundary between two team members:
+
+1. **Boundary Case 1 — Discount Ratio Calculation Between `Return` (Developer 1) and `Sale` (Technical Lead):**
+   - **Evidence:** In `Return.getDiscountRatio()` (`Return.java`, lines 139–144, developed by Developer 1), `Return` extracts `originalSale.getDiscountAmount()` and `originalSale.getSubtotal()` from `Sale` (developed by the Technical Lead) to compute `discountAmount / subtotal` externally.
+   - **Consolidation & Assignment:** Unified in `consolidated-audit.md` as violation `V-01` (**Information Expert**). In Phase 2, the **Technical Lead (`mlanderoc`)** adds `public double getDiscountRatio()` to `Sale`, and **Developer 1 (`craulgomez`)** refactors `Return.getDiscountRatio()` to delegate to `originalSale.getDiscountRatio()`.
+2. **Boundary Case 2 — Product Lookup Within a Sale Between `ReturnService` (Developer 2) and `Sale` (Technical Lead):**
+   - **Evidence:** In `ReturnService.findInSale(Sale sale, String productId)` (`ReturnService.java`, lines 210–217, developed by Developer 2), `ReturnService` iterates over `sale.getProducts()` externally because `Sale` (Technical Lead) did not expose an expert lookup method `findProductById(String productId)`.
+   - **Consolidation & Assignment:** Unified in `consolidated-audit.md` as violation `V-04` (**Information Expert**). In Phase 2, the **Technical Lead (`mlanderoc`)** adds `public Product findProductById(String productId)` to `Sale`, and **Developer 2 (`Hectorguevara22`)** refactors `ReturnService.findInSale` to delegate to `sale.findProductById(productId)`.
+3. **Boundary Case 3 — Console Compatibility Check Between `AccessoryService` (Developer 2) and `Accessory` (Developer 1):**
+   - **Evidence:** In `AccessoryService.findAcessoriesCOmpatibleWith(String consoleId)` (`AccessoryService.java`, lines 72–78, Developer 2), the service calls `accessory.getCompatibleConsoleIds().contains(consoleId)` instead of invoking `accessory.isCompatibleWith(consoleId)` defined in `Accessory` (`Accessory.java`, lines 56–63, Developer 1).
+   - **Consolidation & Assignment:** Recorded in `consolidated-audit.md` as `V-03` (**Information Expert**). **Developer 1 (`craulgomez`)** ensures null-safe list traversal in `Accessory.isCompatibleWith(String)`, and **Developer 2 (`Hectorguevara22`)** refactors `AccessoryService.findAcessoriesCOmpatibleWith` to call `accessory.isCompatibleWith(consoleId)`.
+4. **Boundary Case 4 — Subtype & Promotion Validations Between `ProductValidator` (Developer 1) and `AccessoryService` / `PromotionService` (Developer 2) & Constructor Coupling Between `AccessoryService` (Developer 2) and `Main` (Technical Lead):**
+   - **Evidence:** `AccessoryService` (`AccessoryService.java`, lines 38–40 & 57–59) and `PromotionService` (`PromotionService.java`, lines 53–58, 66–68, 74–90) retained inline `InvalidDataException` / `BusinessRuleException` checks because `ProductValidator` (Developer 1) only covered base `Product` attributes (`V-05`). Additionally, `Main.java` (line 40, Technical Lead) had to pass `accessoryRepository.loadAll()` into `new AccessoryService(accessoryRepository, accessoryRepository.loadAll())` (`V-06`).
+   - **Consolidation & Assignment:** **Developer 1 (`craulgomez`)** adds the missing static validator methods to `ProductValidator`, **Developer 2 (`Hectorguevara22`)** delegates validation in `AccessoryService` and `PromotionService` and adds the single-argument `AccessoryService(AccessoryRepository)` constructor, and the **Technical Lead (`mlanderoc`)** updates `Main` to invoke `new AccessoryService(accessoryRepository)`.
+
+---
+
 ## 3. Overlapping GRASP Patterns and De-Duplication of Findings
 
 **Question:** *Some patterns are closely related to each other. Did the team find code fragments that violate more than one pattern at the same time? How were they recorded without duplicating findings and how was it decided which pattern guides the correction?*
