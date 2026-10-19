@@ -197,3 +197,30 @@ if (storageCapacityGb <= 0) {
 | 7 | **Pure Fabrication** | **Violation** | `V-03`: `ProductValidator` lacks subtype validation methods for `Accessory` subclasses (`Cable`, `Controller`, `Memory`), leaving inline checks in `AccessoryService`. |
 | 8 | **Indirection** | **Correct** | `ProductRepository` decouples `ProductService` from binary file I/O. |
 | 9 | **Protected Variations** | **Correct** | Abstract hierarchies (`Product`, `Promotion`, `Warranty`, `GameZoneException`) and `Repository<Product>` shield clients from variations. |
+
+---
+
+## 4. Detailed Class & Method Verification Matrix
+
+| Class | Requirement / Module | Audited Methods | GRASP Patterns Evaluated | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| `Product` | Taller 1 — Products | Constructor, `getId`, `setId`, `getTitle`, `setTitle`, `getPrice`, `setPrice`, `getStock`, `setStock`, `getDescription` (abstract), `updateStock` | Information Expert (`updateStock`), Polymorphism (`getDescription`), Low Coupling | Correct *(to be extended with `getCategory()` / `belongsToCategory(String)` for `V-02`)* |
+| `VideoGame` | Taller 1 — Products | Constructor, `getPlatform`, `setPlatform`, `getGenre`, `setGenre`, `getAgeRating`, `setAgeRating`, `getDescription` | Information Expert, Polymorphism (`@Override getDescription`), High Cohesion | Correct |
+| `Console` | Taller 1 — Products | Constructor, `getBrand`, `setBrand`, `getModel`, `setModel`, `getGeneration`, `setGeneration`, `getDescription` | Information Expert, Polymorphism (`@Override getDescription`), High Cohesion | Correct |
+| `ProductRepository` | Taller 1 / RE6 — Products | `save`, `findAll`, `findById`, `saveAll`, `loadAll` | Pure Fabrication, Indirection, Protected Variations (`Repository<Product>`), Creator (`PersistenceException`) | Correct |
+| `ProductService` | Taller 1 / RE6 — Products | Constructor, `findById`, `registerVideoGame`, `registerConsole`, `listAllProducts`, `updateStock` | Creator (`VideoGame`, `Console`), High Cohesion, Low Coupling | Correct |
+| `Accessory` | RE1 — Accessories | Constructor, `getCompatibleConsoleIds`, `setCompatibleConsoleIds`, `isCompatibleWith`, `getDescription` | Information Expert (`isCompatibleWith`), Polymorphism (`@Override getDescription`) | Correct |
+| `Controller` | RE1 — Accessories | Constructor, `getConnectionType`, `setConnectionType`, `getDescription` | Information Expert, Polymorphism (`@Override getDescription`), High Cohesion | Correct |
+| `Cable` | RE1 — Accessories | Constructor, `getLengthInMeters`, `setLengthInMeters`, `getConnectorType`, `setConnectorType`, `getDescription` | Information Expert, Polymorphism (`@Override getDescription`), High Cohesion | Correct |
+| `Memory` | RE1 — Accessories | Constructor, `getStorageCapacityGb`, `setStorageCapacityGb`, `getMemoryType`, `setMemoryType`, `getDescription` | Information Expert, Polymorphism (`@Override getDescription`), High Cohesion | Correct |
+| `Promotion` | RE2 — Promotions | Constructor, getters/setters, `isActive`, `calculateDiscount` (abstract) | Information Expert (`isActive`), Polymorphism (`calculateDiscount`), Protected Variations | Correct |
+| `PercentageDiscount` | RE2 — Promotions | Constructor, `getDiscountPercentage`, `setDiscountPercentage`, `calculateDiscount` | Information Expert, Polymorphism (`@Override calculateDiscount`) | Correct |
+| `CategoryDiscount` | RE2 / RE5-A1 — Promotions | Constructor, `getDiscountPercentage`, `setDiscountPercentage`, `getCategoryObjective`, `setCategoryObjective`, `calculateDiscount` | Polymorphism (`calculateDiscount`) | **Violation (`V-02`)**: uses `instanceof` checks instead of polymorphic category query on `Product` |
+| `BulkPurchaseDiscount` | RE2 — Promotions | Constructor, `getMinimumQuantity`, `setMinimumQuantity`, `getDiscountPercentage`, `setDiscountPercentage`, `calculateDiscount` | Information Expert, Polymorphism (`@Override calculateDiscount`) | Correct |
+| `Return` | RE3 / RE5-A5 — Returns | Constructor, getters/setters, `calculateRefundAmount`, `getDiscountRatio`, `generateReturnReceipt` | Information Expert (`calculateRefundAmount`, `generateReturnReceipt`, `getDiscountRatio`) | **Violation (`V-01`)**: `getDiscountRatio()` computes `discountAmount / subtotal` from `Sale`'s raw getters instead of delegating to `Sale` |
+| `Sale.canBeReturned` | RE3 — Returns | `canBeReturned()` (`Sale.java`, lines 177–183) | Information Expert (`date` and 30-day window) | Correct |
+| `Warranty` | RE4 — Warranties | Constructor, getters, `getDurationInMonths`, `getWarrantyType`, `getAdditionalCost`, `isActive`, `generateWarrantyCertificate` | Information Expert (`isActive`, `endDate`), Polymorphism, Protected Variations | Correct |
+| `BasicWarranty` | RE4 — Warranties | Constructor, `getDurationInMonths`, `getWarrantyType`, `getAdditionalCost` | Polymorphism (`6` months, `$0.0` cost), High Cohesion | Correct |
+| `ExtendedWarranty` | RE4 — Warranties | Constructor, `getDurationInMonths`, `getWarrantyType`, `getAdditionalCost` | Polymorphism (`12` months), Information Expert (`10%` of product price) | Correct |
+| `GameZoneException` & Subclasses | RE6 — Exceptions | Constructors, `getErrorCode` in `GameZoneException`, `ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, `PersistenceException` | Polymorphism, Low Coupling, High Cohesion, Protected Variations | Correct |
+| `ProductValidator`, `PersonValidator`, `SaleValidator` | RE6 — Validations | All static `validate*` methods | Pure Fabrication, High Cohesion, Low Coupling, Creator | **Violation (`V-03`)**: `ProductValidator` lacks subtype validation methods for `Cable`, `Controller`, and `Memory` |
