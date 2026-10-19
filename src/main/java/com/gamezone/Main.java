@@ -69,12 +69,17 @@ public class Main {
     public static void preloadPromotionsIfNeeded(PromotionService promotionService) {
         if (promotionService.listAllPromotions().isEmpty()) {
             promotionService.registerPercentageDiscount(
-                    "PROMO001", "Descuento general", LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30), 15.0);
+                    "PROMO001", "Descuento general", LocalDate.of(2026, 9, 1), LocalDate.of(2026, 12, 31), 15.0);
             promotionService.registerCategoryDiscount(
-                    "PROMO002", "Descuento videojuegos", LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30), 20.0, "VIDEOGAME");
+                    "PROMO002", "Descuento videojuegos", LocalDate.of(2026, 9, 1), LocalDate.of(2026, 12, 31), 20.0, "VIDEOGAME");
             promotionService.registerBulkPurchaseDiscount(
-                    "PROMO003", "Descuento por volumen", LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30), 3, 10.0);
+                    "PROMO003", "Descuento por volumen", LocalDate.of(2026, 9, 1), LocalDate.of(2026, 12, 31), 3, 10.0);
+            promotionService.registerCategoryDiscount(
+                    "PROMO004", "Descuento accesorios", LocalDate.of(2026, 9, 1), LocalDate.of(2026, 12, 31), 25.0, "ACCESSORY");
             System.out.println("Promotions preloaded successfully.");
+        } else if (promotionService.findById("PROMO004") == null) {
+            promotionService.registerCategoryDiscount(
+                    "PROMO004", "Descuento accesorios", LocalDate.of(2026, 9, 1), LocalDate.of(2026, 12, 31), 25.0, "ACCESSORY");
         }
     }
     //add preload accessory
