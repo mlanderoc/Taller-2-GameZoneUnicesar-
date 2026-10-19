@@ -31,3 +31,32 @@ For the Technical Lead to accept any verdict into `docs/grasp-audit/consolidated
   Concrete citation of the class name, method signature, and line range demonstrating how the responsibility is properly assigned in `develop`.
 - **For a `Not Applicable` verdict:**
   Architectural justification explaining why the audited classes do not participate in the interaction governed by that pattern.
+
+---
+
+## 3. Overlapping GRASP Patterns and De-Duplication of Findings
+
+**Question:** *Some patterns are closely related to each other. Did the team find code fragments that violate more than one pattern at the same time? How were they recorded without duplicating findings and how was it decided which pattern guides the correction?*
+
+### Overlapping Violations Identified
+
+Yes. Because several GRASP patterns reinforce one another (for instance, **Polymorphism** and **Protected Variations**, or **Pure Fabrication** and **High Cohesion**, or **Information Expert** and **Low Coupling**), the team identified three code fragments that simultaneously touch more than one pattern:
+
+1. **`CategoryDiscount.calculateDiscount(Sale)` (`CategoryDiscount.java`, lines 78–90):**
+   - **Patterns involved:** **Polymorphism** and **Protected Variations** (and **Information Expert** on `Product`).
+   - **Why both apply:** Using `product instanceof VideoGame`, `product instanceof Console`, and `product instanceof Accessory` violates **Polymorphism** (dispatching behavior via type conditionals instead of overriding a method in the hierarchy) and simultaneously weakens **Protected Variations** (failing to shield `CategoryDiscount` from the addition of new `Product` subclasses).
+   - **How it was recorded and guided:** Recorded once (`V-02` in `developer1-audit.md`, consolidated as `V-02`) under **Polymorphism** as the primary guiding pattern, because introducing `public abstract String getCategory()` and `belongsToCategory(String)` in `Product` is the direct polymorphic mechanism that automatically satisfies Protected Variations.
+2. **Inline subtype validations in `AccessoryService` & `PromotionService` vs. `com.gamezone.validation` (`ProductValidator` / `PromotionValidator`):**
+   - **Patterns involved:** **Pure Fabrication** and **High Cohesion**.
+   - **Why both apply:** Keeping format/range validations (`lengthInMeters <= 0`, `storageCapacityGb <= 0`, promotion date/percentage checks) inside `AccessoryService` and `PromotionService` lowers the **High Cohesion** of the services while leaving the **Pure Fabrication** validation layer (`com.gamezone.validation`) incomplete.
+   - **How it was recorded and guided:** Recorded without duplication by assigning the missing validator methods in `ProductValidator` under **Pure Fabrication** and the extraction of inline checks from `PromotionService` / `AccessoryService` under **High Cohesion / Pure Fabrication**, guided by extracting validation rules into `com.gamezone.validation`.
+3. **External calculation of `discountAmount / subtotal` in `Return.getDiscountRatio()` (`Return.java`, lines 139–144):**
+   - **Patterns involved:** **Information Expert** and **Low Coupling**.
+   - **Why both apply:** `Return` reaches into `Sale`'s internal state (`getDiscountAmount()` and `getSubtotal()`) to compute a ratio that belongs to `Sale`.
+   - **How it was recorded and guided:** Recorded under **Information Expert** as the guiding pattern, since placing `getDiscountRatio()` in `Sale` (the owner of `subtotal` and `discountAmount`) directly resolves the coupling in `Return`.
+
+### De-Duplication Rule
+
+To avoid inflating or duplicating violations across the nine pattern sections:
+- Each problematic code fragment is registered **only once** as a numbered `Violation` (`V-XX`) under the **most specific root-cause pattern** that dictates the concrete code refactoring (e.g., **Polymorphism** when replacing `instanceof` with an overridden method; **Information Expert** when moving a calculation to the class that owns the attributes; **Pure Fabrication / High Cohesion** when moving non-domain validation rules to a dedicated validator).
+- In the section of the secondary related pattern (e.g., **Protected Variations**), the report cross-references the primary violation ID (`V-XX`) instead of creating a duplicate entry.
