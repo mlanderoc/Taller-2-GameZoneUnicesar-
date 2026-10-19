@@ -1,6 +1,7 @@
 package com.gamezone.service;
 
 import com.gamezone.model.Accessory;
+import com.gamezone.model.Console;
 import com.gamezone.model.Product;
 import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
@@ -16,8 +17,9 @@ import java.util.UUID;
 /**
  * Handles business rules for registering and querying product returns,
  * validating the 30-day return window and that returned products
- * actually belong to the referenced sale, and restoring stock through
- * ProductService or AccessoryService as appropriate.
+ * actually belong to the referenced sale, restoring stock through
+ * ProductService or AccessoryService, and cancelling associated console
+ * warranties through WarrantyService.
  */
 public class ReturnService {
 
@@ -25,10 +27,10 @@ public class ReturnService {
     private final SaleService saleService;
     private final ProductService productService;
     private final AccessoryService accessoryService;
+    private final WarrantyService warrantyService;
 
     /**
-     * Creates the return service with access to both product and accessory services
-     * so returned accessories have their stock properly restored and resolved.
+     * Creates the return service without a warranty service reference.
      *
      * @param returnRepository repository for return records
      * @param saleService service used to look up original sales
@@ -37,17 +39,35 @@ public class ReturnService {
      */
     public ReturnService(ReturnRepository returnRepository, SaleService saleService,
                           ProductService productService, AccessoryService accessoryService) {
+        this(returnRepository, saleService, productService, accessoryService, null);
+    }
+
+    /**
+     * Creates the return service with access to product, accessory, and warranty services
+     * so returned products have their stock restored and returned consoles have their
+     * associated warranties cancelled and refunded.
+     *
+     * @param returnRepository repository for return records
+     * @param saleService service used to look up original sales
+     * @param productService service used to restore and resolve products
+     * @param accessoryService service used to restore and resolve accessories
+     * @param warrantyService service used to cancel warranties of returned consoles
+     */
+    public ReturnService(ReturnRepository returnRepository, SaleService saleService,
+                          ProductService productService, AccessoryService accessoryService,
+                          WarrantyService warrantyService) {
         this.returnRepository = returnRepository;
         this.saleService = saleService;
         this.productService = productService;
         this.accessoryService = accessoryService;
+        this.warrantyService = warrantyService;
     }
 
     /**
      * Registers a new return: validates the original sale exists, that it is
      * still within the 30-day return window, and that every product being
      * returned actually belongs to that sale. Restores stock for each
-     * returned product and persists the return.
+     * returned product, cancels warranties for returned consoles, and persists the return.
      *
      * @param saleId     id of the original sale
      * @param productIds ids of the products being returned
@@ -81,15 +101,21 @@ public class ReturnService {
 
         String returnId = UUID.randomUUID().toString();
         Return returnObj = new Return(returnId, LocalDate.now(), originalSale, returnedProducts, reason);
-        returnObj.calculateRefundAmount();
 
+        double warrantyRefund = 0.0;
         for (Product product : returnedProducts) {
             if (product instanceof Accessory) {
                 accessoryService.restoreStock(product.getId(), 1);
             } else {
                 productService.restoreStock(product.getId(), 1);
+                if (product instanceof Console && warrantyService != null) {
+                    warrantyRefund += warrantyService.cancelWarranties(product.getId(), saleId);
+                }
             }
         }
+
+        returnObj.setWarrantyRefundAmount(warrantyRefund);
+        returnObj.calculateRefundAmount();
 
         ReturnRecord record = toRecord(returnObj);
         List<ReturnRecord> records = returnRepository.loadAll();
@@ -230,6 +256,11 @@ public class ReturnService {
 
         Return returnObj = new Return(record.getReturnId(), record.getReturnDate(),
                 originalSale, returnedProducts, record.getReason());
+        double productsOnlyRefund = returnObj.calculateRefundAmount();
+        double warrantyDiff = record.getRefundedAmount() - productsOnlyRefund;
+        if (warrantyDiff > 0.001) {
+            returnObj.setWarrantyRefundAmount(warrantyDiff);
+        }
         returnObj.setRefundAmount(record.getRefundedAmount());
         return returnObj;
     }

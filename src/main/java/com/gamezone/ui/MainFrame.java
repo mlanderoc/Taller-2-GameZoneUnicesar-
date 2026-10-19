@@ -44,10 +44,9 @@ public class MainFrame extends javax.swing.JFrame {
         PersonService perService = new PersonService(personRepository);
         PromotionService promoService = new PromotionService(promotionRepository);
         AccessoryService accService = new AccessoryService(accessoryRepository, accessoryRepository.loadAll());
-        SaleService salService = new SaleService(saleRepository, prodService, perService, promoService, accService);
-        WarrantyService warService = new WarrantyService(warrantyRepository, salService, prodService);
-        salService.setWarrantyService(warService);
-        ReturnService retService = new ReturnService(returnRepository, salService, prodService, accService);
+        WarrantyService warService = new WarrantyService(warrantyRepository, saleRepository, prodService);
+        SaleService salService = new SaleService(saleRepository, prodService, perService, promoService, accService, warService);
+        ReturnService retService = new ReturnService(returnRepository, salService, prodService, accService, warService);
 
         Main.preloadSellersIfNeeded(perService);
         Main.preloadPromotionsIfNeeded(promoService);
