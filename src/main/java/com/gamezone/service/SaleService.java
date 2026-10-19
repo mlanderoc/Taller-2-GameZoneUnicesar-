@@ -12,6 +12,8 @@ import com.gamezone.persistence.SaleRecord;
 import com.gamezone.persistence.SaleRepository;
 import com.gamezone.model.Console;
 import com.gamezone.model.ExtendedWarranty;
+import com.gamezone.validation.ProductValidator;
+import com.gamezone.validation.SaleValidator;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -50,7 +52,7 @@ public class SaleService {
     }
     /**
      * Registers a new sale following the unified 8-step registration flow:
-     * 1. Validate that the sale has at least one item.
+     * 1. Validate that the sale has a customer, seller, and at least one item.
      * 2. Resolve each item as a product or accessory and validate its stock.
      * 3. Create the sale and calculate the item subtotal.
      * 4. Query the best active promotion and apply the discount over the subtotal.
@@ -64,15 +66,12 @@ public class SaleService {
      * @param items    the products and accessories included in the sale
      * @param productIdsWithExtendedWarranty console IDs that requested an extended warranty
      * @return the registered Sale
-     * @throws IllegalArgumentException if items is null/empty or stock is insufficient
      */
     public Sale registerSale(Customer customer, Seller seller, List<Product> items, List<String> productIdsWithExtendedWarranty) {
-        // 1. Validate that the sale has at least one item
-        if (items == null || items.isEmpty()) {
-            throw new IllegalArgumentException("Una venta debe contener al menos un producto");
-        }
+        // 1. Validate customer, seller, and that the sale has at least one item
+        SaleValidator.validateSaleData(customer, seller, items);
 
-        // 2. Resolve each item as product or accessory and validate its stock
+        // 2. Resolve each item as product or accessory and validate its existence and stock
         List<Product> resolvedItems = new ArrayList<>();
         for (Product item : items) {
             Product current;
@@ -82,12 +81,8 @@ public class SaleService {
                 current = productService.findById(item.getId());
             }
 
-            if (current == null) {
-                throw new IllegalArgumentException("Producto o accesorio no encontrado: " + item.getId());
-            }
-            if (current.getStock() <= 0) {
-                throw new IllegalArgumentException("Inventario insuficiente: " + current.getTitle());
-            }
+            ProductValidator.validateProductExists(current, item.getId());
+            ProductValidator.validateStockAvailability(current, 1);
             resolvedItems.add(current);
         }
 
