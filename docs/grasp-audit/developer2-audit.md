@@ -167,3 +167,49 @@ if (lengthInMeters <= 0) {
 - **`Person.getSummary()` (`Person.java` line 151; overridden in `Customer.java` lines 31–39 and `Seller.java` lines 78–88):** Allows callers to format summaries of any `Person` instance polymorphically.
 - **`PromotionService.findBestPromotionFor(Sale)` (`PromotionService.java`, lines 107–120):** Evaluates `p.calculateDiscount(sale)` polymorphically across `PercentageDiscount`, `CategoryDiscount`, and `BulkPurchaseDiscount` without checking concrete promotion subclasses.
 - **`WarrantyService.cancelWarranties(String, String)` (`WarrantyService.java`, line 118):** Computes `refundableCost += warranty.getAdditionalCost()` polymorphically (`0.0` for `BasicWarranty`, `10%` of console price for `ExtendedWarranty`).
+
+---
+
+### 2.7 Pure Fabrication
+
+- **Verdict:** **Correct** *(with inline service validations covered under `V-04` High Cohesion above)*
+
+#### Justification & Evidence
+- **`PersonRepository`, `AccessoryRepository`, `PromotionRepository`, `ReturnRepository`, `WarrantyRepository` (`com.gamezone.persistence`):** All five repository classes are textbook **Pure Fabrications** created to encapsulate binary serialization (`data/customers.dat`, `data/sellers.dat`, `data/Accessory.dat`, `data/promotion.dat`, `data/returns.dat`, `data/warranties.dat`) outside the `Person`, `Accessory`, `Promotion`, `Return`, and `Warranty` domain entities.
+- **`ReturnRecord` and `WarrantyRecord` (`com.gamezone.persistence`):** Pure Fabrication DTOs created to persist relational identifiers (`saleId`, `productIds`, `productId`) without serializing live domain object graphs.
+
+---
+
+### 2.8 Indirection
+
+- **Verdict:** **Correct**
+
+#### Justification & Evidence
+- **Repositories & DTOs (`ReturnRepository` + `ReturnRecord`, `WarrantyRepository` + `WarrantyRecord`):** Decouple the service layer (`ReturnService`, `WarrantyService`) and domain model (`Return`, `Warranty`) from the physical storage layout on disk (`ObjectInputStream` / `ObjectOutputStream`).
+- **`ReturnService` as an Intermediary Coordinator (`ReturnService.java`, lines 79–117):** Coordinates `SaleService`, `ProductService`, `AccessoryService`, `WarrantyService`, and `ReturnRepository` so that `ConsoleMenu` and `ReturnDialog` do not couple directly to multiple repositories or inventory/warranty cancellation internals when registering a return.
+
+---
+
+### 2.9 Protected Variations
+
+- **Verdict:** **Correct**
+
+#### Justification & Evidence
+- **`Repository<T>` Contract Implementation:** `PersonRepository` (`implements Repository<Person>`), `AccessoryRepository` (`implements Repository<Accessory>`), `PromotionRepository` (`implements Repository<Promotion>`), `ReturnRepository` (`implements Repository<ReturnRecord>`), and `WarrantyRepository` (`implements Repository<WarrantyRecord>`) implement the common `Repository<T>` interface, protecting services against variations in how entities are stored.
+- **Exception Wrapping in Repositories (Requirement 6):** All five repositories catch checked `IOException | ClassNotFoundException` internally and rethrow `PersistenceException`, shielding the service and presentation layers from low-level storage API variations.
+
+---
+
+## 3. Summary of Verdicts (Developer 2)
+
+| # | GRASP Pattern | Verdict | Findings |
+| :--- | :--- | :--- | :--- |
+| 1 | **Information Expert** | **Violation** | `V-01`: `AccessoryService.findAcessoriesCOmpatibleWith` checks `getCompatibleConsoleIds().contains(...)` instead of calling `accessory.isCompatibleWith(consoleId)`.<br>`V-02`: `ReturnService.findInSale` iterates `sale.getProducts()` externally instead of delegating to `Sale.findProductById(productId)`. |
+| 2 | **Creator** | **Correct** | Properly applied across `PersonService`, `AccessoryService`, `PromotionService`, `ReturnService`, and `WarrantyService`. |
+| 3 | **Controller** | **Correct** | Services act as use-case facade controllers behind `ConsoleMenu` and Swing UI components. |
+| 4 | **Low Coupling** | **Violation** | `V-03`: `AccessoryService` constructor requires an unused `List<Accessory>` parameter from `Main`, causing redundant repository loading coupling. |
+| 5 | **High Cohesion** | **Violation** | `V-04`: `PromotionService` and `AccessoryService` retain inline input/range validation logic instead of delegating to `com.gamezone.validation`. |
+| 6 | **Polymorphism** | **Correct** | Properly applied in `Person.getSummary()`, `PromotionService.findBestPromotionFor`, and `WarrantyService.cancelWarranties`. |
+| 7 | **Pure Fabrication** | **Correct** | Repositories and DTO records (`ReturnRecord`, `WarrantyRecord`) isolate persistence concerns outside the domain model. |
+| 8 | **Indirection** | **Correct** | Repositories and `ReturnService` decouple UI and domain components from storage and cross-module workflows. |
+| 9 | **Protected Variations** | **Correct** | `Repository<T>` interface and `PersistenceException` wrapping shield callers from storage variations. |
