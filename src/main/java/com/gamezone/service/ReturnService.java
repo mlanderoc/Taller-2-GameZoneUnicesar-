@@ -137,26 +137,54 @@ public class ReturnService {
     }
 
     /**
-     * Calculates the net balance (total sales minus total returns) for a
-     * given month and year.
+     * Calculates the total final amount of all sales registered in the given month and year,
+     * after promotional discounts and including extended warranty costs.
+     *
+     * @param month month of the year (1-12)
+     * @param year  calendar year
+     * @return total sales amount for the period
      */
-    public double generateMonthlyBalance(int month, int year) {
+    public double calculateMonthlySales(int month, int year) {
         double totalSales = 0.0;
         for (Sale sale : saleService.viewAllSales()) {
-            if (sale.getDate().getMonthValue() == month && sale.getDate().getYear() == year) {
+            if (sale.getDate() != null
+                    && sale.getDate().getMonthValue() == month
+                    && sale.getDate().getYear() == year) {
                 totalSales += sale.getTotalAmount();
             }
         }
+        return totalSales;
+    }
 
+    /**
+     * Calculates the total refunded amount of all returns registered in the given month and year.
+     *
+     * @param month month of the year (1-12)
+     * @param year  calendar year
+     * @return total returns amount for the period
+     */
+    public double calculateMonthlyReturns(int month, int year) {
         double totalReturns = 0.0;
         for (Return returnObj : viewAllReturns()) {
-            if (returnObj.getReturnDate().getMonthValue() == month
+            if (returnObj.getReturnDate() != null
+                    && returnObj.getReturnDate().getMonthValue() == month
                     && returnObj.getReturnDate().getYear() == year) {
                 totalReturns += returnObj.getRefundAmount();
             }
         }
+        return totalReturns;
+    }
 
-        return totalSales - totalReturns;
+    /**
+     * Calculates the net balance (total sales minus total returns) for a
+     * given month and year.
+     *
+     * @param month month of the year (1-12)
+     * @param year  calendar year
+     * @return net balance for the period
+     */
+    public double generateMonthlyBalance(int month, int year) {
+        return calculateMonthlySales(month, year) - calculateMonthlyReturns(month, year);
     }
 
     /**
