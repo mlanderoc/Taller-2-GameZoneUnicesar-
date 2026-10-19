@@ -39,9 +39,8 @@ public class Main {
         PromotionService promotionService = new PromotionService(promotionRepository);
         AccessoryService accessoryService = new AccessoryService(accessoryRepository,accessoryRepository.loadAll());
         
-        SaleService saleService = new SaleService(saleRepository, productService, personService,promotionService,accessoryService);
-        WarrantyService warrantyService = new WarrantyService(warrantyRepository, saleService, productService);
-        saleService.setWarrantyService(warrantyService);
+        WarrantyService warrantyService = new WarrantyService(warrantyRepository, saleRepository, productService);
+        SaleService saleService = new SaleService(saleRepository, productService, personService, promotionService, accessoryService, warrantyService);
         ReturnService returnService = new ReturnService(returnRepository, saleService, productService, accessoryService);
 
         preloadSellersIfNeeded(personService);
