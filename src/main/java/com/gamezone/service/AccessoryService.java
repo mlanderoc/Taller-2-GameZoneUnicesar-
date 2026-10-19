@@ -71,9 +71,7 @@ public class AccessoryService {
     }
     public List<Accessory> findAcessoriesCOmpatibleWith(String consoleId) {
         return accessories.stream()
-                .filter(accessory ->
-                        accessory.getCompatibleConsoleIds() != null &&
-                        accessory.getCompatibleConsoleIds().contains(consoleId))
+                .filter(accessory -> accessory != null && accessory.isCompatibleWith(consoleId))
                 .collect(Collectors.toList());
     }
     /**
