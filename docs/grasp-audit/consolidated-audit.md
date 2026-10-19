@@ -228,3 +228,28 @@ AccessoryService accessoryService = new AccessoryService(accessoryRepository,acc
 | **Consequence** | Lowers cohesion and readability in `SaleService` and leaves `ProductService.restoreStock` without symmetric input protection. |
 | **Agreed Solution** | 1. Extract private helper methods `resolveCatalogItem(String productId)` and `adjustCatalogStock(Product item, int quantityDelta)` in `SaleService` and use them in `registerSale` and `toSale`.<br>2. Add `if (quantity <= 0) throw new InvalidDataException(...)` in `ProductService.restoreStock`. |
 | **Responsible for Correction** | **Technical Lead (`mlanderoc`)** in `SaleService.java` and `ProductService.java` (`restoreStock`). |
+
+---
+
+## 4. Boundary Findings (Hallazgos de Frontera)
+
+In accordance with Section 4 of Requirement 7 (*"Una violación de frontera (que involucra el código de más de un integrante) se registra una sola vez en la auditoría consolidada. Cada integrante corrige la parte que está bajo su responsabilidad y el Líder Técnico coordina el orden de los commits"*), five of the seven consolidated violations cross module boundaries between team members and were unified as follows:
+
+| Consolidated ID | Boundary Classes Involved | Origin Reports Unified | Responsibility Split for Phase 2 Refactoring |
+| :--- | :--- | :--- | :--- |
+| **`V-01`** | `Sale` (Technical Lead) ↔ `Return` (Developer 1) | `developer1-audit` `V-01` + `leader-audit` `V-01` | **Step 1 (Technical Lead — `mlanderoc`):** Adds `public double getDiscountRatio()` in `Sale.java`.<br>**Step 2 (Developer 1 — `craulgomez`):** Refactors `Return.getDiscountRatio()` in `Return.java` to call `originalSale.getDiscountRatio()`. |
+| **`V-03`** | `Accessory` (Developer 1) ↔ `AccessoryService` (Developer 2) | `developer2-audit` `V-01` | **Step 1 (Developer 1 — `craulgomez`):** Adds null-safe guard in `Accessory.isCompatibleWith(String)` (`Accessory.java`).<br>**Step 2 (Developer 2 — `Hectorguevara22`):** Refactors `AccessoryService.findAcessoriesCOmpatibleWith(String)` to delegate to `accessory.isCompatibleWith(consoleId)`. |
+| **`V-04`** | `Sale` (Technical Lead) ↔ `ReturnService` (Developer 2) | `developer2-audit` `V-02` + `leader-audit` `V-01` | **Step 1 (Technical Lead — `mlanderoc`):** Adds `public Product findProductById(String productId)` in `Sale.java`.<br>**Step 2 (Developer 2 — `Hectorguevara22`):** Refactors `ReturnService.findInSale(Sale, String)` to delegate to `sale.findProductById(productId)`. |
+| **`V-05`** | `ProductValidator` (Developer 1) ↔ `AccessoryService` & `PromotionService` (Developer 2) | `developer1-audit` `V-03` + `developer2-audit` `V-04` | **Step 1 (Developer 1 — `craulgomez`):** Adds static subtype and promotion validation methods (`validateCableData`, `validateMemoryData`, `validatePromotionBase`, `validateCategoryObjective`, `validateMinimumQuantity`) in `ProductValidator.java`.<br>**Step 2 (Developer 2 — `Hectorguevara22`):** Refactors `AccessoryService.java` and `PromotionService.java` to delegate inline checks to `ProductValidator`. |
+| **`V-06`** | `AccessoryService` (Developer 2) ↔ `Main` (Technical Lead) | `developer2-audit` `V-03` + `leader-audit` `V-02` | **Step 1 (Developer 2 — `Hectorguevara22`):** Adds single-argument constructor `public AccessoryService(AccessoryRepository repository)` in `AccessoryService.java`.<br>**Step 2 (Technical Lead — `mlanderoc`):** Updates `Main.main` (`Main.java` line 40) to call `new AccessoryService(accessoryRepository)`. |
+
+---
+
+## 5. Out-of-Scope Functional Findings (Hallazgos Fuera de Alcance)
+
+Per Section 2 of Requirement 7 (*"Durante la auditoría pueden aparecer defectos funcionales: comportamientos incorrectos del sistema cuya corrección cambiaría lo que el usuario observa... Estos defectos no se corrigen en este requerimiento, porque hacerlo rompería la regla de preservación del comportamiento. Se registran en una sección aparte de la auditoría consolidada"*), the following functional observations were recorded as **out of scope** and intentionally left untouched to preserve 100% of the observable system behavior:
+
+| Finding ID | Class & Method | Evidence (`develop` `3f14c06`) | Why It Is Out of Scope for Requirement 7 |
+| :--- | :--- | :--- | :--- |
+| **`F-01`** | `ReturnService.registerReturn(String saleId, List<String> productIds, String reason)` (`ReturnService.java`, lines 79–117) | Validates that each `productId` exists in `originalSale` and that the sale is within 30 days, but does not cross-check previously persisted `ReturnRecord` entries for the same `saleId` to reject returning an already-returned unit in a second return operation. | Adding a new `BusinessRuleException` for previously returned items would alter observable runtime behavior on repeated returns and introduce a functional rule not specified in Requirements 3 or 5. |
+| **`F-02`** | `SaleService.registerSale(...)` (`SaleService.java`, lines 76–87) | Validates `ProductValidator.validateStockAvailability(current, 1)` per item iteration before stock deduction in step 7, rather than aggregating requested counts when the same `productId` appears multiple times in the same cart. | Changing how multi-unit cart validation fails when `stock == 1` would alter the point at which `BusinessRuleException` is thrown during checkout. |
