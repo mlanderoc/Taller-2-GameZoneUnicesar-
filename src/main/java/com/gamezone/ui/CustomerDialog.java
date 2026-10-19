@@ -4,7 +4,10 @@
  */
 package com.gamezone.ui;
 
-import com.gamezone.service.PersonService;                             
+import com.gamezone.exceptions.BusinessRuleException;
+import com.gamezone.exceptions.InvalidDataException;
+import com.gamezone.exceptions.PersistenceException;
+import com.gamezone.service.PersonService;
 import javax.swing.JOptionPane;
 /**
  *
@@ -202,6 +205,12 @@ public class CustomerDialog extends javax.swing.JDialog {
                 customerPanel.loadCustomers();
             }
             dispose(); // Cierra la ventanita
+        } catch (BusinessRuleException ex) {
+            JOptionPane.showMessageDialog(this, "No se puede completar la operación: " + ex.getMessage(), "Regla de negocio", JOptionPane.WARNING_MESSAGE);
+        } catch (InvalidDataException ex) {
+            JOptionPane.showMessageDialog(this, "Los datos ingresados no son válidos: " + ex.getMessage(), "Datos inválidos", JOptionPane.WARNING_MESSAGE);
+        } catch (PersistenceException ex) {
+            JOptionPane.showMessageDialog(this, "Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.", "Error de persistencia", JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error al registrar: "
                     + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
