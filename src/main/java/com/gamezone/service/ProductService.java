@@ -1,6 +1,7 @@
 
 package com.gamezone.service;
 
+import com.gamezone.exceptions.InvalidDataException;
 import com.gamezone.model.Product;
 import com.gamezone.model.VideoGame;
 import com.gamezone.model.Console;
@@ -140,6 +141,10 @@ public class ProductService {
      * @param quantity the quantity to add back to stock (must be positive)
      */
     public void restoreStock(String productId, int quantity) {
+        if (quantity <= 0) {
+            throw new InvalidDataException("quantity", "La cantidad a reintegrar debe ser mayor a cero.");
+        }
         updateStock(productId, quantity);
     }
 }
+
