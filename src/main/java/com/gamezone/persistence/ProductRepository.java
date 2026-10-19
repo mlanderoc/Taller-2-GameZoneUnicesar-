@@ -1,6 +1,7 @@
 
 package com.gamezone.persistence;
 
+import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.model.Product;
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,7 +39,7 @@ public class ProductRepository {
                output.writeObject(products);
             
         } catch(IOException exception){
-            throw new RuntimeException("Error saving products", exception);
+            throw new PersistenceException("Error de escritura en el archivo " + FILE_PATH, exception);
         }
     }
     
@@ -61,7 +62,7 @@ public class ProductRepository {
             return (List<Product>) input.readObject();
             
         } catch (IOException | ClassNotFoundException exception){
-            throw new RuntimeException("Error loading products", exception);
+            throw new PersistenceException("Error de lectura en el archivo " + FILE_PATH, exception);
         }
     }
 }   
