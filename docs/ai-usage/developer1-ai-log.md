@@ -98,3 +98,14 @@ I used Artificial Intelligence as a support tool during the development of the p
  **What I learned:** Checking `originalSale != null && originalSale.getSubtotal() > 0` before dividing ensures safe calculation of `price * (1 - discount / subtotal)`.
  
  **How I applied it:** I updated `calculateRefundAmount` and `generateReturnReceipt` in `Return` to compute and display the list price, proportional discount, and net refund per item.
+
+### Custom unchecked exception hierarchy (Requirement 6)
+
+ **Topic:** Extending `RuntimeException` and chaining constructors with `super(message, cause)`
+ 
+ **Consultation:** I asked how to preserve the original `IOException` stack trace inside `PersistenceException` while keeping an `errorCode` attribute in the abstract `GameZoneException` base class.
+ 
+ **What I learned:** Adding a protected constructor `GameZoneException(String message, String errorCode, Throwable cause)` that calls `super(message, cause)` allows `PersistenceException` to store both the error code and the root cause.
+ 
+ **How I applied it:** I implemented `GameZoneException`, its four specialized subclasses in `com.gamezone.exceptions`, and the static validator classes in `com.gamezone.validation`.
+
