@@ -74,13 +74,7 @@ public class SaleService {
         // 2. Resolve each item as product or accessory and validate its existence and stock
         List<Product> resolvedItems = new ArrayList<>();
         for (Product item : items) {
-            Product current;
-            if (item instanceof Accessory) {
-                current = accessoryService.findById(item.getId());
-            } else {
-                current = productService.findById(item.getId());
-            }
-
+            Product current = findCatalogProduct(item);
             ProductValidator.validateProductExists(current, item.getId());
             ProductValidator.validateStockAvailability(current, 1);
             resolvedItems.add(current);
@@ -114,11 +108,7 @@ public class SaleService {
 
         // 7. Update inventory delegating to ProductService or AccessoryService according to item type
         for (Product item : resolvedItems) {
-            if (item instanceof Accessory) {
-                accessoryService.updateStock(item.getId(), -1);
-            } else {
-                productService.updateStock(item.getId(), -1);
-            }
+            decrementStock(item);
         }
 
         // 8. Persist the sale (warranties were persisted upon assignment)
@@ -226,11 +216,7 @@ public class SaleService {
         List<Product> products = new ArrayList<>();
         
         for (String productId : record.getProductIds()) {
-            Product item = productService.findById(productId);
-            
-            if (item == null) {
-                item = accessoryService.findById(productId);
-            }
+            Product item = findCatalogProductById(productId);
             if (item != null) {
                 products.add(item);
             }
@@ -243,5 +229,37 @@ public class SaleService {
         sale.setExtendedWarrantyCost(record.getExtendedWarrantyCost());
         
         return sale;
+    }
+
+    /**
+     * Resolves a product or accessory from the corresponding catalog service.
+     */
+    private Product findCatalogProduct(Product item) {
+        if (item instanceof Accessory) {
+            return accessoryService.findById(item.getId());
+        }
+        return productService.findById(item.getId());
+    }
+
+    /**
+     * Resolves a product or accessory by its identifier across both catalog services.
+     */
+    private Product findCatalogProductById(String productId) {
+        Product item = productService.findById(productId);
+        if (item == null) {
+            item = accessoryService.findById(productId);
+        }
+        return item;
+    }
+
+    /**
+     * Decrements stock by one unit for the given product or accessory.
+     */
+    private void decrementStock(Product item) {
+        if (item instanceof Accessory) {
+            accessoryService.updateStock(item.getId(), -1);
+        } else {
+            productService.updateStock(item.getId(), -1);
+        }
     }
 }
