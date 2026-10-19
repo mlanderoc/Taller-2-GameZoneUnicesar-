@@ -118,3 +118,14 @@ I used Artificial Intelligence as a support tool during the development of the p
 
 **How I applied it:** I implemented `calculateMonthlySales` and `calculateMonthlyReturns` in `ReturnService` and updated the UI to display all three values.
 
+### Warranty cancellation on console return (Adjustment A7)
+
+**Topic:** Filtering and persisting remaining records in `WarrantyService.cancelWarranties`.
+
+**Consultation:** I asked how to remove all warranty records (`BasicWarranty` and `ExtendedWarranty`) matching a returned `Console` and `saleId` while accumulating the refundable extended warranty cost.
+
+**What I learned:** Iterating through `repository.loadAll()`, summing `warranty.getAdditionalCost()` for matching `(productId, saleId)` records (`0.0` for basic, `10%` of console price for extended), and saving only the non-matching records cleanly cancels the warranties and returns the exact refundable amount.
+
+**How I applied it:** I implemented `cancelWarranties(String productId, String saleId)` in `WarrantyService` and invoked it from `ReturnService.registerReturn` whenever a returned product is a `Console`.
+
+

@@ -277,6 +277,7 @@ classDiagram
         +listAllWarranties() List~Warranty~
         +listActiveWarranties() List~Warranty~
         +listWarrantiesExpiringSoon(daysAhead int) List~Warranty~
+        +cancelWarranties(productId String, saleId String) double
     }
     class SaleService {
         -saleRepository: SaleRepository
@@ -295,6 +296,7 @@ classDiagram
         -saleService: SaleService
         -productService: ProductService
         -accessoryService: AccessoryService
+        -warrantyService: WarrantyService
         +registerReturn(saleId String, productIds List~String~, reason String) Return
         +viewAllReturns() List~Return~
         +viewReturnsByCustomer(customerId String) List~Return~
@@ -328,6 +330,7 @@ classDiagram
     ReturnService "1" --> "1" SaleService
     ReturnService "1" --> "1" ProductService
     ReturnService "1" --> "1" AccessoryService
+    ReturnService "1" --> "1" WarrantyService
     ReturnService ..> Return
     ReturnService ..> ReturnRecord
  
