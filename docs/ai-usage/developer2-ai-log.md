@@ -87,3 +87,13 @@ I used Artificial Intelligence as a support tool during the development of the p
 **What I learned:** Git status messages indicate whether files are untracked, modified, staged, or ready to be committed. Understanding these states helps prevent mistakes when managing project changes.
 
 **How I applied it:** I used the explanations to correctly add my files, create commits, and prepare the changes for pushing to the appropriate branch.
+
+### Circular dependency resolution (Adjustment A2)
+
+**Topic:** Breaking circular dependencies in constructor injection.
+
+**Consultation:** I asked how to avoid the circular dependency between `SaleService` and `WarrantyService` when initializing objects in `Main`.
+
+**What I learned:** If `WarrantyService` receives `SaleRepository` and `ProductService` instead of `SaleService` to resolve persisted IDs, `WarrantyService` can be instantiated first and injected into `SaleService` by constructor.
+
+**How I applied it:** I updated the `WarrantyService` constructor and adjusted the initialization order in `Main`.
