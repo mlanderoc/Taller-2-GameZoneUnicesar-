@@ -35,9 +35,7 @@ public class AccessoryService {
     public void registerCable(double lengthInMeters, String connectorType, List<String> compatibleConsoleIds, String id, String title, double price, int stock) {
         ProductValidator.validateProductData(id, title, price, stock);
         ProductValidator.validateUniqueProduct(findById(id), id);
-        if (lengthInMeters <= 0) {
-            throw new InvalidDataException("longitud", "La longitud del cable debe ser mayor que cero.");
-        }
+        ProductValidator.validateCableData(lengthInMeters);
         Cable cable = new Cable(lengthInMeters, connectorType, compatibleConsoleIds, id, title, price, stock);
         accessories.add(cable);
         repository.saveAll(accessories);
@@ -54,9 +52,7 @@ public class AccessoryService {
     public void registerMemory(int storageCapacityGb, String memoryType, List<String> compatibleConsoleIds, String id, String title, double price, int stock) {
         ProductValidator.validateProductData(id, title, price, stock);
         ProductValidator.validateUniqueProduct(findById(id), id);
-        if (storageCapacityGb <= 0) {
-            throw new InvalidDataException("capacidad", "La capacidad de almacenamiento debe ser mayor que cero.");
-        }
+        ProductValidator.validateMemoryData(storageCapacityGb);
         Memory memory = new Memory(storageCapacityGb, memoryType, compatibleConsoleIds, id, title, price, stock);
         accessories.add(memory);
         repository.saveAll(accessories);
