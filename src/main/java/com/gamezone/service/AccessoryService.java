@@ -71,25 +71,38 @@ public class AccessoryService {
                         accessory.getCompatibleConsoleIds().contains(consoleId))
                 .collect(Collectors.toList());
     }
+    /**
+     * Updates the stock of an accessory by the given delta.
+     *
+     * @param accessoryId the identifier of the accessory to update
+     * @param quantity the quantity to add to or subtract from the stock
+     */
     public void updateStock(String accessoryId, int quantity) {
-    Accessory accessory = findById(accessoryId);
+        Accessory accessory = findById(accessoryId);
 
-    if (accessory == null) {
-        throw new IllegalArgumentException("Accessory with this ID does not exist");
+        if (accessory == null) {
+            throw new IllegalArgumentException("Accessory with this ID does not exist");
+        }
+
+        if (accessory.getStock() + quantity < 0) {
+            throw new IllegalArgumentException("The stock cannot be negative");
+        }
+
+        accessory.updateStock(quantity);
+        repository.saveAll(accessories);
     }
 
-    accessory.updateStock(quantity);
-    repository.saveAll(accessories);
-}
-/**
- * Increases the stock of an accessory by the given quantity.
- * Used when a return is processed.
- *
- * @param accessoryId the id of the accessory to restore
- * @param quantity the quantity to add back to stock
- */
-public void restoreStock(String accessoryId, int quantity) {
-    updateStock(accessoryId, quantity);
-}
-        
+    /**
+     * Increases the stock of an accessory by the given quantity.
+     * Used when a return is processed and the accessory goes back to inventory.
+     *
+     * @param accessoryId the id of the accessory to restore
+     * @param quantity the quantity to add back to stock (must be positive)
+     */
+    public void restoreStock(String accessoryId, int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity to restore must be positive");
+        }
+        updateStock(accessoryId, quantity);
+    }
 }

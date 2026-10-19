@@ -254,6 +254,7 @@ classDiagram
         +listAccessoriesByType(type String) List~Accessory~
         +findAccessoriesCompatibleWith(consoleId String) List~Accessory~
         +updateStock(accessoryId String, quantity int) void
+        +restoreStock(accessoryId String, quantity int) void
         +findById(id String) Accessory
     }
     class PromotionService {
@@ -293,6 +294,7 @@ classDiagram
         -returnRepository: ReturnRepository
         -saleService: SaleService
         -productService: ProductService
+        -accessoryService: AccessoryService
         +registerReturn(saleId String, productIds List~String~, reason String) Return
         +viewAllReturns() List~Return~
         +viewReturnsByCustomer(customerId String) List~Return~
@@ -323,6 +325,7 @@ classDiagram
     ReturnService "1" --> "1" ReturnRepository
     ReturnService "1" --> "1" SaleService
     ReturnService "1" --> "1" ProductService
+    ReturnService "1" --> "1" AccessoryService
     ReturnService ..> Return
     ReturnService ..> ReturnRecord
  

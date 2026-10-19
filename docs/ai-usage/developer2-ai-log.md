@@ -97,3 +97,13 @@ I used Artificial Intelligence as a support tool during the development of the p
 **What I learned:** If `WarrantyService` receives `SaleRepository` and `ProductService` instead of `SaleService` to resolve persisted IDs, `WarrantyService` can be instantiated first and injected into `SaleService` by constructor.
 
 **How I applied it:** I updated the `WarrantyService` constructor and adjusted the initialization order in `Main`.
+
+### Accessory stock restoration on returns (Adjustment A4)
+
+**Topic:** Delegating inventory restoration by subtype in `ReturnService`.
+
+**Consultation:** I asked how `ReturnService` should restore stock when a returned item is an `Accessory` rather than a `VideoGame` or `Console`.
+
+**What I learned:** Since accessories are stored in `AccessoryRepository` and managed by `AccessoryService`, `ReturnService` should check `product instanceof Accessory` and delegate to `AccessoryService.restoreStock`.
+
+**How I applied it:** I validated `AccessoryService.restoreStock` and ensured `ReturnService` delegates stock restoration and record resolution across both `ProductService` and `AccessoryService`.
