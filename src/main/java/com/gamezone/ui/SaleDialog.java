@@ -449,6 +449,14 @@ public class SaleDialog extends javax.swing.JDialog {
                 salePanel.loadSales();
             }
             dispose();
+        } catch (com.gamezone.exceptions.ResourceNotFoundException ex) {
+            javax.swing.JOptionPane.showMessageDialog(this, "No se encontró el recurso solicitado: " + ex.getMessage(), "Recurso no encontrado", javax.swing.JOptionPane.WARNING_MESSAGE);
+        } catch (com.gamezone.exceptions.BusinessRuleException ex) {
+            javax.swing.JOptionPane.showMessageDialog(this, "No se puede completar la operación: " + ex.getMessage(), "Regla de negocio", javax.swing.JOptionPane.WARNING_MESSAGE);
+        } catch (com.gamezone.exceptions.InvalidDataException ex) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Los datos ingresados no son válidos: " + ex.getMessage(), "Datos inválidos", javax.swing.JOptionPane.WARNING_MESSAGE);
+        } catch (com.gamezone.exceptions.PersistenceException ex) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.", "Error de persistencia", javax.swing.JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
             javax.swing.JOptionPane.showMessageDialog(this, "Error al registrar la venta: " + ex.getMessage(), "Error en venta", javax.swing.JOptionPane.ERROR_MESSAGE);
         }

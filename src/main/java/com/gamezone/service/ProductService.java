@@ -5,6 +5,7 @@ import com.gamezone.model.Product;
 import com.gamezone.model.VideoGame;
 import com.gamezone.model.Console;
 import com.gamezone.persistence.ProductRepository;
+import com.gamezone.validation.ProductValidator;
 import java.util.List;
 
 /**
@@ -42,7 +43,7 @@ public class ProductService {
     }
     
     /**
-     * Registers a new video game.
+     * Registers a new video game after validating product data and unique identifier.
      *
      * @param id the unique identifier of the video game
      * @param title the title of the video game
@@ -55,9 +56,8 @@ public class ProductService {
     public void registerVideoGame(String id, String title, double price, int stock,
                 String platform, String genre, String ageRating) {
         
-        if(findById(id) != null){
-            throw new IllegalArgumentException ("A product with this ID already exists");
-        }
+        ProductValidator.validateProductData(id, title, price, stock);
+        ProductValidator.validateUniqueProduct(findById(id), id);
         
         VideoGame videoGame = new VideoGame(
                 id, title,
@@ -71,7 +71,7 @@ public class ProductService {
     }
     
     /**
-     * Registers a new console.
+     * Registers a new console after validating product data and unique identifier.
      *
      * @param id the unique identifier of the console
      * @param title the title of the console
@@ -84,11 +84,8 @@ public class ProductService {
     public void registerConsole(String id, String title, double price, int stock,
                 String brand, String model, String generation){
       
-        if(findById(id) != null){
-            throw new IllegalArgumentException(
-                    "A product with this ID already exists"
-            );
-        }
+        ProductValidator.validateProductData(id, title, price, stock);
+        ProductValidator.validateUniqueProduct(findById(id), id);
         
         Console console = new Console(
                 id, title,
@@ -111,22 +108,17 @@ public class ProductService {
     }
     
     /**
-     * Updates the stock of a product.
+     * Updates the stock of a product after validating existence and available stock.
      *
      * @param productId the identifier of the product to update
      * @param quantity the quantity to add to or subtract from the stock
      */
     public void updateStock(String productId, int quantity){
         Product product = findById(productId);
+        ProductValidator.validateProductExists(product, productId);
         
-        if(product == null){
-            throw new IllegalArgumentException("Product not found");
-        }
-        
-        if(product.getStock() + quantity < 0){
-            throw new IllegalArgumentException(
-                    "the stock cannot be negative"
-            ); 
+        if(quantity < 0){
+            ProductValidator.validateStockAvailability(product, -quantity);
         }
         
         product.updateStock(quantity);

@@ -1,5 +1,6 @@
 
 package com.gamezone.persistence;
+import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.model.Accessory;
 import java.io.*;
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ public class AccessoryRepository {
                output.writeObject(accessories);
             
         } catch(IOException exception){
-            throw new RuntimeException("Error saving Accesories", exception);
+            throw new PersistenceException("Error de escritura en el archivo " + FILE_PATH, exception);
         }
     }
      
@@ -39,7 +40,7 @@ public class AccessoryRepository {
             return (List<Accessory>) input.readObject();
             
         } catch (IOException | ClassNotFoundException exception){
-            throw new RuntimeException("Error loading Accesories", exception);
+            throw new PersistenceException("Error de lectura en el archivo " + FILE_PATH, exception);
         }
     }
     

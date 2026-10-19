@@ -1,5 +1,6 @@
 package com.gamezone.service;
 
+import com.gamezone.exceptions.BusinessRuleException;
 import com.gamezone.model.Accessory;
 import com.gamezone.model.Console;
 import com.gamezone.model.Product;
@@ -7,6 +8,7 @@ import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
 import com.gamezone.persistence.ReturnRecord;
 import com.gamezone.persistence.ReturnRepository;
+import com.gamezone.validation.SaleValidator;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -73,27 +75,16 @@ public class ReturnService {
      * @param productIds ids of the products being returned
      * @param reason     reason for the return
      * @return the registered Return
-     * @throws IllegalArgumentException if any validation fails
      */
     public Return registerReturn(String saleId, List<String> productIds, String reason) {
         Sale originalSale = saleService.findSaleById(saleId);
-        if (originalSale == null) {
-            throw new IllegalArgumentException("La venta indicada no existe.");
-        }
-
-        if (!originalSale.canBeReturned()) {
-            throw new IllegalArgumentException("El plazo de 30 días para devolver esta venta ya expiró.");
-        }
-
-        if (productIds == null || productIds.isEmpty()) {
-            throw new IllegalArgumentException("Debe indicar al menos un producto a devolver.");
-        }
+        SaleValidator.validateReturnData(originalSale, saleId, productIds, reason);
 
         List<Product> returnedProducts = new ArrayList<>();
         for (String productId : productIds) {
             Product match = findInSale(originalSale, productId);
             if (match == null) {
-                throw new IllegalArgumentException(
+                throw new BusinessRuleException(
                         "El producto " + productId + " no pertenece a la venta indicada.");
             }
             returnedProducts.add(match);

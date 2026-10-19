@@ -10,21 +10,29 @@ The application features both a rich **Java Swing Graphical User Interface (GUI)
 
 ## Architecture
 
-The codebase is organized into four distinct layers under the root package `com.gamezone`, adhering strictly to a one-directional dependency rule: `ui → service → persistence → model`.
+The codebase is organized into distinct layers under the root package `com.gamezone`, adhering strictly to a one-directional dependency rule: `ui → service → validation → model` and `ui → service → persistence → model`, with `exceptions` serving as a cross-cutting package.
 
 - `model`: Domain entities, business value objects, and inheritance hierarchies. Depends on nothing else.
-- `persistence`: Repositories and DTO records responsible for saving and loading data files. Depends only on `model`.
-- `service`: Business rules, transaction coordination, stock updates, discount algorithms, and reporting. Depends on `model` and `persistence`.
-- `ui`: Presentation layer including the Swing graphical interface (`MainFrame`, sub-panels, dialogs) and `ConsoleMenu`. Depends only on `service`.
+- `exceptions`: Cross-cutting custom exception hierarchy rooted at `GameZoneException` (`RuntimeException`), with specialized subclasses `ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, and `PersistenceException`.
+- `validation`: Dedicated static validators per functional module (`ProductValidator`, `PersonValidator`, `SaleValidator`) invoked by the service layer before executing business logic. Depends only on `model` and `exceptions`.
+- `persistence`: Repositories and DTO records responsible for saving and loading data files, wrapping low-level `IOException` errors into `PersistenceException` with file and operation context. Depends only on `model` and `exceptions`.
+- `service`: Business rules, transaction coordination, stock updates, discount algorithms, and reporting. Delegates validations to `validation` and depends on `model`, `persistence`, `validation`, and `exceptions`.
+- `ui`: Presentation layer including the Swing graphical interface (`MainFrame`, sub-panels, dialogs) and `ConsoleMenu`, featuring differentiated exception catching to provide clear Spanish error messages by category. Depends on `service`, `model`, and `exceptions`.
 
-See the full architectural diagram and rationale in [docs/layers-diagram.md](docs/layers-diagram.md).
+See the full architectural diagram and rationale in [docs/layers-diagram.md](docs/layers-diagram.md) and the exception layer diagram in [docs/exception-class-diagram.md](docs/exception-class-diagram.md).
 
 ```mermaid
 flowchart TD
     UI["ui (Swing GUI & ConsoleMenu)"] --> SERVICE["service"]
+    SERVICE --> VALIDATION["validation"]
     SERVICE --> PERSISTENCE["persistence"]
     SERVICE --> MODEL["model"]
+    VALIDATION --> MODEL
     PERSISTENCE --> MODEL
+    EXCEPTIONS["exceptions (Cross-Cutting)"] -.-> UI
+    EXCEPTIONS -.-> SERVICE
+    EXCEPTIONS -.-> VALIDATION
+    EXCEPTIONS -.-> PERSISTENCE
 ```
 
 ### Design Note: Persistence DTO Records
@@ -84,6 +92,15 @@ Entity resolutions and object-graph reconstructions are executed cleanly within 
 - Dedicated management views: Customers, Sellers, Products, Accessories, Sales, Promotions, Returns, Warranties, and Reports.
 - Dynamic search filtering, modal creation forms with input validation, and detailed receipt preview dialogs.
 
+### 9. Exception Handling & Validation Layer (RE6)
+- **Custom Exception Hierarchy (`com.gamezone.exceptions`):** Rooted at abstract `GameZoneException` (`RuntimeException`) with error codes and four specialized subclasses:
+  - `ResourceNotFoundException` (`ERR-NOT-FOUND`): Thrown when a requested product, accessory, customer, seller, or sale ID does not exist.
+  - `BusinessRuleException` (`ERR-BUSINESS-RULE`): Thrown when a domain rule is violated (insufficient stock, duplicate ID, empty sale cart, expired 30-day return window).
+  - `InvalidDataException` (`ERR-INVALID-DATA`): Thrown when input parameters fail format or range checks (blank strings, negative prices/quantities, invalid email format).
+  - `PersistenceException` (`ERR-PERSISTENCE`): Wraps `IOException` and `ClassNotFoundException` in repositories with file path and read/write operation context.
+- **Dedicated Validators (`com.gamezone.validation`):** `ProductValidator`, `PersonValidator`, and `SaleValidator` centralize input and domain verification before service operations execute.
+- **Differentiated User Messaging:** `ConsoleMenu` and Swing dialogs catch each specific exception subtype to display clear, category-specific messages in Spanish without exposing technical stack traces.
+
 ## Requirements
 
 - Java 17 or later
@@ -140,9 +157,11 @@ GameZoneUnicesar/
 │   ├── return-analysis.md
 │   ├── warranty-analysis.md
 │   ├── integration-analysis.md
+│   ├── exception-analysis.md
 │   ├── hierarchy-diagram.md
 │   ├── class-diagram.md
 │   ├── integrated-class-diagram.md
+│   ├── exception-class-diagram.md
 │   ├── accessory-class-diagram.md
 │   ├── promotion-class-diagram.md
 │   ├── return-class-diagram.md
@@ -158,10 +177,12 @@ GameZoneUnicesar/
     │   │   └── com/
     │   │       └── gamezone/
     │   │           ├── Main.java
+    │   │           ├── exceptions/
     │   │           ├── model/
     │   │           ├── persistence/
     │   │           ├── service/
-    │   │           └── ui/
+    │   │           ├── ui/
+    │   │           └── validation/
     │   └── resources/
     │       └── images/
     └── test/
@@ -172,15 +193,16 @@ GameZoneUnicesar/
 
 See [TEAM.md](TEAM.md) for detailed role allocations, module ownership, class distribution, and individual committed activities:
 - **Merlin Landero (`mlanderoc`):** Technical Lead — Sales, UI (Swing GUI & Console), System Integration & Reports.
-- **Carlos Gomez (`craulgomez`):** Developer 1 — Domain Models & Hierarchies (Products, Accessories, Returns, Warranties, Promotions).
-- **Héctor Guevara (`Hectorguevara22`):** Developer 2 — Persistence Repositories & Services (People, Accessories, Returns, Warranties, Promotions).
+- **Carlos Gomez (`craulgomez`):** Developer 1 — Domain Models, Hierarchies, Custom Exceptions & Validators.
+- **Héctor Guevara (`Hectorguevara22`):** Developer 2 — Persistence Repositories & Services.
 
 ## Documentation & Diagrams
 
 - [TEAM Documentation](TEAM.md)
-- [System Analysis](docs/analysis.md) | [Integration Analysis (RE5)](docs/integration-analysis.md)
-- [Integrated Class Diagram](docs/integrated-class-diagram.md) | [Class Diagram](docs/class-diagram.md)
+- [System Analysis](docs/analysis.md) | [Integration Analysis (RE5)](docs/integration-analysis.md) | [Exception Analysis (RE6)](docs/exception-analysis.md)
+- [Integrated Class Diagram](docs/integrated-class-diagram.md) | [Exception Class Diagram (RE6)](docs/exception-class-diagram.md) | [Class Diagram](docs/class-diagram.md)
 - [Hierarchy Diagram](docs/hierarchy-diagram.md) | [Layers Diagram](docs/layers-diagram.md)
 - Module Analyses: [Accessories](docs/accessory-analysis.md), [Promotions](docs/promotion-analysis.md), [Returns](docs/return-analysis.md), [Warranties](docs/warranty-analysis.md)
 - Module Diagrams: [Accessories](docs/accessory-class-diagram.md), [Promotions](docs/promotion-class-diagram.md), [Returns](docs/return-class-diagram.md), [Warranties](docs/warranty-class-diagram.md)
 - AI Usage Logs: [Technical Lead](docs/ai-usage/leader-ai-log.md), [Developer 1](docs/ai-usage/developer1-ai-log.md), [Developer 2](docs/ai-usage/developer2-ai-log.md)
+
