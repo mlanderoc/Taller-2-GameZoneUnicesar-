@@ -73,3 +73,60 @@ private double getDiscountRatio() {
 
 #### Justification
 The classes under Developer 1's responsibility belong to the domain model (`com.gamezone.model`), cross-cutting exceptions (`com.gamezone.exceptions`), stateless validators (`com.gamezone.validation`), and the product persistence/service vertical (`ProductRepository`, `ProductService`). System events from the user interface (`ConsoleMenu` and Swing dialogs) are received and coordinated by the UI/service controllers audited by the Technical Lead and Developer 2. While `ProductService` acts as a domain facade for product operations, user-interaction event handling does not take place in Developer 1's domain hierarchies or validators.
+
+---
+
+### 2.4 Low Coupling
+
+- **Verdict:** **Correct**
+
+#### Justification & Evidence
+- **Domain Model Independence (`com.gamezone.model`):** None of the domain classes (`Product`, `VideoGame`, `Console`, `Accessory`, `Controller`, `Cable`, `Memory`, `Promotion`, `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount`, `Return`, `Warranty`, `BasicWarranty`, `ExtendedWarranty`) import or depend on `persistence`, `service`, `validation`, or `ui`.
+- **Exception Hierarchy (`com.gamezone.exceptions`):** `GameZoneException` and its four subclasses (`ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, `PersistenceException`) depend only on standard `java.lang.RuntimeException`.
+- **Validation Layer (`com.gamezone.validation`):** `ProductValidator`, `PersonValidator`, and `SaleValidator` depend strictly on `com.gamezone.model` and `com.gamezone.exceptions`, with zero coupling to `com.gamezone.persistence` or `com.gamezone.service`.
+
+---
+
+### 2.5 High Cohesion
+
+- **Verdict:** **Correct**
+
+#### Justification & Evidence
+- **`ProductService` (`ProductService.java`, lines 14–145):** After delegating input and stock checks to `ProductValidator.validateProductData(...)`, `ProductValidator.validateUniqueProduct(...)`, `ProductValidator.validateProductExists(...)`, and `ProductValidator.validateStockAvailability(...)` in Requirement 6, `ProductService` remains focused exclusively on coordinating product registration, lookup, and inventory persistence.
+- **`Warranty`, `BasicWarranty`, `ExtendedWarranty` (`Warranty.java`, `BasicWarranty.java`, `ExtendedWarranty.java`):** Each class has a single, cohesive domain focus—representing warranty validity, duration (`6` vs `12` months), additional cost (`0.0` vs `10%` of product price), and certificate formatting (`generateWarrantyCertificate()`).
+
+---
+
+### 2.6 Polymorphism
+
+- **Verdict:** **Violation** (1 violation found in `CategoryDiscount`; properly applied in `Product.getDescription()`, `Promotion.calculateDiscount(Sale)`, and `Warranty`).
+
+#### Correct Applications
+- **`Product.getDescription()` (`Product.java` line 111; overridden in `VideoGame.java` lines 96–105, `Console.java` lines 95–104, `Accessory.java` lines 70–74, `Controller.java` lines 53–57, `Cable.java` lines 78–83, `Memory.java` lines 77–82):** Receipt generation and listings call `product.getDescription()` polymorphically without type-checking.
+- **`Promotion.calculateDiscount(Sale)` (`Promotion.java` line 121; overridden in `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount`):** `PromotionService.findBestPromotionFor(Sale)` invokes `p.calculateDiscount(sale)` polymorphically across all promotion subtypes.
+- **`Warranty.getDurationInMonths()`, `getWarrantyType()`, `getAdditionalCost()` (`Warranty.java` lines 85–99; overridden in `BasicWarranty` and `ExtendedWarranty`):** Eliminates conditional branches on warranty type when computing end dates (`startDate.plusMonths(getDurationInMonths())`), certificates, and cancellation refunds.
+
+#### Identified Violation (`V-02`)
+
+| Field | Content |
+| :--- | :--- |
+| **ID** | `V-02` |
+| **Pattern** | Polymorphism (`Polimorfismo`) |
+| **Module** | Promotions & Products/Accessories Hierarchy (Requirement 2 / Requirement 5 Adjustment A1) |
+| **Evidence** | `com.gamezone.model.CategoryDiscount`, method `calculateDiscount(Sale sale)` (lines 78–90 of `CategoryDiscount.java`):<br>```java
+for(Product product : sale.getProducts()){
+    if("VIDEOGAME".equalsIgnoreCase(categoryObjective) && product instanceof VideoGame){
+        categoryTotal += product.getPrice(); 
+    }
+    if("CONSOLE".equalsIgnoreCase(categoryObjective) && product instanceof Console){
+        categoryTotal += product.getPrice(); 
+    }
+    if("ACCESSORY".equalsIgnoreCase(categoryObjective) && product instanceof Accessory){
+        categoryTotal += product.getPrice(); 
+    }
+}
+``` |
+| **Explanation** | Instead of relying on polymorphic dispatch in the `Product` hierarchy to identify which category each product belongs to, `CategoryDiscount.calculateDiscount` uses explicit conditional type checks (`product instanceof VideoGame`, `product instanceof Console`, `product instanceof Accessory`). This directly violates the **Polymorphism** GRASP pattern ("How to handle alternatives based on type without `if/instanceof` conditionals"). |
+| **Consequence** | Adding any new product category to the store catalog in the future forces developers to modify `CategoryDiscount.calculateDiscount` to add a new `if (... && product instanceof NewType)` branch, coupling `CategoryDiscount` to every concrete subclass of `Product`. |
+| **Proposed Solution** | Apply **Polymorphism** (and **Information Expert**) by declaring `public abstract String getCategory();` and `public boolean belongsToCategory(String category)` in `Product`, overriding `getCategory()` in `VideoGame` (`"VIDEOGAME"`), `Console` (`"CONSOLE"`), and `Accessory` (`"ACCESSORY"`), and simplifying `CategoryDiscount.calculateDiscount(Sale)` to iterate with `if (product.belongsToCategory(categoryObjective))`. |
+| **Other Member's Code** | **No:** `Product`, `VideoGame`, `Console`, `Accessory`, and `CategoryDiscount` are all under the responsibility of **Developer 1 (`craulgomez`)**. |
