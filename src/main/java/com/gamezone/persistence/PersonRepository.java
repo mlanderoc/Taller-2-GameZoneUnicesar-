@@ -1,6 +1,7 @@
 
 package com.gamezone.persistence;
 
+import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.model.Customer;
 import com.gamezone.model.Seller;
 
@@ -48,33 +49,31 @@ public class PersonRepository {
             output.writeObject(customers);
 
         } catch (IOException e) {
-            System.out.println("Error saving customers: " + e.getMessage());
+            throw new PersistenceException("Error de escritura en el archivo " + CUSTOMER_FILE, e);
         }
     }
 
     /**
      * Loads all customers from the customer data file.
      *
-     * <p>If the file does not exist, an empty list is returned.
-     * If an error occurs while reading or deserializing the file,
-     * an empty list is also returned.</p>
+     * <p>If the file does not exist, an empty list is returned.</p>
      *
      * @return list containing all saved customers, or an empty list
-     *         if the file does not exist or cannot be read
+     *         if the file does not exist
      */
     @SuppressWarnings("unchecked")
     public List<Customer> loadAllCustomers() {
+        File file = new File(CUSTOMER_FILE);
+        if (!file.exists()) {
+            return new ArrayList<>();
+        }
         try (ObjectInputStream input =
-                     new ObjectInputStream(new FileInputStream(CUSTOMER_FILE))) {
+                     new ObjectInputStream(new FileInputStream(file))) {
 
             return (List<Customer>) input.readObject();
 
-        } catch (FileNotFoundException e) {
-            return new ArrayList<>();
-
         } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Error loading customers: " + e.getMessage());
-            return new ArrayList<>();
+            throw new PersistenceException("Error de lectura en el archivo " + CUSTOMER_FILE, e);
         }
     }
 
@@ -93,33 +92,31 @@ public class PersonRepository {
             output.writeObject(sellers);
 
         } catch (IOException e) {
-            System.out.println("Error saving sellers: " + e.getMessage());
+            throw new PersistenceException("Error de escritura en el archivo " + SELLER_FILE, e);
         }
     }
 
     /**
      * Loads all sellers from the seller data file.
      *
-     * <p>If the file does not exist, an empty list is returned.
-     * If an error occurs while reading or deserializing the file,
-     * an empty list is also returned.</p>
+     * <p>If the file does not exist, an empty list is returned.</p>
      *
      * @return list containing all saved sellers, or an empty list
-     *         if the file does not exist or cannot be read
+     *         if the file does not exist
      */
     @SuppressWarnings("unchecked")
     public List<Seller> loadAllSellers() {
+        File file = new File(SELLER_FILE);
+        if (!file.exists()) {
+            return new ArrayList<>();
+        }
         try (ObjectInputStream input =
-                     new ObjectInputStream(new FileInputStream(SELLER_FILE))) {
+                     new ObjectInputStream(new FileInputStream(file))) {
 
             return (List<Seller>) input.readObject();
 
-        } catch (FileNotFoundException e) {
-            return new ArrayList<>();
-
         } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Error loading sellers: " + e.getMessage());
-            return new ArrayList<>();
+            throw new PersistenceException("Error de lectura en el archivo " + SELLER_FILE, e);
         }
     }
 }

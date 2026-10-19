@@ -1,10 +1,12 @@
 package com.gamezone.service;
 
+import com.gamezone.exceptions.InvalidDataException;
 import com.gamezone.persistence.AccessoryRepository;
 import com.gamezone.model.Accessory;
 import com.gamezone.model.Cable;
 import com.gamezone.model.Memory;
 import com.gamezone.model.Controller;
+import com.gamezone.validation.ProductValidator;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.List;
@@ -31,8 +33,10 @@ public class AccessoryService {
     }
 
     public void registerCable(double lengthInMeters, String connectorType, List<String> compatibleConsoleIds, String id, String title, double price, int stock) {
-        if (findById(id) != null) {
-            throw new IllegalArgumentException("A cable with this ID already exists");
+        ProductValidator.validateProductData(id, title, price, stock);
+        ProductValidator.validateUniqueProduct(findById(id), id);
+        if (lengthInMeters <= 0) {
+            throw new InvalidDataException("longitud", "La longitud del cable debe ser mayor que cero.");
         }
         Cable cable = new Cable(lengthInMeters, connectorType, compatibleConsoleIds, id, title, price, stock);
         accessories.add(cable);
@@ -40,17 +44,18 @@ public class AccessoryService {
     }
 
     public void registerController(String connectionType, List<String> compatibleConsoleIds, String id, String title, double price, int stock) {
-        if (findById(id) != null) {
-            throw new IllegalArgumentException("A controller with this ID already exists");
-        }
+        ProductValidator.validateProductData(id, title, price, stock);
+        ProductValidator.validateUniqueProduct(findById(id), id);
         Controller controller = new Controller(connectionType, compatibleConsoleIds, id, title, price, stock);
         accessories.add(controller);
         repository.saveAll(accessories);
     }
 
     public void registerMemory(int storageCapacityGb, String memoryType, List<String> compatibleConsoleIds, String id, String title, double price, int stock) {
-        if (findById(id) != null) {
-            throw new IllegalArgumentException("A Memory with this ID already exists");
+        ProductValidator.validateProductData(id, title, price, stock);
+        ProductValidator.validateUniqueProduct(findById(id), id);
+        if (storageCapacityGb <= 0) {
+            throw new InvalidDataException("capacidad", "La capacidad de almacenamiento debe ser mayor que cero.");
         }
         Memory memory = new Memory(storageCapacityGb, memoryType, compatibleConsoleIds, id, title, price, stock);
         accessories.add(memory);
@@ -79,13 +84,10 @@ public class AccessoryService {
      */
     public void updateStock(String accessoryId, int quantity) {
         Accessory accessory = findById(accessoryId);
+        ProductValidator.validateProductExists(accessory, accessoryId);
 
-        if (accessory == null) {
-            throw new IllegalArgumentException("Accessory with this ID does not exist");
-        }
-
-        if (accessory.getStock() + quantity < 0) {
-            throw new IllegalArgumentException("The stock cannot be negative");
+        if (quantity < 0) {
+            ProductValidator.validateStockAvailability(accessory, -quantity);
         }
 
         accessory.updateStock(quantity);
@@ -101,7 +103,7 @@ public class AccessoryService {
      */
     public void restoreStock(String accessoryId, int quantity) {
         if (quantity <= 0) {
-            throw new IllegalArgumentException("Quantity to restore must be positive");
+            throw new InvalidDataException("cantidad", "La cantidad a restaurar debe ser positiva.");
         }
         updateStock(accessoryId, quantity);
     }

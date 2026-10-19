@@ -1,5 +1,6 @@
 package com.gamezone.persistence;
 
+import com.gamezone.exceptions.PersistenceException;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,7 @@ public class WarrantyRepository implements Repository<WarrantyRecord> {
             output.writeObject(records);
 
         } catch (IOException exception) {
-            throw new RuntimeException("Error saving warranties", exception);
+            throw new PersistenceException("Error de escritura en el archivo " + FILE_PATH, exception);
         }
     }
 
@@ -44,7 +45,7 @@ public class WarrantyRepository implements Repository<WarrantyRecord> {
             return (List<WarrantyRecord>) input.readObject();
 
         } catch (IOException | ClassNotFoundException exception) {
-            throw new RuntimeException("Error loading warranties", exception);
+            throw new PersistenceException("Error de lectura en el archivo " + FILE_PATH, exception);
         }
     }
 }

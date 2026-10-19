@@ -128,4 +128,15 @@ I used Artificial Intelligence as a support tool during the development of the p
 
 **How I applied it:** I implemented `cancelWarranties(String productId, String saleId)` in `WarrantyService` and invoked it from `ReturnService.registerReturn` whenever a returned product is a `Console`.
 
+### Exception wrapping in repositories and validator delegation in services (Requirement 6)
+
+**Topic:** Wrapping `IOException` into `PersistenceException` and delegating service checks to static validators.
+
+**Consultation:** I asked how to refactor `PersonRepository` so missing `.dat` files on first startup return an empty list while actual read/write failures throw `PersistenceException` with the file path and operation context.
+
+**What I learned:** Checking `file.exists()` before opening `ObjectInputStream` handles initial startup cleanly, while catching `IOException | ClassNotFoundException` and rethrowing `new PersistenceException("Error de lectura/escritura en el archivo ...", e)` preserves the root cause for debugging.
+
+**How I applied it:** I refactored the repositories to throw `PersistenceException` and updated `ProductService`, `PersonService`, `SaleService`, `AccessoryService`, `PromotionService`, and `ReturnService` to invoke `ProductValidator`, `PersonValidator`, and `SaleValidator`.
+
+
 

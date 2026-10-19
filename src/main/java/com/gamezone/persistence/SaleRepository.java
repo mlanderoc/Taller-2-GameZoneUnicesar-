@@ -1,5 +1,6 @@
 
 package com.gamezone.persistence;
+import com.gamezone.exceptions.PersistenceException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -39,7 +40,7 @@ public class SaleRepository implements Repository<SaleRecord>{
             output.writeObject(records);
 
         } catch (IOException exception) {
-            throw new RuntimeException("Error saving sale records", exception);
+            throw new PersistenceException("Error de escritura en el archivo " + FILE_PATH, exception);
         }
     }
 
@@ -64,7 +65,7 @@ public class SaleRepository implements Repository<SaleRecord>{
             return (List<SaleRecord>) input.readObject();
 
         } catch (IOException | ClassNotFoundException exception) {
-            throw new RuntimeException("Error loading sale records", exception);
+            throw new PersistenceException("Error de lectura en el archivo " + FILE_PATH, exception);
         }
     }
 }
