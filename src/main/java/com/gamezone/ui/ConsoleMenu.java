@@ -287,8 +287,14 @@ public class ConsoleMenu {
                         int month = Integer.parseInt(scanner.nextLine().trim());
                         System.out.print("Año (ej. 2026): ");
                         int year = Integer.parseInt(scanner.nextLine().trim());
+                        double totalSales = returnService.calculateMonthlySales(month, year);
+                        double totalReturns = returnService.calculateMonthlyReturns(month, year);
                         double balance = returnService.generateMonthlyBalance(month, year);
-                        printMessage("Balance neto para " + month + "/" + year + ": $" + balance);
+                        printHeader("BALANCE MENSUAL (" + month + "/" + year + ")");
+                        System.out.printf("  Total de ventas del mes:       $%.2f%n", totalSales);
+                        System.out.printf("  Total de devoluciones del mes: $%.2f%n", totalReturns);
+                        printLine();
+                        System.out.printf("  Balance neto del mes:          $%.2f%n", balance);
                     } catch (NumberFormatException e) {
                         printError("Mes y año deben ser valores numericos.");
                     }
