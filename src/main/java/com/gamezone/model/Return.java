@@ -15,13 +15,14 @@ public class Return {
     private Sale originalSale;
     private List<Product> returnedProducts;
     private String reason;
+    private double warrantyRefundAmount;
     private double refundAmount;
 
     /**
      * Creates a new return and calculates the refund amount
      * from the returned products.
      *
-     * @param id unique identifier of the return
+     * @param returnId unique identifier of the return
      * @param returnDate date when the return was registered
      * @param originalSale sale associated with the return
      * @param returnedProducts products returned by the customer
@@ -33,6 +34,7 @@ public class Return {
         this.originalSale = originalSale;
         this.returnedProducts = returnedProducts;
         this.reason = reason;
+        this.warrantyRefundAmount = 0.0;
         this.refundAmount = calculateRefundAmount();
     }
 
@@ -83,6 +85,24 @@ public class Return {
     }
 
     /**
+     * Returns the refunded amount corresponding to cancelled extended warranties.
+     *
+     * @return warranty refund amount
+     */
+    public double getWarrantyRefundAmount() {
+        return warrantyRefundAmount;
+    }
+
+    /**
+     * Sets the refunded amount corresponding to cancelled extended warranties.
+     *
+     * @param warrantyRefundAmount warranty refund amount
+     */
+    public void setWarrantyRefundAmount(double warrantyRefundAmount) {
+        this.warrantyRefundAmount = warrantyRefundAmount;
+    }
+
+    /**
      * Returns the amount refunded to the customer.
      *
      * @return refund amount
@@ -98,7 +118,8 @@ public class Return {
 
     /**
      * Calculates the refund amount by applying the original sale's proportional
-     * discount to each returned product: price * (1 - discount / subtotal).
+     * discount to each returned product: price * (1 - discount / subtotal),
+     * plus any refunded extended warranty cost.
      *
      * @return calculated refund amount
      */
@@ -110,6 +131,7 @@ public class Return {
             total += product.getPrice() * (1.0 - discountRatio);
         }
 
+        total += warrantyRefundAmount;
         this.refundAmount = total;
         return total;
     }
@@ -123,7 +145,8 @@ public class Return {
     
     /**
      * Generates a formatted receipt with the return information, including
-     * list price, proportional discount, and refunded amount for each item.
+     * list price, proportional discount, refunded amount for each item,
+     * and any refunded extended warranty amount.
      *
      * @return return receipt text
      */
@@ -151,6 +174,7 @@ public class Return {
                     .append("\n");
         }
 
+        sb.append("Garantía extendida reembolsada: ").append(String.format(java.util.Locale.US, "%.2f", warrantyRefundAmount)).append("\n");
         sb.append("Motivo: ").append(reason).append("\n");
         sb.append("Monto reembolsado: ").append(String.format(java.util.Locale.US, "%.2f", refundAmount));
 

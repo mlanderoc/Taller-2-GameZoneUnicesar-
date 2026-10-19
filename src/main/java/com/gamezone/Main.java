@@ -41,7 +41,7 @@ public class Main {
         
         WarrantyService warrantyService = new WarrantyService(warrantyRepository, saleRepository, productService);
         SaleService saleService = new SaleService(saleRepository, productService, personService, promotionService, accessoryService, warrantyService);
-        ReturnService returnService = new ReturnService(returnRepository, saleService, productService, accessoryService);
+        ReturnService returnService = new ReturnService(returnRepository, saleService, productService, accessoryService, warrantyService);
 
         preloadSellersIfNeeded(personService);
         preloadPromotionsIfNeeded(promotionService);

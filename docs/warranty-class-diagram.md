@@ -52,6 +52,7 @@ classDiagram
         +listAllWarranties() List~Warranty~
         +listActiveWarranties() List~Warranty~
         +listWarrantiesExpiringSoon(daysAhead int) List~Warranty~
+        +cancelWarranties(productId String, saleId String) double
     }
 
     Warranty <|-- BasicWarranty
