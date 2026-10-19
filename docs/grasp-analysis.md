@@ -107,3 +107,37 @@ The team records and presents in `docs/grasp-refactor-log.md` and during the ora
 - **Zero-error compilation evidence** (`mvn clean compile`).
 - **Complete Reference vs. Post-Refactor Verification Table** covering all menu operations with exact input values, expected outputs/receipts, and pass/match status (`IDENTICAL`).
 - **Confirmation of unchanged `.dat` binary serialization compatibility** (`products.dat`, `Accessory.dat`, `customers.dat`, `sellers.dat`, `sales.dat`, `promotion.dat`, `returns.dat`, `warranties.dat`).
+
+---
+
+## 5. Correction Order and Branch Coordination Strategy in Phase 2
+
+**Question:** *In what order are the violations corrected and why? When the correction of a violation involves code from more than one team member, how is the work coordinated to avoid conflicts on the shared branch?*
+
+### Bottom-Up Dependency Order for Phase 2 Corrections (`feature/grasp-refactor`)
+
+To guarantee that the project compiles cleanly (`mvn clean compile` / `javac`) after **every single atomic commit** without breaking callers, the team corrects the seven consolidated violations in strict **bottom-up architectural order** (`model` and `validation` providers first → `service` consumers second → `Main` integration and final diagrams last):
+
+1. **Stage 1 — Developer 1 (`craulgomez`): Model Hierarchy & Validation Providers (`PR #1` on `feature/grasp-refactor`)**
+   - **Why first:** Developer 1 owns the foundational `model` classes (`Product`, `VideoGame`, `Console`, `Accessory`, `CategoryDiscount`, `Return`) and the `validation` layer (`ProductValidator`) upon which Developer 2's services (`AccessoryService`, `PromotionService`) depend.
+   - **Corrections executed:**
+     - `V-02`: Adds `public abstract String getCategory()` and `belongsToCategory(String)` in `Product`, overrides `getCategory()` in `VideoGame`, `Console`, and `Accessory`, and refactors `CategoryDiscount.calculateDiscount(Sale)` to eliminate `instanceof` checks.
+     - `V-03` (provider side): Makes `Accessory.isCompatibleWith(String)` null-safe on `compatibleConsoleIds`.
+     - `V-05` (provider side): Adds `validateCableData`, `validateControllerData`, `validateMemoryData`, `validatePromotionBase`, `validateCategoryObjective`, and `validateMinimumQuantity` to `ProductValidator`.
+2. **Stage 2 — Developer 2 (`Hectorguevara22`): Service Layer Delegations (`PR #2` on `feature/grasp-refactor`)**
+   - **Why second:** Once `ProductValidator` and `Accessory.isCompatibleWith` are merged into `develop`, Developer 2 can immediately refactor the service layer to consume them and expose the single-argument `AccessoryService(AccessoryRepository)` constructor needed by `Main`.
+   - **Corrections executed:**
+     - `V-03` (consumer side): Refactors `AccessoryService.findAcessoriesCOmpatibleWith(String)` to delegate to `accessory.isCompatibleWith(consoleId)`.
+     - `V-05` (consumer side): Refactors `AccessoryService` and `PromotionService` to delegate subtype and promotion validations to `ProductValidator`.
+     - `V-06` (provider side): Adds `public AccessoryService(AccessoryRepository repository)` constructor to `AccessoryService`.
+3. **Stage 3 — Technical Lead (`mlanderoc`): `Sale` Expert Methods, Boundary Callers, `SaleService`, `Main` & Final Documentation (`PR #3` on `feature/grasp-refactor`)**
+   - **Why third:** Coordinates the final boundary links (`Sale.getDiscountRatio()` and `Sale.findProductById(String)` consumed by `Return` and `ReturnService`, and `new AccessoryService(accessoryRepository)` in `Main`), refactors `SaleService` and `ProductService.restoreStock` (`V-07`), completes the `"After"` diagram in `docs/grasp-class-diagram.md`, records the final non-regression verification table in `docs/grasp-refactor-log.md`, and updates `README.md`.
+
+### Branch Coordination Strategy to Prevent Merge Conflicts
+
+1. **Sequential Pull Request Windows on `feature/grasp-refactor`:**
+   Each team member works in a dedicated sequential window, commits atomically (`refactor: ... (V-XX)` followed by `docs: log V-XX correction in grasp refactor log`), pushes each commit immediately, and opens their Pull Request to `develop`. The next member pulls `develop` before starting their commits.
+2. **File-Ownership Separation:**
+   In boundary violations (`V-01`, `V-03`, `V-04`, `V-05`, `V-06`), each member edits only the classes under their ownership (`ProductValidator` vs `AccessoryService`/`PromotionService`, `AccessoryService` vs `Main`, `Sale` vs `Return`/`ReturnService`), eliminating concurrent edits to the same `.java` lines.
+3. **Append-Only Refactor Log (`docs/grasp-refactor-log.md`):**
+   Each member appends their own table rows to `docs/grasp-refactor-log.md` after syncing with `develop`, avoiding markdown merge conflicts.
