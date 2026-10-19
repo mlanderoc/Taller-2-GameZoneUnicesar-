@@ -97,48 +97,63 @@ public class Return {
     
 
     /**
-     * Calculates the refund amount by summing the prices
-     * of all returned products.
+     * Calculates the refund amount by applying the original sale's proportional
+     * discount to each returned product: price * (1 - discount / subtotal).
      *
      * @return calculated refund amount
      */
     public double calculateRefundAmount() {
+        double discountRatio = getDiscountRatio();
         double total = 0.0;
 
         for (Product product : returnedProducts) {
-            total += product.getPrice();
+            total += product.getPrice() * (1.0 - discountRatio);
         }
 
         this.refundAmount = total;
         return total;
     }
+
+    private double getDiscountRatio() {
+        if (originalSale != null && originalSale.getSubtotal() > 0) {
+            return originalSale.getDiscountAmount() / originalSale.getSubtotal();
+        }
+        return 0.0;
+    }
     
     /**
-     * Generates a formatted receipt with the return information.
+     * Generates a formatted receipt with the return information, including
+     * list price, proportional discount, and refunded amount for each item.
      *
      * @return return receipt text
      */
     public String generateReturnReceipt() {
         StringBuilder sb = new StringBuilder();
+        double discountRatio = getDiscountRatio();
 
         sb.append("ID de devolución: ").append(returnId).append("\n");
         sb.append("Fecha de devolución: ").append(returnDate).append("\n");
-        sb.append("ID de venta original: ").append(originalSale.getId()).append("\n");
+        sb.append("ID de venta original: ").append(originalSale != null ? originalSale.getId() : "-").append("\n");
         sb.append("Productos devueltos:\n");
 
         for (Product product : returnedProducts) {
+            double listPrice = product.getPrice();
+            double proportionalDiscount = listPrice * discountRatio;
+            double itemRefund = listPrice - proportionalDiscount;
             sb.append(" - ")
                     .append(product.getTitle())
-                    .append(": ")
-                    .append(product.getPrice())
+                    .append(" | Precio de lista: ")
+                    .append(String.format(java.util.Locale.US, "%.2f", listPrice))
+                    .append(" | Descuento proporcional: ")
+                    .append(String.format(java.util.Locale.US, "%.2f", proportionalDiscount))
+                    .append(" | Monto reembolsado: ")
+                    .append(String.format(java.util.Locale.US, "%.2f", itemRefund))
                     .append("\n");
         }
 
         sb.append("Motivo: ").append(reason).append("\n");
-        sb.append("Monto reembolsado: ").append(refundAmount);
+        sb.append("Monto reembolsado: ").append(String.format(java.util.Locale.US, "%.2f", refundAmount));
 
         return sb.toString();
     }
-    
-    
 }
