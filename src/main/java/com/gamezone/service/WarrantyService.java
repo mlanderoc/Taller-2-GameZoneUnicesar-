@@ -5,6 +5,8 @@ import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
+import com.gamezone.persistence.SaleRecord;
+import com.gamezone.persistence.SaleRepository;
 import com.gamezone.persistence.WarrantyRecord;
 import com.gamezone.persistence.WarrantyRepository;
 
@@ -20,13 +22,21 @@ import java.util.UUID;
  */
 public class WarrantyService {
 
-    private WarrantyRepository repository;
-    private SaleService saleService;
-    private ProductService productService;
+    private final WarrantyRepository repository;
+    private final SaleRepository saleRepository;
+    private final ProductService productService;
 
-    public WarrantyService(WarrantyRepository repository, SaleService saleService, ProductService productService) {
+    /**
+     * Creates the warranty service resolving sale and product references from
+     * their identifiers without depending on SaleService.
+     *
+     * @param repository the warranty repository
+     * @param saleRepository the sale repository used to resolve sale identifiers
+     * @param productService the product service used to resolve product identifiers
+     */
+    public WarrantyService(WarrantyRepository repository, SaleRepository saleRepository, ProductService productService) {
         this.repository = repository;
-        this.saleService = saleService;
+        this.saleRepository = saleRepository;
         this.productService = productService;
     }
 
@@ -44,7 +54,9 @@ public class WarrantyService {
 
     public Warranty findWarrantyByProduct(String productId, String saleId) {
         for (Warranty warranty : listAllWarranties()) {
-            if (warranty.getProduct().getId().equals(productId) && warranty.getSale().getId().equals(saleId)) {
+            if (warranty.getProduct() != null && warranty.getSale() != null
+                    && warranty.getProduct().getId().equals(productId)
+                    && warranty.getSale().getId().equals(saleId)) {
                 return warranty;
             }
         }
@@ -54,7 +66,10 @@ public class WarrantyService {
     public List<Warranty> listAllWarranties() {
         List<Warranty> warranties = new ArrayList<>();
         for (WarrantyRecord record : repository.loadAll()) {
-            warranties.add(toWarranty(record));
+            Warranty warranty = toWarranty(record);
+            if (warranty != null) {
+                warranties.add(warranty);
+            }
         }
         return warranties;
     }
@@ -102,12 +117,41 @@ public class WarrantyService {
 
     private Warranty toWarranty(WarrantyRecord record) {
         Product product = productService.findById(record.getProductId());
-        Sale sale = saleService.findSaleById(record.getSaleId());
+        Sale sale = resolveSaleById(record.getSaleId(), product);
+        if (product == null || sale == null) {
+            return null;
+        }
 
         if ("Garantía Extendida".equals(record.getWarrantyType())) {
             return new ExtendedWarranty(record.getWarrantyId(), product, sale, record.getStartDate());
         } else {
             return new BasicWarranty(record.getWarrantyId(), product, sale, record.getStartDate());
         }
+    }
+
+    private Sale resolveSaleById(String saleId, Product fallbackProduct) {
+        for (SaleRecord saleRecord : saleRepository.loadAll()) {
+            if (saleRecord.getSaleId().equals(saleId)) {
+                List<Product> products = new ArrayList<>();
+                for (String pid : saleRecord.getProductIds()) {
+                    Product item = productService.findById(pid);
+                    if (item != null) {
+                        products.add(item);
+                    }
+                }
+                if (products.isEmpty() && fallbackProduct != null) {
+                    products.add(fallbackProduct);
+                }
+                if (products.isEmpty()) {
+                    return null;
+                }
+                Sale sale = new Sale(saleRecord.getSaleId(), saleRecord.getDate(), null, null, products);
+                sale.setSubtotal(saleRecord.getSubtotal());
+                sale.setAppliedPromotionName(saleRecord.getAppliedPromotionName());
+                sale.setDiscountAmount(saleRecord.getDiscountAmount());
+                return sale;
+            }
+        }
+        return null;
     }
 }
