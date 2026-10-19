@@ -162,11 +162,12 @@ public class ReturnDialog extends javax.swing.JDialog {
                 .filter(s -> !s.isEmpty())
                 .collect(java.util.stream.Collectors.toList());
 
+        double discountRatio = (sale.getSubtotal() > 0) ? (sale.getDiscountAmount() / sale.getSubtotal()) : 0.0;
         double total = 0.0;
         for (String pid : prodIds) {
             for (com.gamezone.model.Product p : sale.getProducts()) {
                 if (p.getId().equalsIgnoreCase(pid) || p.getTitle().equalsIgnoreCase(pid)) {
-                    total += p.getPrice();
+                    total += p.getPrice() * (1.0 - discountRatio);
                     break;
                 }
             }
