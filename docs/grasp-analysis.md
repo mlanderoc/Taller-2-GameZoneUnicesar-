@@ -83,3 +83,27 @@ Yes. Because several GRASP patterns reinforce one another (for instance, **Polym
 To avoid inflating or duplicating violations across the nine pattern sections:
 - Each problematic code fragment is registered **only once** as a numbered `Violation` (`V-XX`) under the **most specific root-cause pattern** that dictates the concrete code refactoring (e.g., **Polymorphism** when replacing `instanceof` with an overridden method; **Information Expert** when moving a calculation to the class that owns the attributes; **Pure Fabrication / High Cohesion** when moving non-domain validation rules to a dedicated validator).
 - In the section of the secondary related pattern (e.g., **Protected Variations**), the report cross-references the primary violation ID (`V-XX`) instead of creating a duplicate entry.
+
+---
+
+## 4. Strategy and Evidence for Preserving External System Behavior (Non-Regression)
+
+**Question:** *The refactoring must preserve the external behavior of the system. What strategy does the team follow to guarantee that all menu operations continue working the same way? What evidence is shown at the end to demonstrate that nothing was broken?*
+
+### Non-Regression Verification Strategy
+
+Because Phase 2 of Requirement 7 reorganizes internal responsibilities (such as moving calculations to Information Experts, replacing `instanceof` category checks with polymorphic dispatch, and delegating inline service validations to `com.gamezone.validation`) without altering user-visible functionality, the team follows a three-checkpoint verification protocol documented in `docs/grasp-refactor-log.md`:
+
+1. **Baseline Reference Execution on `develop` (Before First Correction):**
+   Before applying any refactoring on `feature/grasp-refactor`, the team runs and records a complete reference test suite covering every Console Menu operation (`1` through `28` across Products, Customers/Sellers, Sales, Accessories, Promotions, Returns/Monthly Balance, and Warranties) along with the four differentiated exception paths (`ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, `PersistenceException`).
+2. **Per-Pull-Request Verification (During Phase 2):**
+   After each team member completes their assigned `refactor:` commits on `feature/grasp-refactor`, they run `mvn clean compile` / `javac` and execute the specific menu operations affected by their changes (e.g., Developer 1 verifies category discount calculation and return receipt generation; Developer 2 verifies console compatibility lookup, promotion registration validation, and return registration; Technical Lead verifies sale registration, stock restoration, and startup initialization).
+3. **Final End-to-End Verification (Before Merging Phase 2):**
+   Once all violations `V-01` through `V-07` are integrated on `feature/grasp-refactor`, the Technical Lead executes the full 28-operation verification matrix and compares every output, receipt, Spanish error message, and `.dat` file state against the baseline reference.
+
+### Evidence Presented at Completion
+
+The team records and presents in `docs/grasp-refactor-log.md` and during the oral defense:
+- **Zero-error compilation evidence** (`mvn clean compile`).
+- **Complete Reference vs. Post-Refactor Verification Table** covering all menu operations with exact input values, expected outputs/receipts, and pass/match status (`IDENTICAL`).
+- **Confirmation of unchanged `.dat` binary serialization compatibility** (`products.dat`, `Accessory.dat`, `customers.dat`, `sellers.dat`, `sales.dat`, `promotion.dat`, `returns.dat`, `warranties.dat`).
