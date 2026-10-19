@@ -76,11 +76,15 @@ public class CategoryDiscount extends Promotion {
       double categoryTotal = 0; 
       
       for(Product product : sale.getProducts()){
-          if(categoryObjective.equals("VIDEOGAME") && product instanceof VideoGame){
+          if("VIDEOGAME".equalsIgnoreCase(categoryObjective) && product instanceof VideoGame){
               categoryTotal += product.getPrice(); 
           }
           
-          if(categoryObjective.equals("CONSOLE") && product instanceof Console){
+          if("CONSOLE".equalsIgnoreCase(categoryObjective) && product instanceof Console){
+              categoryTotal += product.getPrice(); 
+          }
+
+          if("ACCESSORY".equalsIgnoreCase(categoryObjective) && product instanceof Accessory){
               categoryTotal += product.getPrice(); 
           }
       }

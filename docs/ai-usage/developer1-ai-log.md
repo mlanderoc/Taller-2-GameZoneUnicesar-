@@ -79,4 +79,12 @@ I used Artificial Intelligence as a support tool during the development of the p
  
  **How ​​I applied it:** I applied the corresponding translations to each task I was assigned.
 
+### Category discount for accessories (Adjustment A1)
 
+ **Topic:** Polymorphic type checking with `instanceof` in `CategoryDiscount`
+ 
+ **Consultation:** I asked whether `product instanceof Accessory` also matches subclasses such as `Controller`, `Cable`, and `Memory` when calculating category discounts.
+ 
+ **What I learned:** In Java, `instanceof` evaluates to `true` for any concrete subclass of `Accessory`, so a single check covers all accessory types.
+ 
+ **How I applied it:** I added the `"ACCESSORY"` condition in `CategoryDiscount.calculateDiscount` and validated the allowed category names in `PromotionService.registerCategoryDiscount`.

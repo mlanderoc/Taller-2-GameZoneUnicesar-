@@ -552,7 +552,7 @@ public class ConsoleMenu {
             LocalDate start = readDate("Fecha inicio (AAAA-MM-DD): ");
             LocalDate end = readDate("Fecha fin (AAAA-MM-DD): ");
             System.out.print("Porcentaje: "); double pct = Double.parseDouble(scanner.nextLine().trim());
-            System.out.print("Categoria (VIDEOGAME o CONSOLE): "); String cat = scanner.nextLine().trim().toUpperCase();
+            System.out.print("Categoria (VIDEOGAME, CONSOLE o ACCESSORY): "); String cat = scanner.nextLine().trim().toUpperCase();
 
             promotionService.registerCategoryDiscount(id, name, start, end, pct, cat);
             printMessage("Promocion registrada.");
