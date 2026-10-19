@@ -49,3 +49,8 @@ Used GitHub Copilot to translate commit messages and code comments into English 
 
 **Outcome:** Checked Mermaid `classDiagram` generic syntax (`List~Product~`, `List~String~`) and used Copilot to review the English phrasing of the seven integration adjustment summaries (`A1`–`A7`).
 
+## 10. Differentiated exception catching in ConsoleMenu (Requirement 6)
+
+**Context:** Updating `ConsoleMenu` and the Swing dialogs (`SaleDialog`, `ReturnDialog`) to display category-specific Spanish error messages for `ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, and `PersistenceException`.
+
+**Outcome:** Consulted on ordering multi-catch clauses from the specific subclasses down to the root `GameZoneException` fallback so that `PersistenceException` hides low-level file paths behind a safe administrator notice while validation and business-rule errors show their Spanish detail message. Also used Copilot to proofread the English grammar in `docs/exception-analysis.md`.
