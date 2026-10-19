@@ -109,3 +109,20 @@ I used Artificial Intelligence as a support tool during the development of the p
  
  **How I applied it:** I implemented `GameZoneException`, its four specialized subclasses in `com.gamezone.exceptions`, and the static validator classes in `com.gamezone.validation`.
 
+---
+
+## Requirement 7 — GRASP Audit and Refactoring
+
+### Phase 1 - Audit
+
+#### Conceptual difference between Polymorphism and Protected Variations in GRASP
+- **Topic:** Object-oriented design concepts (GRASP patterns)
+- **Consultation:** I asked for a conceptual explanation of how GRASP distinguishes *Polymorphism* from *Protected Variations* when evaluating an inheritance hierarchy in Java.
+- **What I learned:** *Polymorphism* focuses on how to assign responsibility for type-dependent behavior using overridden methods instead of `if/instanceof` conditionals, whereas *Protected Variations* focuses on shielding client classes from foreseeable points of instability through a stable interface or abstraction.
+- **How I applied it:** When I audited my own `Product` and `Promotion` classes, I classified the `instanceof` checks in `CategoryDiscount.calculateDiscount` primarily under *Polymorphism* (`V-02`) and cross-referenced *Protected Variations* without duplicating the finding.
+
+#### English terminology for audit tables
+- **Topic:** Spanish-to-English translation of technical terms
+- **Consultation:** I asked for standard English phrasing for terms such as *"hallazgo de frontera"* (*boundary finding*) and *"veredicto"* (*verdict*).
+- **What I learned:** Using consistent terminology across the individual audit tables makes consolidation clearer.
+- **How I applied it:** I used those English terms when writing `docs/grasp-audit/developer1-audit.md` and Questions 1 and 3 in `docs/grasp-analysis.md`.
