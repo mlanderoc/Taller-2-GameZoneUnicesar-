@@ -94,3 +94,76 @@ private Product findInSale(Sale sale, String productId) {
 
 #### Justification & Evidence
 - **`PersonService`, `AccessoryService`, `PromotionService`, `ReturnService`, and `WarrantyService` (`com.gamezone.service`):** Act as domain/use-case facade controllers behind the presentation layer (`ConsoleMenu` and Swing dialogs/panels). Neither `ConsoleMenu` nor the Swing panels execute business calculations or touch `Repository` classes directly; instead, they delegate every system operation (`registerCustomer`, `registerReturn`, `generateMonthlyBalance`, `listWarrantiesExpiringSoon`, etc.) to these service classes.
+
+---
+
+### 2.4 Low Coupling
+
+- **Verdict:** **Violation** (1 violation found in `AccessoryService` constructor coupling with `Main`; properly applied in `WarrantyService`, `ReturnRecord`, and `WarrantyRecord`).
+
+#### Correct Applications
+- **Acyclic Service Wiring in `WarrantyService` (`WarrantyService.java`, lines 25–41):** `WarrantyService` resolves sale references through `SaleRepository` and `ProductService` rather than depending on `SaleService`, preventing circular dependencies (`SaleService ↔ WarrantyService`).
+- **DTO Persistence Records (`ReturnRecord`, `WarrantyRecord`):** Store only primitive/String IDs (`saleId`, `productIds`, `productId`) instead of serializing full `Sale` or `Product` object graphs across repositories.
+
+#### Identified Violation (`V-03`)
+
+| Field | Content |
+| :--- | :--- |
+| **ID** | `V-03` |
+| **Pattern** | Low Coupling (`Bajo Acoplamiento`) |
+| **Module** | Accessories (Requirement 1) |
+| **Evidence** | `com.gamezone.service.AccessoryService`, constructor `AccessoryService(AccessoryRepository repository, List<Accessory> accessories)` (lines 19–22 of `AccessoryService.java`):<br>```java
+public AccessoryService(AccessoryRepository repository, List<Accessory> accessories) {
+    this.repository = repository;
+    this.accessories = repository.loadAll();
+}
+```<br>invoked from `Main.java` (line 40): `new AccessoryService(accessoryRepository, accessoryRepository.loadAll());` |
+| **Explanation** | Unlike `ProductService(ProductRepository)`, `PersonService(PersonRepository)`, and `PromotionService(PromotionRepository)`, `AccessoryService` only exposes a 2-argument constructor requiring the caller (`Main`) to pass `List<Accessory> accessories`, which the constructor immediately ignores in favor of calling `this.accessories = repository.loadAll()`. |
+| **Consequence** | Forces callers (`Main`) to couple to `accessoryRepository.loadAll()` during service construction and triggers a redundant disk read of `data/Accessory.dat` at startup. |
+| **Proposed Solution** | Apply **Low Coupling** by adding a clean single-argument constructor `public AccessoryService(AccessoryRepository repository)` that loads `this.accessories = repository.loadAll()` internally (retaining the 2-argument overload delegating to `this(repository)` for backward compatibility), and updating `Main` to call `new AccessoryService(accessoryRepository)`. |
+| **Other Member's Code** | **Yes (Boundary Finding):** `AccessoryService` belongs to **Developer 2 (`Hectorguevara22`)**, while `Main` belongs to the **Technical Lead (`mlanderoc`)**. |
+
+---
+
+### 2.5 High Cohesion
+
+- **Verdict:** **Violation** (1 violation found in `PromotionService` and `AccessoryService`; properly applied in `PersonService`, `ReturnService`, `WarrantyService`, and all repositories).
+
+#### Correct Applications
+- **`PersonService` (`PersonService.java`, lines 14–96):** Delegates all data and uniqueness validations to `PersonValidator.validatePersonData(...)` and `PersonValidator.validateUniquePerson(...)`, keeping its methods focused solely on person registration and lookup.
+- **Repositories (`PersonRepository`, `AccessoryRepository`, `PromotionRepository`, `ReturnRepository`, `WarrantyRepository`):** Focused exclusively on binary file serialization/deserialization and wrapping I/O failures into `PersistenceException`.
+
+#### Identified Violation (`V-04`)
+
+| Field | Content |
+| :--- | :--- |
+| **ID** | `V-04` |
+| **Pattern** | High Cohesion (`Alta Cohesión`) / Pure Fabrication (`Fabricación Pura`) |
+| **Module** | Promotions (Requirement 2) & Accessories (Requirement 1) with Validations (Requirement 6) |
+| **Evidence** | 1. `com.gamezone.service.PromotionService`, methods `registerCategoryDiscount` (lines 53–58), `registerBulkPurchaseDiscount` (lines 66–68), and `validatePromotionBase` (lines 74–90 of `PromotionService.java`):<br>```java
+private void validatePromotionBase(String id, String name, LocalDate startDate, LocalDate endDate, double discountPercentage) {
+    if (id == null || id.trim().isEmpty()) {
+        throw new InvalidDataException("id", "El identificador de la promoción no puede estar vacío.");
+    }
+    ...
+}
+```<br>2. `com.gamezone.service.AccessoryService`, methods `registerCable` (lines 38–40) and `registerMemory` (lines 57–59 of `AccessoryService.java`):<br>```java
+if (lengthInMeters <= 0) {
+    throw new InvalidDataException("longitud", "La longitud del cable debe ser mayor que cero.");
+}
+``` |
+| **Explanation** | While `ProductService`, `PersonService`, and `SaleService` delegate all input and rule validations to dedicated validators in `com.gamezone.validation`, `PromotionService` and `AccessoryService` still contain inline field/range/date validation logic mixed with service orchestration. |
+| **Consequence** | Reduces the **High Cohesion** of `PromotionService` and `AccessoryService` and splits validation rules across `service` and `validation`. |
+| **Proposed Solution** | Apply **High Cohesion** and **Pure Fabrication** by extracting promotion validation rules into `ProductValidator` / `SaleValidator` (or delegating accessory subtype checks to `ProductValidator.validateCableData`, `validateControllerData`, and `validateMemoryData` and promotion checks to `ProductValidator.validatePromotionBase` / `validateCategoryObjective` / `validateMinimumQuantity`) so `PromotionService` and `AccessoryService` remain purely focused on service coordination. |
+| **Other Member's Code** | **Yes (Boundary Finding):** Connects with `ProductValidator` under **Developer 1 (`craulgomez`, `developer1-audit` `V-03`)**. |
+
+---
+
+### 2.6 Polymorphism
+
+- **Verdict:** **Correct**
+
+#### Justification & Evidence
+- **`Person.getSummary()` (`Person.java` line 151; overridden in `Customer.java` lines 31–39 and `Seller.java` lines 78–88):** Allows callers to format summaries of any `Person` instance polymorphically.
+- **`PromotionService.findBestPromotionFor(Sale)` (`PromotionService.java`, lines 107–120):** Evaluates `p.calculateDiscount(sale)` polymorphically across `PercentageDiscount`, `CategoryDiscount`, and `BulkPurchaseDiscount` without checking concrete promotion subclasses.
+- **`WarrantyService.cancelWarranties(String, String)` (`WarrantyService.java`, line 118):** Computes `refundableCost += warranty.getAdditionalCost()` polymorphically (`0.0` for `BasicWarranty`, `10%` of console price for `ExtendedWarranty`).
