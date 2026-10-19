@@ -213,3 +213,25 @@ if (lengthInMeters <= 0) {
 | 7 | **Pure Fabrication** | **Correct** | Repositories and DTO records (`ReturnRecord`, `WarrantyRecord`) isolate persistence concerns outside the domain model. |
 | 8 | **Indirection** | **Correct** | Repositories and `ReturnService` decouple UI and domain components from storage and cross-module workflows. |
 | 9 | **Protected Variations** | **Correct** | `Repository<T>` interface and `PersistenceException` wrapping shield callers from storage variations. |
+
+---
+
+## 4. Detailed Class & Method Verification Matrix
+
+| Class | Requirement / Module | Audited Methods | GRASP Patterns Evaluated | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| `Person` | Taller 1 — People | Constructor, `getId`, `setId`, `getFirstName`, `setFirstName`, `getLastName`, `setLastName`, `getPhoneNumber`, `setPhoneNumber`, `getFullName`, `getSummary` (abstract) | Information Expert (`getFullName`), Polymorphism (`getSummary`), Low Coupling | Correct |
+| `Customer` | Taller 1 — People | Constructor, `getEmail`, `setEmail`, `getSummary` | Information Expert, Polymorphism (`@Override getSummary`), High Cohesion | Correct |
+| `Seller` | Taller 1 — People | Constructor, `getEmployeeCode`, `setEmployeeCode`, `getWorkShift`, `setWorkShift`, `getSummary` | Information Expert, Polymorphism (`@Override getSummary`), High Cohesion | Correct |
+| `PersonRepository` | Taller 1 / RE6 — People | `save`, `findAll`, `findById`, `saveAll`, `loadAllCustomers`, `loadAllSellers`, `saveAllCustomers`, `saveAllSellers` | Pure Fabrication, Indirection, Protected Variations (`Repository<Person>`), Creator (`PersistenceException`) | Correct |
+| `PersonService` | Taller 1 / RE6 — People | Constructor, `registerCustomer`, `registerSeller`, `findCustomerById`, `findSellerById`, `listAllCustomers`, `listAllSellers` | Creator (`Customer`, `Seller`), Controller, High Cohesion (delegates to `PersonValidator`) | Correct |
+| `AccessoryRepository` | RE1 / RE6 — Accessories | `save`, `findAll`, `findById`, `saveAll`, `loadAll` | Pure Fabrication, Indirection, Protected Variations (`Repository<Accessory>`) | Correct |
+| `AccessoryService` | RE1 / RE5-A4 / RE6 — Accessories | Constructor, `findById`, `registerCable`, `registerController`, `registerMemory`, `listAllaccessories`, `listAccesoriesByType`, `findAcessoriesCOmpatibleWith`, `updateStock`, `restoreStock` | Information Expert, Creator, Low Coupling, High Cohesion | **Violations (`V-01`, `V-03`, `V-04`)**: `findAcessoriesCOmpatibleWith` bypasses `accessory.isCompatibleWith`; constructor requires redundant `List<Accessory>`; inline subtype validations in `registerCable` and `registerMemory` |
+| `PromotionRepository` | RE2 / RE6 — Promotions | `save`, `findAll`, `findById`, `saveAll`, `loadAll` | Pure Fabrication, Indirection, Protected Variations (`Repository<Promotion>`) | Correct |
+| `PromotionService` | RE2 / RE5-A1 / RE6 — Promotions | Constructor, `findById`, `registerPercentageDiscount`, `registerCategoryDiscount`, `registerBulkPurchaseDiscount`, `validatePromotionBase`, `listAllPromotions`, `listActivePromotions`, `findBestPromotionFor` | Information Expert (`findBestPromotionFor`), Creator, Polymorphism, High Cohesion | **Violation (`V-04`)**: `validatePromotionBase`, `registerCategoryDiscount`, and `registerBulkPurchaseDiscount` keep inline validation logic instead of delegating to `com.gamezone.validation` |
+| `ReturnRecord` | RE3 — Returns | Constructor, getters | Pure Fabrication, Low Coupling (DTO with raw IDs) | Correct |
+| `ReturnRepository` | RE3 / RE6 — Returns | `save`, `findAll`, `findById`, `saveAll`, `loadAll` | Pure Fabrication, Indirection, Protected Variations (`Repository<ReturnRecord>`) | Correct |
+| `ReturnService` | RE3 / RE5-A4/A6/A7 / RE6 — Returns | Constructors, `registerReturn`, `viewAllReturns`, `viewReturnsByCustomer`, `viewReturnsBySale`, `calculateMonthlySales`, `calculateMonthlyReturns`, `generateMonthlyBalance`, `findInSale`, `toRecord`, `toReturn` | Information Expert, Creator (`Return`, `ReturnRecord`), Controller, Indirection | **Violation (`V-02`)**: `findInSale(Sale, String)` iterates `sale.getProducts()` externally instead of delegating to `Sale` |
+| `WarrantyRecord` | RE4 — Warranties | Constructor, getters | Pure Fabrication, Low Coupling (DTO with raw IDs) | Correct |
+| `WarrantyRepository` | RE4 / RE6 — Warranties | `save`, `findAll`, `findById`, `saveAll`, `loadAll` | Pure Fabrication, Indirection, Protected Variations (`Repository<WarrantyRecord>`) | Correct |
+| `WarrantyService` | RE4 / RE5-A2/A7 — Warranties | Constructor, `assignBasicWarranty`, `assignExtendedWarranty`, `findWarrantyByProduct`, `listAllWarranties`, `listActiveWarranties`, `listWarrantiesExpiringSoon`, `cancelWarranties`, `save`, `toRecord`, `toWarranty`, `resolveSaleById` | Information Expert (`listActiveWarranties`), Creator (`BasicWarranty`, `ExtendedWarranty`), Low Coupling (acyclic wiring), Polymorphism (`cancelWarranties`) | Correct |
