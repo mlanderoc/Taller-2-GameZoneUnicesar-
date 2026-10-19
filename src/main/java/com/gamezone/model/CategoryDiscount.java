@@ -71,24 +71,15 @@ public class CategoryDiscount extends Promotion {
      * @return the calculated discount amount for the target category
      */
     @Override
-    public double calculateDiscount(Sale sale){
-        
-      double categoryTotal = 0; 
-      
-      for(Product product : sale.getProducts()){
-          if("VIDEOGAME".equalsIgnoreCase(categoryObjective) && product instanceof VideoGame){
-              categoryTotal += product.getPrice(); 
-          }
-          
-          if("CONSOLE".equalsIgnoreCase(categoryObjective) && product instanceof Console){
-              categoryTotal += product.getPrice(); 
-          }
+    public double calculateDiscount(Sale sale) {
+        double categoryTotal = 0;
 
-          if("ACCESSORY".equalsIgnoreCase(categoryObjective) && product instanceof Accessory){
-              categoryTotal += product.getPrice(); 
-          }
-      }
-      
-      return categoryTotal * discountPercentage / 100;
+        for (Product product : sale.getProducts()) {
+            if (product != null && product.belongsToCategory(categoryObjective)) {
+                categoryTotal += product.getPrice();
+            }
+        }
+
+        return categoryTotal * discountPercentage / 100;
     }
 }
