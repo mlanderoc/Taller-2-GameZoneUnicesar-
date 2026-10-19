@@ -4,6 +4,9 @@
  */
 package com.gamezone.ui;
 
+import com.gamezone.exceptions.BusinessRuleException;
+import com.gamezone.exceptions.InvalidDataException;
+import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.service.ProductService;
 import javax.swing.JOptionPane;
 
@@ -256,6 +259,12 @@ public class ProductDialog extends javax.swing.JDialog {
                 productPanel.loadProducts();
             }
             dispose();
+        } catch (BusinessRuleException ex) {
+            JOptionPane.showMessageDialog(this, "No se puede completar la operación: " + ex.getMessage(), "Regla de negocio", JOptionPane.WARNING_MESSAGE);
+        } catch (InvalidDataException ex) {
+            JOptionPane.showMessageDialog(this, "Los datos ingresados no son válidos: " + ex.getMessage(), "Datos inválidos", JOptionPane.WARNING_MESSAGE);
+        } catch (PersistenceException ex) {
+            JOptionPane.showMessageDialog(this, "Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.", "Error de persistencia", JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "No se pudo registrar el producto: " + ex.getMessage(), "Error al registrar", JOptionPane.ERROR_MESSAGE);
         }

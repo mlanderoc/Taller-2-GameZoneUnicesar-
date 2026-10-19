@@ -1,5 +1,9 @@
 package com.gamezone.ui;
 
+import com.gamezone.exceptions.BusinessRuleException;
+import com.gamezone.exceptions.InvalidDataException;
+import com.gamezone.exceptions.PersistenceException;
+import com.gamezone.exceptions.ResourceNotFoundException;
 import com.gamezone.model.Accessory;
 import com.gamezone.model.Console;
 import com.gamezone.model.Customer;
@@ -61,36 +65,50 @@ public class ConsoleMenu {
             printMainMenu();
             String option = scanner.nextLine().trim();
 
-            switch (option) {
-                case "1":
-                    showProductMenu();
-                    break;
-                case "2":
-                    showPeopleMenu();
-                    break;
-                case "3":
-                    showSalesMenu();
-                    break;
-                case "4":
-                    showPromotionMenu();
-                    break;
-                case "5":
-                    showAccessoryMenu();
-                    break;
-                case "6":
-                    showReturnMenu();
-                    break;
-                case "7":
-                    showWarrantyMenu();
-                    break;
-                case "0":
-                    running = false;
-                    printMessage("Gracias por usar GameZone Unicesar.");
-                    break;
-                default:
-                    printError("Opcion invalida. Intente nuevamente.");
-                    pause();
-                    break;
+            try {
+                switch (option) {
+                    case "1":
+                        showProductMenu();
+                        break;
+                    case "2":
+                        showPeopleMenu();
+                        break;
+                    case "3":
+                        showSalesMenu();
+                        break;
+                    case "4":
+                        showPromotionMenu();
+                        break;
+                    case "5":
+                        showAccessoryMenu();
+                        break;
+                    case "6":
+                        showReturnMenu();
+                        break;
+                    case "7":
+                        showWarrantyMenu();
+                        break;
+                    case "0":
+                        running = false;
+                        printMessage("Gracias por usar GameZone Unicesar.");
+                        break;
+                    default:
+                        printError("Opcion invalida. Intente nuevamente.");
+                        pause();
+                        break;
+                }
+            } catch (ResourceNotFoundException e) {
+                printError("No se encontró el recurso solicitado: " + e.getMessage());
+                pause();
+            } catch (BusinessRuleException e) {
+                printError("No se puede completar la operación: " + e.getMessage());
+                pause();
+            } catch (InvalidDataException e) {
+                printError("Los datos ingresados no son válidos: " + e.getMessage());
+                pause();
+            } catch (PersistenceException e) {
+                printError("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+                pause();
             }
         }
     }
@@ -404,8 +422,14 @@ public class ConsoleMenu {
             Sale sale = saleService.registerSale(customer, seller, products, productIdsWithExtendedWarranty);
             printMessage("Venta registrada correctamente.");
             System.out.println("\n" + sale.generateReceipt());
-        } catch (IllegalArgumentException exception) {
-            printError("No se pudo registrar la venta: " + exception.getMessage());
+        } catch (ResourceNotFoundException e) {
+            printError("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            printError("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            printError("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            printError("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         }
     }
 
@@ -431,8 +455,14 @@ public class ConsoleMenu {
             Return returnObj = returnService.registerReturn(saleId, productIds, reason);
             printMessage("Devolucion registrada correctamente.");
             System.out.println("\n" + returnObj.generateReturnReceipt());
-        } catch (IllegalArgumentException e) {
-            printError("No se pudo procesar la devolucion: " + e.getMessage());
+        } catch (ResourceNotFoundException e) {
+            printError("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            printError("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            printError("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            printError("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         }
     }
 
@@ -449,8 +479,16 @@ public class ConsoleMenu {
 
             productService.registerVideoGame(id, title, price, stock, platform, genre, ageRating);
             printMessage("Videojuego registrado correctamente.");
-        } catch (Exception e) {
-            printError(e.getMessage());
+        } catch (NumberFormatException e) {
+            printError("Los datos ingresados no son válidos: Precio e inventario deben ser valores numéricos.");
+        } catch (ResourceNotFoundException e) {
+            printError("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            printError("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            printError("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            printError("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         }
     }
 
@@ -467,8 +505,16 @@ public class ConsoleMenu {
 
             productService.registerConsole(id, title, price, stock, brand, model, generation);
             printMessage("Consola registrada correctamente.");
-        } catch (Exception e) {
-            printError(e.getMessage());
+        } catch (NumberFormatException e) {
+            printError("Los datos ingresados no son válidos: Precio e inventario deben ser valores numéricos.");
+        } catch (ResourceNotFoundException e) {
+            printError("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            printError("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            printError("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            printError("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         }
     }
 
@@ -490,8 +536,14 @@ public class ConsoleMenu {
 
             personService.registerCustomer(id, firstName, lastName, phone, email);
             printMessage("Cliente registrado correctamente.");
-        } catch (Exception e) {
-            printError(e.getMessage());
+        } catch (ResourceNotFoundException e) {
+            printError("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            printError("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            printError("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            printError("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         }
     }
 
@@ -519,7 +571,7 @@ public class ConsoleMenu {
     private void viewSalesByCustomer() {
         System.out.print("ID del cliente: ");
         Customer c = personService.findCustomerById(scanner.nextLine().trim());
-        if (c == null) { printError("Cliente no encontrado."); return; }
+        if (c == null) { printError("No se encontró el recurso solicitado: Cliente no encontrado."); return; }
         List<Sale> sales = saleService.viewSalesByCustomer(c);
         if (sales.isEmpty()) printMessage("Este cliente no tiene compras.");
         else sales.forEach(s -> System.out.println(s.generateReceipt() + "\n----------------------------------------------"));
@@ -528,7 +580,7 @@ public class ConsoleMenu {
     private void viewSalesBySeller() {
         System.out.print("ID del vendedor: ");
         Seller s = personService.findSellerById(scanner.nextLine().trim());
-        if (s == null) { printError("Vendedor no encontrado."); return; }
+        if (s == null) { printError("No se encontró el recurso solicitado: Vendedor no encontrado."); return; }
         List<Sale> sales = saleService.viewSalesBySeller(s);
         if (sales.isEmpty()) printMessage("Este vendedor no tiene ventas.");
         else sales.forEach(sl -> System.out.println(sl.generateReceipt() + "\n----------------------------------------------"));
@@ -545,8 +597,16 @@ public class ConsoleMenu {
 
             promotionService.registerPercentageDiscount(id, name, start, end, pct);
             printMessage("Promocion registrada.");
-        } catch (Exception e) {
-            printError(e.getMessage());
+        } catch (NumberFormatException e) {
+            printError("Los datos ingresados no son válidos: El porcentaje debe ser numérico.");
+        } catch (ResourceNotFoundException e) {
+            printError("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            printError("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            printError("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            printError("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         }
     }
 
@@ -562,8 +622,16 @@ public class ConsoleMenu {
 
             promotionService.registerCategoryDiscount(id, name, start, end, pct, cat);
             printMessage("Promocion registrada.");
-        } catch (Exception e) {
-            printError(e.getMessage());
+        } catch (NumberFormatException e) {
+            printError("Los datos ingresados no son válidos: El porcentaje debe ser numérico.");
+        } catch (ResourceNotFoundException e) {
+            printError("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            printError("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            printError("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            printError("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         }
     }
 
@@ -579,8 +647,16 @@ public class ConsoleMenu {
 
             promotionService.registerBulkPurchaseDiscount(id, name, start, end, min, pct);
             printMessage("Promocion registrada.");
-        } catch (Exception e) {
-            printError(e.getMessage());
+        } catch (NumberFormatException e) {
+            printError("Los datos ingresados no son válidos: La cantidad mínima y el porcentaje deben ser numéricos.");
+        } catch (ResourceNotFoundException e) {
+            printError("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            printError("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            printError("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            printError("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
         }
     }
 
