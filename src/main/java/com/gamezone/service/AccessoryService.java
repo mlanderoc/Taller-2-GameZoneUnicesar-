@@ -16,9 +16,18 @@ public class AccessoryService {
     private final AccessoryRepository repository;
     private final List<Accessory> accessories;
 
-    public AccessoryService(AccessoryRepository repository, List<Accessory> accessories) {
+    /**
+     * Creates the accessory service loading the initial catalog from the repository.
+     *
+     * @param repository the accessory repository
+     */
+    public AccessoryService(AccessoryRepository repository) {
         this.repository = repository;
         this.accessories = repository.loadAll();
+    }
+
+    public AccessoryService(AccessoryRepository repository, List<Accessory> accessories) {
+        this(repository);
     }
     
     
