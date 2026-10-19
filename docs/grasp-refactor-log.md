@@ -56,4 +56,25 @@ In coherence with Guiding Question 4 of [docs/grasp-analysis.md](grasp-analysis.
 | `AccessoryService`, `PromotionService` | Delegated inline subtype and promotion validations (`Cable`, `ExternalMemory`, `Promotion` base fields, `CategoryDiscount`, `BulkPurchaseDiscount`) to `ProductValidator` | `V-05` | Pure Fabrication & High Cohesion (`Fabricación Pura` y `Alta Cohesión`) | `feature/grasp-refactor` (PR #2) | Héctor Guevara (`Hectorguevara22`) |
 | `AccessoryService` | Added single-argument constructor `AccessoryService(AccessoryRepository)` that encapsulates `repository.loadAll()` internally | `V-06` | Low Coupling (`Bajo Acoplamiento`) | `feature/grasp-refactor` (PR #2) | Héctor Guevara (`Hectorguevara22`) |
 | `Sale`, `ReturnService` | Added `Sale.findProductById(String)` and delegated `ReturnService.findInSale(Sale, String)` to `sale.findProductById(productId)` | `V-04` | Information Expert (`Experto en Información`) | `feature/grasp-refactor` (PR #2) | Héctor Guevara (`Hectorguevara22`) |
+| `Main` | Updated `AccessoryService` initialization to `new AccessoryService(accessoryRepository)`, removing the direct `accessoryRepository.loadAll()` call in `Main` | `V-06` | Low Coupling (`Bajo Acoplamiento`) | `feature/grasp-refactor` (PR #3) | Merlin Landero (`mlanderoc`) |
+| `SaleService` | Extracted private cohesive helpers `findCatalogProduct(Product)`, `findCatalogProductById(String)`, and `decrementStock(Product)` from `registerSale(...)` and `toSale(...)` | `V-07` | High Cohesion (`Alta Cohesión`) | `feature/grasp-refactor` (PR #3) | Merlin Landero (`mlanderoc`) |
+| `ProductService` | Added positive quantity guard in `restoreStock(String, int)` throwing `InvalidDataException` when `quantity <= 0` for symmetry with `AccessoryService.restoreStock` | `V-07` | High Cohesion (`Alta Cohesión`) | `feature/grasp-refactor` (PR #3) | Merlin Landero (`mlanderoc`) |
+
+---
+
+## 4. Final Non-Regression Verification Results (After All Phase 2 Corrections)
+
+After integrating PR #1 (`craulgomez`), PR #2 (`Hectorguevara22`), and PR #3 (`mlanderoc`) on `feature/grasp-refactor`, the complete verification suite was executed and compared against the Section 2 Baseline Reference Table:
+
+| Menu Option / Scenario | Affected Refactorings | Post-Refactor Output / Behavior | Non-Regression Status |
+| :--- | :--- | :--- | :--- |
+| **1–3. Products Registration & Listing (`VideoGame`, `Console`)** | `V-02`, `V-07` | Registers and lists `VideoGame` and `Console` identically to baseline; `getCategory()` returns `"VIDEOGAME"` and `"CONSOLE"` | PASS (No Regression) |
+| **4–6. Customers & Sellers Registration & Listing** | — | Registers customers and lists preloaded sellers (`V001`–`V003`) identically to baseline | PASS (No Regression) |
+| **7–10. Unified Sale Registration & Queries** | `V-02`, `V-06`, `V-07` | `SaleService.registerSale` and `toSale` resolve items and deduct stock via `findCatalogProduct`, `findCatalogProductById`, and `decrementStock`; `CategoryDiscount` evaluates `product.belongsToCategory(...)` polymorphically; receipts match baseline 100% | PASS (No Regression) |
+| **11–13. Accessories Registration, Type Filter & Console Compatibility** | `V-03`, `V-05`, `V-06` | `Main` initializes `AccessoryService(accessoryRepository)` cleanly; `registerCable` and `registerMemory` validate via `ProductValidator`; `findCompatibleWithConsole("C001")` delegates to `accessory.isCompatibleWith("C001")` and returns the exact same accessories | PASS (No Regression) |
+| **14–16. Promotions Registration & Active Listing** | `V-02`, `V-05` | `PromotionService` delegates base, category, and minimum-quantity validations to `ProductValidator`; active and best promotions compute identical discounts | PASS (No Regression) |
+| **17–20. Returns Registration, Proportional Refund & Warranty Cancellation** | `V-01`, `V-04`, `V-07` | `ReturnService.findInSale` delegates to `sale.findProductById(productId)`; `Return.getDiscountRatio()` delegates to `originalSale.getDiscountRatio()`; `ProductService.restoreStock` and `AccessoryService.restoreStock` restore stock and validate positive quantities | PASS (No Regression) |
+| **21. Monthly Financial Balance** | `V-01`, `V-07` | `calculateMonthlySales`, `calculateMonthlyReturns`, and `generateMonthlyBalance` produce the exact same financial totals | PASS (No Regression) |
+| **22–24. Warranties Queries (By Product & Sale / Active / Expiring Soon)** | — | Displays `generateWarrantyCertificate()` identically to baseline | PASS (No Regression) |
+| **Error Paths (`ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, `PersistenceException`)** | `V-05`, `V-07` | Throws the exact same exception types and Spanish user-facing messages in `ConsoleMenu` and Swing dialogs | PASS (No Regression) |
 
