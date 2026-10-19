@@ -4,6 +4,7 @@ package com.gamezone.service;
 import com.gamezone.model.Customer;
 import com.gamezone.model.Seller;
 import com.gamezone.persistence.PersonRepository;
+import com.gamezone.validation.PersonValidator;
 
 import java.util.List;
 
@@ -32,44 +33,38 @@ public class PersonService {
      * Creates a new PersonService and initializes the repository.
      */
     public PersonService(PersonRepository repository) {
-        this.repository = new PersonRepository();
+        this.repository = (repository != null) ? repository : new PersonRepository();
     }
 
     /**
-     * Registers a new customer in the system.
-     *
-     * <p>The method loads the existing customers, adds the new customer
-     * to the list, and saves the updated list through the repository.</p>
-     *
-     * @param customer customer to be registered
+     * Registers a new customer in the system after validating data and unique identifier.
      */
-   public void registerCustomer(String id, String firstName, String lastName, String phone, String email) {
-    List<Customer> customers = repository.loadAllCustomers();
+    public void registerCustomer(String id, String firstName, String lastName, String phone, String email) {
+        String fullName = ((firstName != null ? firstName.trim() : "") + " " + (lastName != null ? lastName.trim() : "")).trim();
+        PersonValidator.validatePersonData(id, fullName, email, phone);
 
-    for (Customer existing : customers) {
-        if (existing.getId().equals(id)) {
-            throw new IllegalArgumentException("A customer with id " + id + " already exists.");
-        }
+        List<Customer> customers = repository.loadAllCustomers();
+        PersonValidator.validateUniquePerson(customers, id);
+
+        Customer customer = new Customer(id, firstName, lastName, phone, email);
+        customers.add(customer);
+        repository.saveAllCustomers(customers);
     }
 
-    Customer customer = new Customer(id, firstName, lastName, phone, email);
-    customers.add(customer);
-    repository.saveAllCustomers(customers);
-}
-   public void registerSeller(String id, String firstName, String lastName, String phone,
-                            String employeeCode, String shift) {
-    List<Seller> sellers = repository.loadAllSellers();
+    /**
+     * Registers a new seller in the system after validating data and unique identifier.
+     */
+    public void registerSeller(String id, String firstName, String lastName, String phone,
+                               String employeeCode, String shift) {
+        PersonValidator.validateSellerData(id, firstName, lastName, phone, employeeCode, shift);
 
-    for (Seller existing : sellers) {
-        if (existing.getId().equals(id)) {
-            throw new IllegalArgumentException("A seller with id " + id + " already exists.");
-        }
+        List<Seller> sellers = repository.loadAllSellers();
+        PersonValidator.validateUniquePerson(sellers, id);
+
+        Seller seller = new Seller(id, firstName, lastName, phone, employeeCode, shift);
+        sellers.add(seller);
+        repository.saveAllSellers(sellers);
     }
-
-    Seller seller = new Seller(id, firstName, lastName, phone, employeeCode, shift);
-    sellers.add(seller);
-    repository.saveAllSellers(sellers);
-}
 
     /**
      * Searches for a customer by their ID.
