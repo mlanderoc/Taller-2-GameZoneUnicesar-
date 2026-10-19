@@ -1,6 +1,7 @@
 package com.gamezone.persistence;
 
 
+import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.model.Promotion;
 import java.io.File;
 import java.io.FileInputStream;
@@ -29,7 +30,7 @@ public class PromotionRepository implements Repository<Promotion>  {
             output.writeObject(promotions);
 
         } catch (IOException exception) {
-            throw new RuntimeException("Error saving promotions", exception);
+            throw new PersistenceException("Error de escritura en el archivo " + FILE_PATH, exception);
         }
     }
       @SuppressWarnings("unchecked")
@@ -46,7 +47,7 @@ public class PromotionRepository implements Repository<Promotion>  {
             return (List<Promotion>) input.readObject();
             
         } catch (IOException | ClassNotFoundException exception){
-            throw new RuntimeException("Error loading promotions", exception);
+            throw new PersistenceException("Error de lectura en el archivo " + FILE_PATH, exception);
         }
     }
 }
