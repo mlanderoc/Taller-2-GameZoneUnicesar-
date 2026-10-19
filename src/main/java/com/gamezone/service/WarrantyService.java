@@ -98,6 +98,37 @@ public class WarrantyService {
         return expiringSoon;
     }
 
+    /**
+     * Cancels and removes from persistence all warranties (basic and/or extended)
+     * associated with the given product and sale when a console is returned.
+     *
+     * @param productId identifier of the returned console
+     * @param saleId    identifier of the original sale
+     * @return refundable cost of cancelled warranties (0.0 if only basic, or extended warranty cost)
+     */
+    public double cancelWarranties(String productId, String saleId) {
+        List<WarrantyRecord> allRecords = repository.loadAll();
+        List<WarrantyRecord> remainingRecords = new ArrayList<>();
+        double refundableCost = 0.0;
+
+        for (WarrantyRecord record : allRecords) {
+            if (record.getProductId().equals(productId) && record.getSaleId().equals(saleId)) {
+                Warranty warranty = toWarranty(record);
+                if (warranty != null) {
+                    refundableCost += warranty.getAdditionalCost();
+                }
+            } else {
+                remainingRecords.add(record);
+            }
+        }
+
+        if (remainingRecords.size() != allRecords.size()) {
+            repository.saveAll(remainingRecords);
+        }
+
+        return refundableCost;
+    }
+
     private void save(Warranty warranty) {
         List<WarrantyRecord> records = repository.loadAll();
         records.add(toRecord(warranty));
