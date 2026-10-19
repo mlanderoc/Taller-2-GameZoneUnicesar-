@@ -140,3 +140,14 @@ I used Artificial Intelligence as a support tool during the development of the p
 
 
 
+---
+
+## Requirement 7 — GRASP Audit and Refactoring
+
+### Phase 1 - Audit
+
+#### Role of Services as GRASP Controllers and Pure Fabrications
+- **Topic:** Conceptual clarification of GRASP *Controller*, *Pure Fabrication*, and *Indirection* in a layered Java architecture.
+- **Consultation:** I asked for a conceptual explanation of how service and repository classes relate to the *Controller*, *Pure Fabrication*, and *Indirection* patterns in GRASP.
+- **What I learned:** Repository classes (`PersonRepository`, `AccessoryRepository`, `ReturnRepository`, `WarrantyRepository`, `PromotionRepository`) and DTO records (`ReturnRecord`, `WarrantyRecord`) are *Pure Fabrications* that also provide *Indirection* between business logic and binary file I/O, while service classes act as use-case *Controllers* coordinating domain objects behind the UI.
+- **How I applied it:** I used these definitions to evaluate my persistence and service classes in `docs/grasp-audit/developer2-audit.md` and to document the boundary findings in Question 2 of `docs/grasp-analysis.md`.

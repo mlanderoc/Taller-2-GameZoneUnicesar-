@@ -34,6 +34,29 @@ For the Technical Lead to accept any verdict into `docs/grasp-audit/consolidated
 
 ---
 
+## 2. Boundary Findings Between Team Members' Code
+
+**Question:** *Some violations manifest at the boundary between the code of two team members, for example when a class of one member depends inappropriately on a class of another. What findings of this type did the team identify? How were they recorded in the consolidation and to whom was their correction assigned? Present at least one concrete case or, if there were none, explain how you verified that none existed.*
+
+### Boundary Findings Identified by the Team
+
+During the individual audits, the team identified **four concrete boundary findings** where a responsibility crossed the ownership boundary between two team members:
+
+1. **Boundary Case 1 — Discount Ratio Calculation Between `Return` (Developer 1) and `Sale` (Technical Lead):**
+   - **Evidence:** In `Return.getDiscountRatio()` (`Return.java`, lines 139–144, developed by Developer 1), `Return` extracts `originalSale.getDiscountAmount()` and `originalSale.getSubtotal()` from `Sale` (developed by the Technical Lead) to compute `discountAmount / subtotal` externally.
+   - **Consolidation & Assignment:** Unified in `consolidated-audit.md` as violation `V-01` (**Information Expert**). In Phase 2, the **Technical Lead (`mlanderoc`)** adds `public double getDiscountRatio()` to `Sale`, and **Developer 1 (`craulgomez`)** refactors `Return.getDiscountRatio()` to delegate to `originalSale.getDiscountRatio()`.
+2. **Boundary Case 2 — Product Lookup Within a Sale Between `ReturnService` (Developer 2) and `Sale` (Technical Lead):**
+   - **Evidence:** In `ReturnService.findInSale(Sale sale, String productId)` (`ReturnService.java`, lines 210–217, developed by Developer 2), `ReturnService` iterates over `sale.getProducts()` externally because `Sale` (Technical Lead) did not expose an expert lookup method `findProductById(String productId)`.
+   - **Consolidation & Assignment:** Unified in `consolidated-audit.md` as violation `V-04` (**Information Expert**). In Phase 2, the **Technical Lead (`mlanderoc`)** adds `public Product findProductById(String productId)` to `Sale`, and **Developer 2 (`Hectorguevara22`)** refactors `ReturnService.findInSale` to delegate to `sale.findProductById(productId)`.
+3. **Boundary Case 3 — Console Compatibility Check Between `AccessoryService` (Developer 2) and `Accessory` (Developer 1):**
+   - **Evidence:** In `AccessoryService.findAcessoriesCOmpatibleWith(String consoleId)` (`AccessoryService.java`, lines 72–78, Developer 2), the service calls `accessory.getCompatibleConsoleIds().contains(consoleId)` instead of invoking `accessory.isCompatibleWith(consoleId)` defined in `Accessory` (`Accessory.java`, lines 56–63, Developer 1).
+   - **Consolidation & Assignment:** Recorded in `consolidated-audit.md` as `V-03` (**Information Expert**). **Developer 1 (`craulgomez`)** ensures null-safe list traversal in `Accessory.isCompatibleWith(String)`, and **Developer 2 (`Hectorguevara22`)** refactors `AccessoryService.findAcessoriesCOmpatibleWith` to call `accessory.isCompatibleWith(consoleId)`.
+4. **Boundary Case 4 — Subtype & Promotion Validations Between `ProductValidator` (Developer 1) and `AccessoryService` / `PromotionService` (Developer 2) & Constructor Coupling Between `AccessoryService` (Developer 2) and `Main` (Technical Lead):**
+   - **Evidence:** `AccessoryService` (`AccessoryService.java`, lines 38–40 & 57–59) and `PromotionService` (`PromotionService.java`, lines 53–58, 66–68, 74–90) retained inline `InvalidDataException` / `BusinessRuleException` checks because `ProductValidator` (Developer 1) only covered base `Product` attributes (`V-05`). Additionally, `Main.java` (line 40, Technical Lead) had to pass `accessoryRepository.loadAll()` into `new AccessoryService(accessoryRepository, accessoryRepository.loadAll())` (`V-06`).
+   - **Consolidation & Assignment:** **Developer 1 (`craulgomez`)** adds the missing static validator methods to `ProductValidator`, **Developer 2 (`Hectorguevara22`)** delegates validation in `AccessoryService` and `PromotionService` and adds the single-argument `AccessoryService(AccessoryRepository)` constructor, and the **Technical Lead (`mlanderoc`)** updates `Main` to invoke `new AccessoryService(accessoryRepository)`.
+
+---
+
 ## 3. Overlapping GRASP Patterns and De-Duplication of Findings
 
 **Question:** *Some patterns are closely related to each other. Did the team find code fragments that violate more than one pattern at the same time? How were they recorded without duplicating findings and how was it decided which pattern guides the correction?*
@@ -60,3 +83,27 @@ Yes. Because several GRASP patterns reinforce one another (for instance, **Polym
 To avoid inflating or duplicating violations across the nine pattern sections:
 - Each problematic code fragment is registered **only once** as a numbered `Violation` (`V-XX`) under the **most specific root-cause pattern** that dictates the concrete code refactoring (e.g., **Polymorphism** when replacing `instanceof` with an overridden method; **Information Expert** when moving a calculation to the class that owns the attributes; **Pure Fabrication / High Cohesion** when moving non-domain validation rules to a dedicated validator).
 - In the section of the secondary related pattern (e.g., **Protected Variations**), the report cross-references the primary violation ID (`V-XX`) instead of creating a duplicate entry.
+
+---
+
+## 4. Strategy and Evidence for Preserving External System Behavior (Non-Regression)
+
+**Question:** *The refactoring must preserve the external behavior of the system. What strategy does the team follow to guarantee that all menu operations continue working the same way? What evidence is shown at the end to demonstrate that nothing was broken?*
+
+### Non-Regression Verification Strategy
+
+Because Phase 2 of Requirement 7 reorganizes internal responsibilities (such as moving calculations to Information Experts, replacing `instanceof` category checks with polymorphic dispatch, and delegating inline service validations to `com.gamezone.validation`) without altering user-visible functionality, the team follows a three-checkpoint verification protocol documented in `docs/grasp-refactor-log.md`:
+
+1. **Baseline Reference Execution on `develop` (Before First Correction):**
+   Before applying any refactoring on `feature/grasp-refactor`, the team runs and records a complete reference test suite covering every Console Menu operation (`1` through `28` across Products, Customers/Sellers, Sales, Accessories, Promotions, Returns/Monthly Balance, and Warranties) along with the four differentiated exception paths (`ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, `PersistenceException`).
+2. **Per-Pull-Request Verification (During Phase 2):**
+   After each team member completes their assigned `refactor:` commits on `feature/grasp-refactor`, they run `mvn clean compile` / `javac` and execute the specific menu operations affected by their changes (e.g., Developer 1 verifies category discount calculation and return receipt generation; Developer 2 verifies console compatibility lookup, promotion registration validation, and return registration; Technical Lead verifies sale registration, stock restoration, and startup initialization).
+3. **Final End-to-End Verification (Before Merging Phase 2):**
+   Once all violations `V-01` through `V-07` are integrated on `feature/grasp-refactor`, the Technical Lead executes the full 28-operation verification matrix and compares every output, receipt, Spanish error message, and `.dat` file state against the baseline reference.
+
+### Evidence Presented at Completion
+
+The team records and presents in `docs/grasp-refactor-log.md` and during the oral defense:
+- **Zero-error compilation evidence** (`mvn clean compile`).
+- **Complete Reference vs. Post-Refactor Verification Table** covering all menu operations with exact input values, expected outputs/receipts, and pass/match status (`IDENTICAL`).
+- **Confirmation of unchanged `.dat` binary serialization compatibility** (`products.dat`, `Accessory.dat`, `customers.dat`, `sellers.dat`, `sales.dat`, `promotion.dat`, `returns.dat`, `warranties.dat`).
