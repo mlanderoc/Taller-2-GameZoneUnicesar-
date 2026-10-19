@@ -107,3 +107,14 @@ I used Artificial Intelligence as a support tool during the development of the p
 **What I learned:** Since accessories are stored in `AccessoryRepository` and managed by `AccessoryService`, `ReturnService` should check `product instanceof Accessory` and delegate to `AccessoryService.restoreStock`.
 
 **How I applied it:** I validated `AccessoryService.restoreStock` and ensured `ReturnService` delegates stock restoration and record resolution across both `ProductService` and `AccessoryService`.
+
+### Monthly balance breakdown methods (Adjustment A6)
+
+**Topic:** Filtering dates with `LocalDate.getMonthValue()` and `getYear()` in `ReturnService`.
+
+**Consultation:** I asked how to separate the monthly balance calculation into helper methods so the UI can display total sales, total returns, and net balance independently.
+
+**What I learned:** Extracting `calculateMonthlySales(int month, int year)` and `calculateMonthlyReturns(int month, int year)` allows `generateMonthlyBalance(month, year)` to reuse both methods while exposing the intermediate totals to `ConsoleMenu` and `ReportsPanel`.
+
+**How I applied it:** I implemented `calculateMonthlySales` and `calculateMonthlyReturns` in `ReturnService` and updated the UI to display all three values.
+

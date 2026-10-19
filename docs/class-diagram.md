@@ -299,6 +299,8 @@ classDiagram
         +viewAllReturns() List~Return~
         +viewReturnsByCustomer(customerId String) List~Return~
         +viewReturnsBySale(saleId String) List~Return~
+        +calculateMonthlySales(month int, year int) double
+        +calculateMonthlyReturns(month int, year int) double
         +generateMonthlyBalance(month int, year int) double
     }
  
