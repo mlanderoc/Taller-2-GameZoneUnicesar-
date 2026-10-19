@@ -47,3 +47,8 @@ In coherence with Guiding Question 4 of [docs/grasp-analysis.md](grasp-analysis.
 
 | Class | Change Made | Violation ID | Applied Pattern | Commit / PR | Responsible |
 | :--- | :--- | :--- | :--- | :--- | :--- |
+| `Product`, `VideoGame`, `Console`, `Accessory` | Added abstract `getCategory()` and `belongsToCategory(String)` in `Product` and `@Override getCategory()` in subclasses (`"VIDEOGAME"`, `"CONSOLE"`, `"ACCESSORY"`) | `V-02` | Polymorphism (`Polimorfismo`) | `feature/grasp-refactor` (PR #1) | Carlos Gomez (`craulgomez`) |
+| `CategoryDiscount` | Replaced `instanceof VideoGame`, `Console`, and `Accessory` conditionals in `calculateDiscount(Sale)` with polymorphic `product.belongsToCategory(categoryObjective)` | `V-02` | Polymorphism (`Polimorfismo`) | `feature/grasp-refactor` (PR #1) | Carlos Gomez (`craulgomez`) |
+| `Accessory` | Added null-safe guards on `compatibleConsoleIds` and `consoleId` inside `isCompatibleWith(String)` | `V-03` | Information Expert (`Experto en Información`) | `feature/grasp-refactor` (PR #1) | Carlos Gomez (`craulgomez`) |
+| `ProductValidator` | Added static subtype and promotion validation methods (`validateCableData`, `validateMemoryData`, `validatePromotionBase`, `validateCategoryObjective`, `validateMinimumQuantity`) | `V-05` | Pure Fabrication (`Fabricación Pura`) | `feature/grasp-refactor` (PR #1) | Carlos Gomez (`craulgomez`) |
+| `Sale`, `Return` | Added `Sale.getDiscountRatio()` and refactored `Return.getDiscountRatio()` to delegate to `originalSale.getDiscountRatio()` | `V-01` | Information Expert (`Experto en Información`) | `feature/grasp-refactor` (PR #1) | Carlos Gomez (`craulgomez`) & Merlin Landero (`mlanderoc`) |
