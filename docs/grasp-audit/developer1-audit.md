@@ -48,7 +48,7 @@ private double getDiscountRatio() {
     }
     return 0.0;
 }
-``` |
+| **Evidence** | TU_TEXTO_DE_EVIDENCE_DE_V-01:<br><pre>if (originalSale != null &amp;&amp; originalSale.getSubtotal() &gt; 0) {<br>    return originalSale.getDiscountAmount() / originalSale.getSubtotal();<br>}<br>return 0.0;<br>}</pre> |
 | **Explanation** | `Sale` is the Information Expert that owns both `subtotal` and `discountAmount`. However, `Return` pulls both raw attributes out of `originalSale` (`originalSale.getDiscountAmount()` and `originalSale.getSubtotal()`) to compute the sale's discount ratio on its own. |
 | **Consequence** | `Return` is coupled to the internal arithmetic relationship between `subtotal` and `discountAmount` inside `Sale`. If `Sale` changes how discounts or item-level effective prices are stored or calculated, `Return` would have to be modified in tandem. |
 | **Proposed Solution** | Apply **Information Expert** by moving `getDiscountRatio()` into `Sale` (`public double getDiscountRatio()`), and have `Return.getDiscountRatio()` (or `calculateRefundAmount()` and `generateReturnReceipt()`) delegate directly to `originalSale.getDiscountRatio()`. |
@@ -113,19 +113,7 @@ The classes under Developer 1's responsibility belong to the domain model (`com.
 | **ID** | `V-02` |
 | **Pattern** | Polymorphism (`Polimorfismo`) |
 | **Module** | Promotions & Products/Accessories Hierarchy (Requirement 2 / Requirement 5 Adjustment A1) |
-| **Evidence** | `com.gamezone.model.CategoryDiscount`, method `calculateDiscount(Sale sale)` (lines 78–90 of `CategoryDiscount.java`):<br>```java
-for(Product product : sale.getProducts()){
-    if("VIDEOGAME".equalsIgnoreCase(categoryObjective) && product instanceof VideoGame){
-        categoryTotal += product.getPrice(); 
-    }
-    if("CONSOLE".equalsIgnoreCase(categoryObjective) && product instanceof Console){
-        categoryTotal += product.getPrice(); 
-    }
-    if("ACCESSORY".equalsIgnoreCase(categoryObjective) && product instanceof Accessory){
-        categoryTotal += product.getPrice(); 
-    }
-}
-``` |
+| **Evidence** | `com.gamezone.model.CategoryDiscount`, method `calculateDiscount(Sale sale)` (lines 78–90 of `CategoryDiscount.java`):<br><pre>for(Product product : sale.getProducts()){<br>    if("VIDEOGAME".equalsIgnoreCase(categoryObjective) &amp;&amp; product instanceof VideoGame){<br>        categoryTotal += product.getPrice(); <br>    }<br>    if("CONSOLE".equalsIgnoreCase(categoryObjective) &amp;&amp; product instanceof Console){<br>        categoryTotal += product.getPrice(); <br>    }<br>    if("ACCESSORY".equalsIgnoreCase(categoryObjective) &amp;&amp; product instanceof Accessory){<br>        categoryTotal += product.getPrice(); <br>    }<br>}</pre> |
 | **Explanation** | Instead of relying on polymorphic dispatch in the `Product` hierarchy to identify which category each product belongs to, `CategoryDiscount.calculateDiscount` uses explicit conditional type checks (`product instanceof VideoGame`, `product instanceof Console`, `product instanceof Accessory`). This directly violates the **Polymorphism** GRASP pattern ("How to handle alternatives based on type without `if/instanceof` conditionals"). |
 | **Consequence** | Adding any new product category to the store catalog in the future forces developers to modify `CategoryDiscount.calculateDiscount` to add a new `if (... && product instanceof NewType)` branch, coupling `CategoryDiscount` to every concrete subclass of `Product`. |
 | **Proposed Solution** | Apply **Polymorphism** (and **Information Expert**) by declaring `public abstract String getCategory();` and `public boolean belongsToCategory(String category)` in `Product`, overriding `getCategory()` in `VideoGame` (`"VIDEOGAME"`), `Console` (`"CONSOLE"`), and `Accessory` (`"ACCESSORY"`), and simplifying `CategoryDiscount.calculateDiscount(Sale)` to iterate with `if (product.belongsToCategory(categoryObjective))`. |
@@ -148,15 +136,7 @@ for(Product product : sale.getProducts()){
 | **ID** | `V-03` |
 | **Pattern** | Pure Fabrication (`Fabricación Pura`) |
 | **Module** | Exceptions & Validations (Requirement 6) / Accessories Hierarchy (Requirement 1) |
-| **Evidence** | `com.gamezone.validation.ProductValidator` (`ProductValidator.java`, lines 18–79) only provides `validateProductData(id, title, price, stock)` for base `Product` attributes, leaving out subtype validation rules for `Accessory` subclasses (`Cable` length > 0 and connector type, `Controller` connection type, `Memory` storage capacity > 0 and memory type). Consequently, `AccessoryService` (`AccessoryService.java`, lines 38–40 & 57–59) had to keep inline `InvalidDataException` checks:<br>```java
-if (lengthInMeters <= 0) {
-    throw new InvalidDataException("longitud", "La longitud del cable debe ser mayor que cero.");
-}
-...
-if (storageCapacityGb <= 0) {
-    throw new InvalidDataException("capacidad", "La capacidad de almacenamiento debe ser mayor que cero.");
-}
-``` |
+| **Evidence** | `com.gamezone.validation.ProductValidator` (`ProductValidator.java`, lines 18–79) only provides `validateProductData(id, title, price, stock)` for base `Product` attributes, leaving out subtype validation rules for `Accessory` subclasses (`Cable` length > 0 and connector type, `Controller` connection type, `Memory` storage capacity > 0 and memory type). Consequently, `AccessoryService` (`AccessoryService.java`, lines 38–40 & 57–59) had to keep inline `InvalidDataException` checks:<br><pre>if (lengthInMeters &lt;= 0) {<br>    throw new InvalidDataException("longitud", "La longitud del cable debe ser mayor que cero.");<br>}<br>...<br>if (storageCapacityGb &lt;= 0) {<br>    throw new InvalidDataException("capacidad", "La capacidad de almacenamiento debe ser mayor que cero.");<br>}</pre> |
 | **Explanation** | `ProductValidator` was designed as the Pure Fabrication validator for the entire `Product` hierarchy (which includes `Accessory`, `Cable`, `Controller`, and `Memory`). Because `ProductValidator` omitted subtype validation methods for accessories, `AccessoryService` could not fully delegate its input validation to the validation layer. |
 | **Consequence** | Scatters product/accessory validation rules across `com.gamezone.validation.ProductValidator` and `com.gamezone.service.AccessoryService`, lowering service cohesion. |
 | **Proposed Solution** | Apply **Pure Fabrication** by adding `validateCableData(double lengthInMeters, String connectorType)`, `validateControllerData(String connectionType)`, and `validateMemoryData(int storageCapacityGb, String memoryType)` to `ProductValidator` (Developer 1), and delegating to them from `AccessoryService` (Developer 2). |
