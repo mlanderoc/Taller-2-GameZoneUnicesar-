@@ -101,6 +101,14 @@ Entity resolutions and object-graph reconstructions are executed cleanly within 
 - **Dedicated Validators (`com.gamezone.validation`):** `ProductValidator`, `PersonValidator`, and `SaleValidator` centralize input and domain verification before service operations execute.
 - **Differentiated User Messaging:** `ConsoleMenu` and Swing dialogs catch each specific exception subtype to display clear, category-specific messages in Spanish without exposing technical stack traces.
 
+### 10. GRASP Patterns Audit & Refactoring (RE7)
+- **Phase 1 — Individual & Consolidated Audits (`docs/grasp-audit/`):** Systematic evaluation of all 35 non-UI classes across the 9 GRASP patterns (*Information Expert*, *Creator*, *Controller*, *Low Coupling*, *High Cohesion*, *Polymorphism*, *Pure Fabrication*, *Indirection*, *Protected Variations*), identifying 7 in-scope violations (`V-01`–`V-07`) and 2 out-of-scope structural observations (`F-01`, `F-02`).
+- **Phase 2 — Behavior-Preserving Refactoring (`docs/grasp-refactor-log.md`):**
+  - *Polymorphism (`V-02`):* Added `Product.getCategory()` and `Product.belongsToCategory(String)` to replace `instanceof` chains in `CategoryDiscount`.
+  - *Information Expert (`V-01`, `V-03`, `V-04`):* Delegated discount ratio calculation to `Sale.getDiscountRatio()`, console compatibility checks to `Accessory.isCompatibleWith(String)`, and sale item lookups to `Sale.findProductById(String)`.
+  - *Pure Fabrication & High Cohesion (`V-05`, `V-07`):* Centralized subtype and promotion validations in `ProductValidator`, extracted catalog lookup and stock helpers in `SaleService`, and enforced positive quantity checks in `ProductService.restoreStock`.
+  - *Low Coupling (`V-06`):* Added `AccessoryService(AccessoryRepository)` constructor so `Main` no longer invokes `accessoryRepository.loadAll()` directly.
+
 ## Requirements
 
 - Java 17 or later
@@ -158,15 +166,23 @@ GameZoneUnicesar/
 │   ├── warranty-analysis.md
 │   ├── integration-analysis.md
 │   ├── exception-analysis.md
+│   ├── grasp-analysis.md
+│   ├── grasp-refactor-log.md
 │   ├── hierarchy-diagram.md
 │   ├── class-diagram.md
 │   ├── integrated-class-diagram.md
 │   ├── exception-class-diagram.md
+│   ├── grasp-class-diagram.md
 │   ├── accessory-class-diagram.md
 │   ├── promotion-class-diagram.md
 │   ├── return-class-diagram.md
 │   ├── warranty-class-diagram.md
 │   ├── layers-diagram.md
+│   ├── grasp-audit/
+│   │   ├── developer1-audit.md
+│   │   ├── developer2-audit.md
+│   │   ├── leader-audit.md
+│   │   └── consolidated-audit.md
 │   └── ai-usage/
 │       ├── leader-ai-log.md
 │       ├── developer1-ai-log.md
@@ -199,8 +215,9 @@ See [TEAM.md](TEAM.md) for detailed role allocations, module ownership, class di
 ## Documentation & Diagrams
 
 - [TEAM Documentation](TEAM.md)
-- [System Analysis](docs/analysis.md) | [Integration Analysis (RE5)](docs/integration-analysis.md) | [Exception Analysis (RE6)](docs/exception-analysis.md)
-- [Integrated Class Diagram](docs/integrated-class-diagram.md) | [Exception Class Diagram (RE6)](docs/exception-class-diagram.md) | [Class Diagram](docs/class-diagram.md)
+- [System Analysis](docs/analysis.md) | [Integration Analysis (RE5)](docs/integration-analysis.md) | [Exception Analysis (RE6)](docs/exception-analysis.md) | [GRASP Analysis (RE7)](docs/grasp-analysis.md)
+- [Consolidated GRASP Audit](docs/grasp-audit/consolidated-audit.md) | [GRASP Refactoring Log](docs/grasp-refactor-log.md)
+- [Integrated Class Diagram](docs/integrated-class-diagram.md) | [Exception Class Diagram (RE6)](docs/exception-class-diagram.md) | [GRASP Class Diagram (RE7)](docs/grasp-class-diagram.md) | [Class Diagram](docs/class-diagram.md)
 - [Hierarchy Diagram](docs/hierarchy-diagram.md) | [Layers Diagram](docs/layers-diagram.md)
 - Module Analyses: [Accessories](docs/accessory-analysis.md), [Promotions](docs/promotion-analysis.md), [Returns](docs/return-analysis.md), [Warranties](docs/warranty-analysis.md)
 - Module Diagrams: [Accessories](docs/accessory-class-diagram.md), [Promotions](docs/promotion-class-diagram.md), [Returns](docs/return-class-diagram.md), [Warranties](docs/warranty-class-diagram.md)

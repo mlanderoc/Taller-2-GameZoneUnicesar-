@@ -37,7 +37,7 @@ public class Main {
         ProductService productService = new ProductService(productRepository);
         PersonService personService = new PersonService(personRepository);
         PromotionService promotionService = new PromotionService(promotionRepository);
-        AccessoryService accessoryService = new AccessoryService(accessoryRepository,accessoryRepository.loadAll());
+        AccessoryService accessoryService = new AccessoryService(accessoryRepository);
         
         WarrantyService warrantyService = new WarrantyService(warrantyRepository, saleRepository, productService);
         SaleService saleService = new SaleService(saleRepository, productService, personService, promotionService, accessoryService, warrantyService);

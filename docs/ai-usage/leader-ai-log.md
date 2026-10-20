@@ -62,3 +62,10 @@ Used GitHub Copilot to translate commit messages and code comments into English 
 **Context:** Consolidating the three individual GRASP audit reports (`developer1-audit.md`, `developer2-audit.md`, `leader-audit.md`) into `docs/grasp-audit/consolidated-audit.md` and defining the correction order in Question 5 of `docs/grasp-analysis.md`.
 
 **Outcome:** Consulted on the conceptual distinction between *Information Expert* and *Low Coupling* when a boundary violation involves two classes owned by different developers (such as `Sale` and `Return`, or `Sale` and `ReturnService`), and used Copilot to proofread the English phrasing of the consolidated audit tables.
+
+### Phase 2 - Refactoring
+
+**Context:** Completing the Technical Lead's GRASP Phase 2 responsibilities (`V-06` in `Main`, `V-07` in `SaleService` and `ProductService`, and the comparative `Before Refactoring` / `After Refactoring` Mermaid class diagrams in `docs/grasp-class-diagram.md`).
+
+**Outcome:** Consulted on how to increase internal cohesion in `SaleService.registerSale` and `SaleService.toSale` without altering the class's external dependencies (`F-01` remaining out of scope until Requirement 8 SOLID), extracting private helpers `findCatalogProduct(Product)`, `findCatalogProductById(String)`, and `decrementStock(Product)`. Also verified the Mermaid `classDiagram` syntax for the `Before Refactoring` and `After Refactoring` sections in `docs/grasp-class-diagram.md`.
+
