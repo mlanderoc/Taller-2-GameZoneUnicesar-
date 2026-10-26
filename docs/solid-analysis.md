@@ -123,3 +123,29 @@ To demonstrate conclusively that zero regressions were introduced, the team prov
 - **Compilation & Binary Compatibility Evidence:** Clean compilation of all source files (`mvn clean compile` / `javac` exit code `0`) and verified deserialization of all eight `.dat` persistence files.
 - **Baseline vs. Final Comparison Table in `docs/solid-refactor-log.md`:** A complete scenario-by-scenario matrix covering all 24 menu operations and error-handling paths, mapping each scenario to the specific SOLID violations (`V-01`–`V-07`) that touched its underlying classes and confirming 100% identical outputs, Spanish messages, receipt layouts, proportional refund amounts, monthly financial balances, and warranty certificates.
 - **Pull Request Traceability:** Each of the three Phase 2 Pull Requests explicitly lists the corrected violation IDs (`V-XX`) and the verified menu operations in its PR description.
+
+---
+
+## Guiding Question 5 — Correction Order and Multi-Member Branch Coordination
+
+> **Question:** *In what order are the violations corrected and why? When correcting a violation involves code from more than one team member, how is the work coordinated to avoid conflicts on the shared branch?*
+>
+> *(Drafted by Technical Lead — `mlanderoc`, following team alignment)*
+
+### 1. Rationale for Bottom-Up, Provider-First Correction Sequencing
+
+In Phase 2 (`feature/solid-refactor`), the eight consolidated violations (`V-01` through `V-08`) are corrected in a strict **bottom-up, provider-first sequence** following the architectural dependency graph (`model` & `validation` & `persistence` → `service` → `ui` & `Main`):
+
+1. **Wave 1 — Provider Contracts, Polymorphic Hierarchies, and Core Abstractions (PR #1 — Developer 1 `craulgomez`):**
+   - **Why First:** Developer 1 owns the foundational domain hierarchies (`Accessory`, `Warranty`, `Promotion`), the `validation` layer (`ProductValidator`), and the `Product` persistence/service module (`ProductRepository`, `ProductService`). By adding the new polymorphic methods (`Accessory.getAccessoryType()` / `matchesAccessoryType` for `V-03`, `Warranty.createFromType` for `V-04`, `Promotion.getPromotionType()` for `V-08`), extracting `PromotionValidator` (`V-01`), simplifying `ProductService.updateStock` (`V-02`), making `ProductRepository` implement `Repository<Product>` (`V-06`), and creating the segregated `ProductCatalogLookup` interface (`V-07`) **first**—while keeping backward-compatible forwarding methods in `ProductValidator`—every existing caller in `service` and `ui` continues compiling with zero errors.
+2. **Wave 2 — Service-Layer Delegations, Repository DIP, and Warranty SRP Extraction (PR #2 — Developer 2 `Hectorguevara22`):**
+   - **Why Second:** Once PR #1 is merged into `develop` and synced onto `feature/solid-refactor`, all provider abstractions (`PromotionValidator`, `Accessory.matchesAccessoryType`, `Warranty.createFromType`, `ProductCatalogLookup`) are already available. Developer 2 can then cleanly update `PromotionService` (`V-01`), `AccessoryService.listAccesoriesByType` (`V-03`), `WarrantyService.toWarranty` (`V-04`), extract `SaleRecordResolver` from `WarrantyService` (`V-05`), make `AccessoryRepository` implement `Repository<Accessory>` and type all repository fields in `AccessoryService`, `PromotionService`, `ReturnService`, and `WarrantyService` to `Repository<T>` (`V-06`), and update `AccessoryService` and `WarrantyService` to implement/consume `ProductCatalogLookup` (`V-07`).
+3. **Wave 3 — Technical Lead Service/UI Refactoring, Before/After Class Diagrams, and Final Non-Regression Verification (PR #3 — Technical Lead `mlanderoc`):**
+   - **Why Third:** After PR #2 is merged into `develop`, the Technical Lead completes the remaining consumer/provider pieces on `feature/solid-refactor`: typing `SaleService.saleRepository` to `Repository<SaleRecord>` (`V-06`), introducing `SaleQueryService` in `SaleService` and wiring `ReturnService` (`V-07`), extracting `DataInitializer` from `Main`, centralizing `ConsoleMenu.handleGameZoneException`, and calling `promotion.getPromotionType()` in `ConsoleMenu.printPromotion` (`V-08`), alongside the `Before` and `After` Mermaid diagrams in `docs/solid-class-diagram.md` and the final end-to-end verification in `docs/solid-refactor-log.md`.
+
+### 2. Coordination Protocol on the Shared `feature/solid-refactor` Branch
+
+To guarantee zero merge conflicts across shared files (`docs/solid-refactor-log.md` and cross-module boundary classes):
+1. **Sequential Pull Request Windows:** Only one member commits and pushes to `feature/solid-refactor` at a time. When that member finishes their atomic commits and verifies `mvn clean compile`, they open a Pull Request to `develop`, which is reviewed and merged before the next member syncs `feature/solid-refactor` with `origin/develop`.
+2. **Additive Contract Evolution:** When a boundary violation (`V-01`, `V-03`, `V-04`, `V-06`, `V-07`, `V-08`) spans two members, the provider adds the new interface, class, or method without breaking the old signature, so the codebase compiles at every single commit.
+3. **Append-Only Traceability Logging:** Each member appends their rows chronologically to Section 3 of `docs/solid-refactor-log.md` during their own PR window and logs their AI consultations exclusively in their own `docs/ai-usage/<role>-ai-log.md` file.

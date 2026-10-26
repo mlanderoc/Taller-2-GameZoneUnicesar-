@@ -1,0 +1,134 @@
+# Individual SOLID Audit Report — Technical Lead (`mlanderoc`)
+
+- **Auditor:** Merlin Landero (`mlanderoc`)
+- **Role:** Technical Lead — Sales Module, Console UI, Application Entry Point (`Main`), System Integration, and Team Consolidation
+- **Evaluated Branch & Commit:** `develop` (`1bfc5f6`)
+- **Requirement:** Requirement 8 — Phase 1: SOLID Principles Audit
+
+---
+
+## 1. Audit Scope
+
+In accordance with Section 4.1 of the Requirement 8 specification, `TEAM.md`, and `docs/grasp-refactor-log.md`, this audit covers all classes, methods, and cross-module integrations developed or modified under the Technical Lead's responsibility across Taller 1 and Requirements 1 through 7:
+
+| Module / Requirement | Audited Classes & Methods | Package |
+| :--- | :--- | :--- |
+| **Sales, UI & Startup (Taller 1)** | `Sale` (`Sale` constructor, `getId`, `getDate`, `getCustomer`, `getSeller`, `getProducts`, `setProducts`, `getSubtotal`, `setSubtotal`, `getTotalAmount`, `calculateTotal`, `generateReceipt`), `SaleRecord`, `SaleRepository` (`saveAll`, `loadAll`), `SaleService` (`registerSale`, `viewAllSales`, `viewSalesByCustomer`, `viewSalesBySeller`, `findSaleById`, `toRecord`, `toSale`), `ConsoleMenu` (`start`, `printMainMenu`, `showProductMenu`, `showPeopleMenu`, `showSalesMenu`, `registerSale`, `viewAllSales`, `viewSalesByCustomer`, `viewSalesBySeller`, `registerVideoGame`, `registerConsole`, `listAllProducts`, `registerCustomer`, `listAllCustomers`, `listAllSellers`), `Main` (`main`, `preloadSellersIfNeeded`) | `com.gamezone`, `com.gamezone.model`, `com.gamezone.persistence`, `com.gamezone.service`, `com.gamezone.ui` |
+| **Accessories Integration (Req. 1 & Req. 5)** | Integration of `AccessoryService` in `SaleService.registerSale` and `SaleService.toSale`, `ConsoleMenu.showAccessoryMenu`, and `Main.preloadAccessoriesIfNeeded` | `com.gamezone`, `com.gamezone.service`, `com.gamezone.ui` |
+| **Promotions Integration (Req. 2 & Req. 5)** | Discount application in `SaleService.registerSale`, `Sale.applyDiscount(String, double)`, promotional breakdown in `Sale.generateReceipt()`, `ConsoleMenu.showPromotionMenu` (`registerPercentageDiscount`, `registerCategoryDiscount`, `registerBulkPurchaseDiscount`, `listAllPromotions`, `listActivePromotions`, `printPromotion`), and `Main.preloadPromotionsIfNeeded` | `com.gamezone`, `com.gamezone.model`, `com.gamezone.service`, `com.gamezone.ui` |
+| **Returns Integration (Req. 3 & Req. 5)** | `ProductService.restoreStock(String, int)` (`src/main/java/com/gamezone/service/ProductService.java`, lines 141–146) and `ConsoleMenu.showReturnMenu` / `registerReturn` (including monthly balance display) | `com.gamezone.service`, `com.gamezone.ui` |
+| **Warranties Integration (Req. 4 & Req. 5)** | Basic and extended warranty assignment and cost aggregation in `SaleService.registerSale`, `Sale.getExtendedWarrantyCost` / `setExtendedWarrantyCost`, and `ConsoleMenu.showWarrantyMenu` | `com.gamezone.model`, `com.gamezone.service`, `com.gamezone.ui` |
+| **Differentiated Exception Handling (Req. 6)** | Multi-catch blocks for `ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, and `PersistenceException` in `ConsoleMenu` | `com.gamezone.ui` |
+| **GRASP Phase 2 Refactorings (Req. 7)** | `Main.main` (`new AccessoryService(accessoryRepository)`), `SaleService` cohesive helpers (`findCatalogProduct`, `findCatalogProductById`, `decrementStock`), `ProductService.restoreStock` positive quantity guard, and `Sale.getDiscountRatio()` (co-authored with Developer 1) | `com.gamezone`, `com.gamezone.model`, `com.gamezone.service` |
+
+---
+
+## 2. Evaluation by SOLID Principle
+
+### 2.1 Single Responsibility Principle (SRP)
+
+- **Overall Verdict for Audited Scope:** **Violation** (2 violations identified: `V-01` in `Main` and `V-02` in `ConsoleMenu`; `Sale`, `SaleRecord`, `SaleRepository`, `SaleService`, and `ProductService.restoreStock` are **Correct**).
+
+#### Identified Violations
+
+| Field | Content |
+| :--- | :--- |
+| **ID** | `V-01` |
+| **Principle** | Single Responsibility Principle (SRP) |
+| **Module** | Application Entry Point & Module Integrations (Taller 1 & Requirements 1, 2, 5) |
+| **Evidence** | Class `com.gamezone.Main`, methods `main(String[] args)` (lines 28–53), `preloadSellersIfNeeded(PersonService)` (lines 59–66), `preloadPromotionsIfNeeded(PromotionService)` (lines 68–83), and `preloadAccessoriesIfNeeded(AccessoryService)` (lines 85–101) in `src/main/java/com/gamezone/Main.java`:<br>`public static void preloadSellersIfNeeded(PersonService personService) { ... }`<br>`public static void preloadPromotionsIfNeeded(PromotionService promotionService) { ... }`<br>`public static void preloadAccessoriesIfNeeded(AccessoryService accessoryService) { ... }` |
+| **Explanation** | `Main` combines two independent responsibilities with different reasons to change: (1) bootstrapping the application's dependency-injection graph (instantiating repositories, services, and launching `MainFrame` / `ConsoleMenu`), and (2) defining hardcoded initial seed data for sellers (`V001`–`V003`), promotions (`PROMO001`–`PROMO004`), and accessories (`A001`–`A003`). |
+| **Consequence** | Any change to the default sample catalog, staff shifts, or promotional dates forces modifying `Main.java`, coupling application composition/startup to initial dataset provisioning. |
+| **Proposed Solution** | Extract the data-seeding logic (`preloadSellersIfNeeded`, `preloadPromotionsIfNeeded`, `preloadAccessoriesIfNeeded`) into a dedicated `DataInitializer` class (`com.gamezone.DataInitializer`), while delegating from `Main` so `Main` focuses on dependency wiring and startup while preserving backward compatibility. |
+| **Other Member's Code** | **No** — `Main` is exclusively under the Technical Lead's responsibility. |
+
+| Field | Content |
+| :--- | :--- |
+| **ID** | `V-02` |
+| **Principle** | Single Responsibility Principle (SRP) |
+| **Module** | Console UI & Differentiated Exception Handling (Requirement 6) |
+| **Evidence** | Class `com.gamezone.ui.ConsoleMenu` (`src/main/java/com/gamezone/ui/ConsoleMenu.java`), repeated 4-branch `catch` blocks in `start()` (lines 100–112), `registerSale()` (lines 425–433), `registerReturn()` (lines 458–466), `registerVideoGame()` (lines 484–492), `registerConsole()` (lines 510–518), `registerCustomer()` (lines 539–547), `registerPercentageDiscount()` (lines 602–610), `registerCategoryDiscount()` (lines 627–635), and `registerBulkPurchaseDiscount()` (lines 652–660):<br>`} catch (ResourceNotFoundException e) {`<br>`    printError("No se encontró el recurso solicitado: " + e.getMessage());`<br>`} catch (BusinessRuleException e) {`<br>`    printError("No se puede completar la operación: " + e.getMessage());`<br>`} catch (InvalidDataException e) {`<br>`    printError("Los datos ingresados no son válidos: " + e.getMessage());`<br>`} catch (PersistenceException e) {`<br>`    printError("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");`<br>`}` |
+| **Explanation** | Every interactive registration method in `ConsoleMenu` combines two responsibilities: (1) reading console user input and invoking the target service method, and (2) classifying and formatting `GameZoneException` subtypes into Spanish error messages across 9 duplicated `try/catch` blocks. |
+| **Consequence** | Any adjustment to how `GameZoneException` categories are formatted or logged requires editing 9 different methods in `ConsoleMenu`, risking inconsistent error messages across menu options. |
+| **Proposed Solution** | Extract a single cohesive helper method `handleGameZoneException(GameZoneException e)` in `ConsoleMenu` and delegate all `GameZoneException` catch blocks to it, preserving 100% identical Spanish console messages. |
+| **Other Member's Code** | **No** — `ConsoleMenu` is exclusively under the Technical Lead's responsibility. |
+
+#### Compliant Classes Under SRP (`Correct`)
+
+- **`Sale` (`com.gamezone.model.Sale`, lines 17–215):** Encapsulates only the state and domain calculations of a sale transaction (`calculateTotal`, `getTotalAmount`, `getDiscountRatio`, `applyDiscount`, `canBeReturned`, `findProductById`, `generateReceipt`).
+- **`SaleRecord` and `SaleRepository` (`com.gamezone.persistence`):** `SaleRecord` (`SaleRecord.java` lines 13–133) is a pure persistence DTO, and `SaleRepository` (`SaleRepository.java` lines 20–71) handles only binary serialization of `SaleRecord` lists to `data/sales.dat`.
+- **`SaleService` (`com.gamezone.service.SaleService`, lines 28–275):** Coordinates the 8-step sale registration workflow, sale history queries, and `SaleRecord` mapping (`toRecord`, `toSale`), aided by the cohesive private helpers `findCatalogProduct`, `findCatalogProductById`, and `decrementStock` extracted in Requirement 7 (`V-07`).
+- **`ProductService.restoreStock(String, int)` (`com.gamezone.service.ProductService`, lines 141–146):** Validates that the restored quantity is positive and delegates stock increment to `updateStock(productId, quantity)`.
+
+---
+
+### 2.2 Open/Closed Principle (OCP)
+
+- **Overall Verdict for Audited Scope:** **Violation** (1 violation identified in `ConsoleMenu.printPromotion`: `V-03`; `Sale` and `SaleService` promotional evaluation are **Correct**).
+
+#### Identified Violations
+
+| Field | Content |
+| :--- | :--- |
+| **ID** | `V-03` |
+| **Principle** | Open/Closed Principle (OCP) |
+| **Module** | Promotions Integration in Console UI (Requirement 2) |
+| **Evidence** | Class `com.gamezone.ui.ConsoleMenu`, method `printPromotion(Promotion promotion)` (`src/main/java/com/gamezone/ui/ConsoleMenu.java`, lines 677–680):<br>`private void printPromotion(Promotion promotion) {`<br>`    System.out.println("ID: " + promotion.getId() + " | Nombre: " + promotion.getName() + " | Tipo: " + promotion.getClass().getSimpleName());`<br>`    printLine();`<br>`}` |
+| **Explanation** | `ConsoleMenu.printPromotion(Promotion)` obtains the promotion type name via Java runtime reflection (`promotion.getClass().getSimpleName()`) instead of invoking a polymorphic method on `Promotion` (`promotion.getPromotionType()`). If a new `Promotion` subtype is introduced whose display/type identifier differs from its Java class identifier, or if a promotion is wrapped by a decorator, `printPromotion` cannot display its domain type without modifying `ConsoleMenu`. |
+| **Consequence** | The UI layer is coupled to internal Java class identifiers of `Promotion` subclasses rather than an explicit polymorphic contract on `Promotion`. |
+| **Proposed Solution** | Coordinate with Developer 1 (`craulgomez`) to add `public String getPromotionType()` on `Promotion` (defaulting to `getClass().getSimpleName()` and overridden in `PercentageDiscount`, `CategoryDiscount`, and `BulkPurchaseDiscount` to return `"PercentageDiscount"`, `"CategoryDiscount"`, and `"BulkPurchaseDiscount"` so console output remains 100% identical), and update `ConsoleMenu.printPromotion(Promotion)` to call `promotion.getPromotionType()`. |
+| **Other Member's Code** | **Yes — Developer 1 (`craulgomez`):** `Promotion` (`src/main/java/com/gamezone/model/Promotion.java`) and its subclasses define `getPromotionType()`. |
+
+#### Compliant Classes Under OCP (`Correct`)
+
+- **`Sale.generateReceipt()` (`com.gamezone.model.Sale`, lines 135–158):** Iterates through `List<Product>` and invokes `product.getDescription()` polymorphically (`line 145`), remaining closed for modification when new `Product` or `Accessory` subtypes are added.
+- **`SaleService.registerSale(...)` Promotional Calculation (`com.gamezone.service.SaleService`, lines 94–98):** Delegates best-promotion selection to `promotionService.findBestPromotionFor(sale)` and discount computation to the polymorphic `bestPromotion.calculateDiscount(sale)`, supporting any new `Promotion` subclass without modifying `SaleService`.
+
+---
+
+### 2.3 Liskov Substitution Principle (LSP)
+
+- **Overall Verdict for Audited Scope:** **Correct** (`SaleRepository` honors the `Repository<SaleRecord>` behavioral contract; `Sale`, `SaleRecord`, `SaleService`, `ConsoleMenu`, and `Main` do not participate in domain inheritance hierarchies).
+
+#### Evidence of Compliance (`Correct`)
+
+1. **`SaleRepository implements Repository<SaleRecord>` (`src/main/java/com/gamezone/persistence/SaleRepository.java`, lines 20–71):**
+   - Implements `saveAll(List<SaleRecord>)` and `loadAll()` from `Repository<SaleRecord>` (`src/main/java/com/gamezone/persistence/Repository.java`, lines 5–8), returning a non-null `ArrayList<>()` when `data/sales.dat` does not exist and throwing `PersistenceException` on I/O failure. It can be substituted wherever a `Repository<SaleRecord>` reference is expected.
+
+---
+
+### 2.4 Interface Segregation Principle (ISP)
+
+- **Overall Verdict for Audited Scope:** **Violation** (1 boundary violation identified in `SaleService`: `V-04`; `Repository<SaleRecord>` is **Correct**).
+
+#### Identified Violations
+
+| Field | Content |
+| :--- | :--- |
+| **ID** | `V-04` |
+| **Principle** | Interface Segregation Principle (ISP) |
+| **Module** | Sales Module & Returns Integration (Taller 1 & Requirements 3 & 5) |
+| **Evidence** | Class `com.gamezone.service.SaleService` (`src/main/java/com/gamezone/service/SaleService.java`, lines 28–275) and its consumer `ReturnService` (`src/main/java/com/gamezone/service/ReturnService.java`, lines 29, 80, 166, 231):<br>`public class SaleService { ... public Sale registerSale(...) ... public List<Sale> viewAllSales() ... public List<Sale> viewSalesByCustomer(...) ... public List<Sale> viewSalesBySeller(...) ... public Sale findSaleById(String saleId) ... }`<br>In `ReturnService`:<br>`private final SaleService saleService;`<br>`Sale originalSale = saleService.findSaleById(saleId);`<br>`for (Sale sale : saleService.viewAllSales()) { ... }` |
+| **Explanation** | `SaleService` exposes both sale registration (`registerSale`), filtered queries (`viewSalesByCustomer`, `viewSalesBySeller`), collaborator wiring (`setWarrantyService`), and general sale lookup (`findSaleById`, `viewAllSales`) without implementing a narrow query interface. As a result, `ReturnService` (owned by Developer 2) is forced to depend on the entire concrete `SaleService` class even though it only invokes `findSaleById(String)` and `viewAllSales()`. |
+| **Consequence** | Collaborators that only need read-only sale queries are coupled to the full `SaleService` class and its write operations, violating ISP. |
+| **Proposed Solution** | Define a segregated interface `SaleQueryService` (`Sale findSaleById(String saleId); List<Sale> viewAllSales();`) in `com.gamezone.service`, implement `SaleQueryService` in `SaleService`, and allow `ReturnService` to depend on `SaleQueryService`. |
+| **Other Member's Code** | **Yes — Developer 2 (`Hectorguevara22`):** `ReturnService` (`src/main/java/com/gamezone/service/ReturnService.java`, line 29) consumes `SaleQueryService`. |
+
+---
+
+### 2.5 Dependency Inversion Principle (DIP)
+
+- **Overall Verdict for Audited Scope:** **Violation** (1 violation identified in `SaleService`: `V-05`; `Sale` and `SaleRecord` are **Not Applicable** as leaf domain/DTO classes).
+
+#### Identified Violations
+
+| Field | Content |
+| :--- | :--- |
+| **ID** | `V-05` |
+| **Principle** | Dependency Inversion Principle (DIP) |
+| **Module** | Sales Module (Taller 1) |
+| **Evidence** | Class `com.gamezone.service.SaleService` (`src/main/java/com/gamezone/service/SaleService.java`, lines 29, 36–48):<br>`private SaleRepository saleRepository;`<br>`public SaleService(SaleRepository saleRepository, ProductService productService, PersonService personService, PromotionService promotionService, AccessoryService accessoryService)`<br>`public SaleService(SaleRepository saleRepository, ProductService productService, PersonService personService, PromotionService promotionService, AccessoryService accessoryService, WarrantyService warrantyService)` |
+| **Explanation** | Even though `SaleRepository` already implements `Repository<SaleRecord>` (`SaleRepository.java` line 20), `SaleService` declares its `saleRepository` attribute and constructor parameters using the concrete class `SaleRepository` instead of the interface `Repository<SaleRecord>`. |
+| **Consequence** | `SaleService` depends directly on the low-level binary file persistence class `SaleRepository` rather than the `Repository<SaleRecord>` abstraction, violating DIP. |
+| **Proposed Solution** | Change the `saleRepository` field and constructor parameters in `SaleService` to `Repository<SaleRecord>` (preserving constructor compatibility since `SaleRepository` implements `Repository<SaleRecord>`). |
+| **Other Member's Code** | **Yes — Developer 1 (`craulgomez`) & Developer 2 (`Hectorguevara22`):** Part of the system-wide persistence DIP alignment across `ProductService`, `AccessoryService`, `PromotionService`, `ReturnService`, `WarrantyService`, and `SaleService`. |
