@@ -69,3 +69,11 @@ Used GitHub Copilot to translate commit messages and code comments into English 
 
 **Outcome:** Consulted on how to increase internal cohesion in `SaleService.registerSale` and `SaleService.toSale` without altering the class's external dependencies (`F-01` remaining out of scope until Requirement 8 SOLID), extracting private helpers `findCatalogProduct(Product)`, `findCatalogProductById(String)`, and `decrementStock(Product)`. Also verified the Mermaid `classDiagram` syntax for the `Before Refactoring` and `After Refactoring` sections in `docs/grasp-class-diagram.md`.
 
+
+## 12. Requirement 8 — SOLID Audit and Refactoring
+
+### Phase 1 - Audit
+
+**Context:** Auditing the Technical Lead's modules (`Sale`, `SaleRecord`, `SaleRepository`, `SaleService`, `ConsoleMenu`, `Main`, `ProductService.restoreStock`), consolidating the three individual SOLID audit reports into `docs/solid-audit/consolidated-audit.md`, and drafting Question 5 in `docs/solid-analysis.md`.
+
+**Outcome:** Consulted on the conceptual difference between GRASP *High Cohesion* and SOLID *Single Responsibility Principle (SRP)* when evaluating application startup classes (`Main`) and console UI menus (`ConsoleMenu`), and used Copilot to review the English phrasing of the consolidated boundary findings and out-of-scope observations tables.
