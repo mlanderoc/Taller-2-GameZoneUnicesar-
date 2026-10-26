@@ -1,24 +1,44 @@
 package com.gamezone.service;
 
 import com.gamezone.persistence.PromotionRepository;
+import com.gamezone.persistence.Repository;
 import com.gamezone.model.BulkPurchaseDiscount;
 import com.gamezone.model.CategoryDiscount;
 import com.gamezone.model.PercentageDiscount;
 import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
-import com.gamezone.validation.ProductValidator;
+import com.gamezone.validation.PromotionValidator;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Manages business operations for promotional campaigns, depending on the
+ * {@link Repository} abstraction (DIP) and delegating validation rules to
+ * {@link PromotionValidator} (SRP).
+ */
 public class PromotionService {
 
-    private final PromotionRepository repository;
+    private final Repository<Promotion> repository;
     private final List<Promotion> promotions;
 
-    public PromotionService(PromotionRepository repository) {
+    /**
+     * Creates the promotion service using the given repository abstraction.
+     *
+     * @param repository the repository used to load and save promotions
+     */
+    public PromotionService(Repository<Promotion> repository) {
         this.repository = repository;
         this.promotions = repository.loadAll();
+    }
+
+    /**
+     * Creates the promotion service using a concrete {@link PromotionRepository}.
+     *
+     * @param repository the promotion repository
+     */
+    public PromotionService(PromotionRepository repository) {
+        this((Repository<Promotion>) repository);
     }
 
     public Promotion findById(String id) {
@@ -49,7 +69,7 @@ public class PromotionService {
      */
     public void registerCategoryDiscount(String id, String name, LocalDate startDate, LocalDate endDate, double discountPercentage, String categoryObjective) {
         validatePromotionBase(id, name, startDate, endDate, discountPercentage);
-        ProductValidator.validateCategoryObjective(categoryObjective);
+        PromotionValidator.validateCategoryObjective(categoryObjective);
         CategoryDiscount categoryDiscount = new CategoryDiscount(id, name, startDate, endDate, discountPercentage, categoryObjective.trim().toUpperCase());
         promotions.add(categoryDiscount);
         repository.saveAll(promotions);
@@ -57,14 +77,14 @@ public class PromotionService {
 
     public void registerBulkPurchaseDiscount(String id, String name, LocalDate startDate, LocalDate endDate, int minimumQuantity, double discountPercentage) {
         validatePromotionBase(id, name, startDate, endDate, discountPercentage);
-        ProductValidator.validateMinimumQuantity(minimumQuantity);
+        PromotionValidator.validateMinimumQuantity(minimumQuantity);
         BulkPurchaseDiscount bulkPurchaseDiscount = new BulkPurchaseDiscount(id, name, startDate, endDate, minimumQuantity, discountPercentage);
         promotions.add(bulkPurchaseDiscount);
         repository.saveAll(promotions);
     }
 
     private void validatePromotionBase(String id, String name, LocalDate startDate, LocalDate endDate, double discountPercentage) {
-        ProductValidator.validatePromotionBase(id, name, startDate, endDate, discountPercentage, findById(id));
+        PromotionValidator.validatePromotionBase(id, name, startDate, endDate, discountPercentage, findById(id));
     }
 
     public List<Promotion> listAllPromotions() {
