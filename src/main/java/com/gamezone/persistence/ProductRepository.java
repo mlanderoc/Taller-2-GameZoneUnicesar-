@@ -1,4 +1,3 @@
-
 package com.gamezone.persistence;
 
 import com.gamezone.exceptions.PersistenceException;
@@ -12,12 +11,11 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-
-
 /**
- * Manages the file-based persistence of products.
+ * Manages the file-based persistence of products, implementing the
+ * {@link Repository} abstraction for Dependency Inversion (DIP).
  */
-public class ProductRepository {
+public class ProductRepository implements Repository<Product> {
 
     private static final String FILE_PATH = "data/products.dat";
 
@@ -26,44 +24,45 @@ public class ProductRepository {
      *
      * @param products the list of products to save
      */
-    public void saveAll(List<Product> products){
-        File dataDirectory = new File("data"); 
-        
-        if(!dataDirectory.exists()){
+    @Override
+    public void saveAll(List<Product> products) {
+        File dataDirectory = new File("data");
+
+        if (!dataDirectory.exists()) {
             dataDirectory.mkdir();
         }
-        
+
         try (ObjectOutputStream output = new ObjectOutputStream(
-                new FileOutputStream(FILE_PATH))){
-            
-               output.writeObject(products);
-            
-        } catch(IOException exception){
+                new FileOutputStream(FILE_PATH))) {
+
+            output.writeObject(products);
+
+        } catch (IOException exception) {
             throw new PersistenceException("Error de escritura en el archivo " + FILE_PATH, exception);
         }
     }
-    
-     /**
+
+    /**
      * Loads all products from the data file.
      *
      * @return a list containing all loaded products
      */
+    @Override
     @SuppressWarnings("unchecked")
-    public List<Product> loadAll(){
-        File dataFile = new File(FILE_PATH); 
-        
-        if(!dataFile.exists()){
-            return new ArrayList<>(); 
+    public List<Product> loadAll() {
+        File dataFile = new File(FILE_PATH);
+
+        if (!dataFile.exists()) {
+            return new ArrayList<>();
         }
-        
+
         try (ObjectInputStream input = new ObjectInputStream(
-                new FileInputStream(FILE_PATH))){
-            
+                new FileInputStream(FILE_PATH))) {
+
             return (List<Product>) input.readObject();
-            
-        } catch (IOException | ClassNotFoundException exception){
+
+        } catch (IOException | ClassNotFoundException exception) {
             throw new PersistenceException("Error de lectura en el archivo " + FILE_PATH, exception);
         }
     }
-}   
-    
+}

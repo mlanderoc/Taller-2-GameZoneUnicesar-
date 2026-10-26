@@ -1,14 +1,13 @@
-
 package com.gamezone.model;
 
-import java.util.List; 
+import java.util.List;
 
 /**
  * Represents a memory accessory sold by the store.
  * A memory accessory has a storage capacity and a memory type.
  */
 public class Memory extends Accessory {
-    
+
     private int storageCapacityGb;
     private String memoryType;
 
@@ -35,7 +34,6 @@ public class Memory extends Accessory {
      *
      * @return storage capacity in gigabytes
      */
-
     public int getStorageCapacityGb() {
         return storageCapacityGb;
     }
@@ -66,17 +64,26 @@ public class Memory extends Accessory {
     public void setMemoryType(String memoryType) {
         this.memoryType = memoryType;
     }
-    
+
     /**
      * Returns a description of the memory accessory including its capacity and type.
      *
      * @return formatted memory accessory description
      */
     @Override
-    public String getDescription(){
-        
+    public String getDescription() {
         return "Title: " + getTitle()
                 + ", Storage Capacity: " + storageCapacityGb + "GB"
-                + ", Type: " + memoryType; 
+                + ", Type: " + memoryType;
+    }
+
+    /**
+     * Returns the accessory subtype identifier for memory accessories.
+     *
+     * @return {@code "Memory"}
+     */
+    @Override
+    public String getAccessoryType() {
+        return "Memory";
     }
 }

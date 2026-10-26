@@ -1,4 +1,3 @@
-
 package com.gamezone.model;
 
 import java.util.List;
@@ -8,10 +7,10 @@ import java.util.List;
  * A cable has a length in meters and a connector type.
  */
 public class Cable extends Accessory {
-    
+
     private double lengthInMeters;
     private String connectorType;
-    
+
     /**
      * Creates a new cable with its product information,
      * compatible consoles, length, and connector type.
@@ -30,7 +29,7 @@ public class Cable extends Accessory {
         this.connectorType = connectorType;
     }
 
-     /**
+    /**
      * Returns the cable length in meters.
      *
      * @return cable length in meters
@@ -38,7 +37,7 @@ public class Cable extends Accessory {
     public double getLengthInMeters() {
         return lengthInMeters;
     }
-    
+
     /**
      * Updates the cable length in meters.
      *
@@ -46,38 +45,45 @@ public class Cable extends Accessory {
      */
     public void setLengthInMeters(double lengthInMeters) {
         this.lengthInMeters = lengthInMeters;
-    }   
+    }
+
     /**
      * Returns the connector type of the cable.
      *
      * @return cable connector type
      */
-
     public String getConnectorType() {
         return connectorType;
     }
-    
+
     /**
      * Updates the connector type of the cable.
      *
      * @param connectorType new cable connector type
      */
-
     public void setConnectorType(String connectorType) {
         this.connectorType = connectorType;
     }
-    
+
     /**
      * Returns a description of the cable including its length and connector type.
      *
      * @return formatted cable description
      */
     @Override
-    public String getDescription(){
-        
+    public String getDescription() {
         return "Title: " + getTitle()
                 + ", length: " + lengthInMeters
                 + ",connector type: " + connectorType;
-        
+    }
+
+    /**
+     * Returns the accessory subtype identifier for cables.
+     *
+     * @return {@code "Cable"}
+     */
+    @Override
+    public String getAccessoryType() {
+        return "Cable";
     }
 }

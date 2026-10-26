@@ -1,4 +1,3 @@
-
 package com.gamezone.model;
 
 import java.time.LocalDate;
@@ -8,7 +7,7 @@ import java.time.LocalDate;
  * It defines common warranty information and behavior.
  */
 public abstract class Warranty {
-    
+
     private String warrantyId;
     private Product product;
     private Sale sale;
@@ -30,6 +29,26 @@ public abstract class Warranty {
         this.sale = sale;
         this.startDate = startDate;
         this.endDate = startDate.plusMonths(getDurationInMonths());
+    }
+
+    /**
+     * Reconstructs the appropriate {@link Warranty} subclass from its persisted
+     * warranty type identifier, centralizing subtype instantiation in the
+     * hierarchy root (Open/Closed Principle).
+     *
+     * @param warrantyType persisted warranty type label
+     * @param warrantyId   unique identifier of the warranty
+     * @param product      product covered by the warranty
+     * @param sale         sale associated with the warranty
+     * @param startDate    start date of the warranty
+     * @return the reconstructed {@link Warranty} instance
+     */
+    public static Warranty createFromType(String warrantyType, String warrantyId,
+                                          Product product, Sale sale, LocalDate startDate) {
+        if (ExtendedWarranty.TYPE.equals(warrantyType)) {
+            return new ExtendedWarranty(warrantyId, product, sale, startDate);
+        }
+        return new BasicWarranty(warrantyId, product, sale, startDate);
     }
 
     /**
@@ -105,10 +124,9 @@ public abstract class Warranty {
      * @return true if the warranty is active; otherwise false
      */
     public boolean isActive(LocalDate date) {
-
         return !date.isBefore(startDate) && !date.isAfter(endDate);
     }
-    
+
     /**
      * Generates a formatted certificate with the warranty information.
      *
@@ -127,5 +145,4 @@ public abstract class Warranty {
 
         return sb.toString();
     }
-    
 }

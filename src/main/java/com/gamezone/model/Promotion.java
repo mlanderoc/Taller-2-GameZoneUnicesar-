@@ -1,5 +1,5 @@
-
 package com.gamezone.model;
+
 import java.io.Serializable;
 import java.time.LocalDate;
 
@@ -9,13 +9,13 @@ import java.time.LocalDate;
  * calculation strategy for its concrete subclasses.
  */
 public abstract class Promotion implements Serializable {
-    
+
     private static final long serialVersionUID = 1L;
-    
+
     private String id;
-    private String name; 
-    private LocalDate startDate; 
-    private LocalDate endDate; 
+    private String name;
+    private LocalDate startDate;
+    private LocalDate endDate;
 
     /**
      * Creates a promotion with its common information and validity period.
@@ -103,7 +103,7 @@ public abstract class Promotion implements Serializable {
     public void setEndDate(LocalDate endDate) {
         this.endDate = endDate;
     }
-    
+
     /**
      * Checks whether this promotion is active on the specified date.
      * The start and end dates are included in the validity period.
@@ -112,11 +112,18 @@ public abstract class Promotion implements Serializable {
      * @return true if the promotion is active on the given date;
      *         false otherwise
      */
-    public boolean isActive(LocalDate date){
-        
-        return !date.isBefore(startDate) && !date.isAfter(endDate);    
+    public boolean isActive(LocalDate date) {
+        return !date.isBefore(startDate) && !date.isAfter(endDate);
     }
-    
+
+    /**
+     * Returns the promotion type identifier for display and reporting,
+     * eliminating the need for reflection in client code (OCP).
+     *
+     * @return the promotion type name
+     */
+    public abstract String getPromotionType();
+
     /**
      * Calculates the monetary discount that this promotion applies
      * to the specified sale.
@@ -124,6 +131,5 @@ public abstract class Promotion implements Serializable {
      * @param sale the sale used to calculate the discount
      * @return the discount amount for the given sale
      */
-    public abstract double calculateDiscount(Sale sale); 
-    
+    public abstract double calculateDiscount(Sale sale);
 }

@@ -1,5 +1,5 @@
-
 package com.gamezone.model;
+
 import java.time.LocalDate;
 
 /**
@@ -7,9 +7,9 @@ import java.time.LocalDate;
  * when a sale includes a minimum number of products.
  */
 public class BulkPurchaseDiscount extends Promotion {
-    
-    private int minimumQuantity; 
-    private double discountPercentage; 
+
+    private int minimumQuantity;
+    private double discountPercentage;
 
     /**
      * Creates a bulk purchase discount promotion.
@@ -64,7 +64,17 @@ public class BulkPurchaseDiscount extends Promotion {
     public void setDiscountPercentage(double discountPercentage) {
         this.discountPercentage = discountPercentage;
     }
-    
+
+    /**
+     * Returns the promotion type identifier for bulk purchase discounts.
+     *
+     * @return {@code "BulkPurchaseDiscount"}
+     */
+    @Override
+    public String getPromotionType() {
+        return "BulkPurchaseDiscount";
+    }
+
     /**
      * Calculates the monetary discount for a sale when it contains
      * at least the required minimum number of products.
@@ -74,12 +84,10 @@ public class BulkPurchaseDiscount extends Promotion {
      *         does not meet the minimum product quantity
      */
     @Override
-    public double calculateDiscount(Sale sale){
-     
+    public double calculateDiscount(Sale sale) {
         if (sale.getProducts().size() >= minimumQuantity) {
-            return sale.calculateTotal() * discountPercentage / 100; 
+            return sale.calculateTotal() * discountPercentage / 100;
         }
-        return 0; 
+        return 0;
     }
-    
 }

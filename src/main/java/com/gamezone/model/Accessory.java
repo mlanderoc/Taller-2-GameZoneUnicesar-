@@ -1,4 +1,3 @@
-
 package com.gamezone.model;
 
 import java.util.List;
@@ -9,9 +8,9 @@ import java.util.List;
  * of the consoles it is compatible with.
  */
 public abstract class Accessory extends Product {
-    
+
     private List<String> compatibleConsoleIds;
-    
+
     /**
      * Creates a new accessory with common product information and compatible
      * console identifiers.
@@ -27,7 +26,6 @@ public abstract class Accessory extends Product {
         this.compatibleConsoleIds = compatibleConsoleIds;
     }
 
-    
     /**
      * Returns the identifiers of the consoles compatible with this accessory.
      *
@@ -36,7 +34,7 @@ public abstract class Accessory extends Product {
     public List<String> getCompatibleConsoleIds() {
         return compatibleConsoleIds;
     }
-    
+
     /**
      * Updates the identifiers of the consoles compatible with this accessory.
      *
@@ -45,7 +43,7 @@ public abstract class Accessory extends Product {
     public void setCompatibleConsoleIds(List<String> compatibleConsoleIds) {
         this.compatibleConsoleIds = compatibleConsoleIds;
     }
-    
+
     /**
      * Checks whether this accessory is compatible with a specific console.
      *
@@ -64,16 +62,16 @@ public abstract class Accessory extends Product {
         }
         return false;
     }
-    
+
     /**
      * Returns a description of the accessory including its compatible consoles.
      *
      * @return formatted accessory description
      */
     @Override
-    public String getDescription(){
+    public String getDescription() {
         return "Title: " + getTitle()
-        + ", Compatible console: " + compatibleConsoleIds;
+                + ", Compatible console: " + compatibleConsoleIds;
     }
 
     /**
@@ -84,5 +82,25 @@ public abstract class Accessory extends Product {
     @Override
     public String getCategory() {
         return "ACCESSORY";
+    }
+
+    /**
+     * Returns the specific accessory subtype identifier (e.g., "Controller",
+     * "Cable", or "Memory").
+     *
+     * @return the accessory subtype name
+     */
+    public abstract String getAccessoryType();
+
+    /**
+     * Checks whether this accessory matches the specified accessory subtype name,
+     * ignoring case sensitivity.
+     *
+     * @param type the accessory subtype name to compare against
+     * @return true if this accessory matches the given type; otherwise false
+     */
+    public boolean matchesAccessoryType(String type) {
+        return type != null && getAccessoryType() != null
+                && getAccessoryType().equalsIgnoreCase(type.trim());
     }
 }

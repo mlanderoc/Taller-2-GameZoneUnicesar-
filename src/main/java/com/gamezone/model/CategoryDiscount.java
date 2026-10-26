@@ -1,5 +1,5 @@
-
 package com.gamezone.model;
+
 import java.time.LocalDate;
 
 /**
@@ -7,8 +7,8 @@ import java.time.LocalDate;
  * to products belonging to a specific category.
  */
 public class CategoryDiscount extends Promotion {
-    
-    private double discountPercentage; 
+
+    private double discountPercentage;
     private String categoryObjective;
 
     /**
@@ -62,7 +62,17 @@ public class CategoryDiscount extends Promotion {
     public void setCategoryObjective(String categoryObjective) {
         this.categoryObjective = categoryObjective;
     }
-    
+
+    /**
+     * Returns the promotion type identifier for category discounts.
+     *
+     * @return {@code "CategoryDiscount"}
+     */
+    @Override
+    public String getPromotionType() {
+        return "CategoryDiscount";
+    }
+
     /**
      * Calculates the monetary discount by applying the configured percentage
      * only to the products that belong to the target category.
