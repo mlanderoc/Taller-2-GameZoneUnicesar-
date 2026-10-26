@@ -5,6 +5,7 @@ import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
+import com.gamezone.persistence.Repository;
 import com.gamezone.persistence.SaleRecord;
 import com.gamezone.persistence.SaleRepository;
 import com.gamezone.persistence.WarrantyRecord;
@@ -18,26 +19,40 @@ import java.util.UUID;
 
 /**
  * Handles business rules for assigning, querying, and persisting warranties
- * associated to consoles sold in the system.
+ * associated to consoles sold in the system, adhering to SRP, OCP, ISP, and DIP.
  */
 public class WarrantyService {
 
-    private final WarrantyRepository repository;
-    private final SaleRepository saleRepository;
-    private final ProductService productService;
+    private final Repository<WarrantyRecord> repository;
+    private final ProductCatalogLookup productService;
+    private final SaleRecordResolver saleRecordResolver;
+
+    /**
+     * Creates the warranty service using repository and catalog lookup abstractions
+     * (DIP & ISP).
+     *
+     * @param repository     the warranty record repository abstraction
+     * @param saleRepository the sale record repository abstraction
+     * @param productLookup  the read-only product catalog lookup
+     */
+    public WarrantyService(Repository<WarrantyRecord> repository,
+                           Repository<SaleRecord> saleRepository,
+                           ProductCatalogLookup productLookup) {
+        this.repository = repository;
+        this.productService = productLookup;
+        this.saleRecordResolver = new SaleRecordResolver(saleRepository, productLookup);
+    }
 
     /**
      * Creates the warranty service resolving sale and product references from
      * their identifiers without depending on SaleService.
      *
-     * @param repository the warranty repository
+     * @param repository     the warranty repository
      * @param saleRepository the sale repository used to resolve sale identifiers
      * @param productService the product service used to resolve product identifiers
      */
     public WarrantyService(WarrantyRepository repository, SaleRepository saleRepository, ProductService productService) {
-        this.repository = repository;
-        this.saleRepository = saleRepository;
-        this.productService = productService;
+        this((Repository<WarrantyRecord>) repository, (Repository<SaleRecord>) saleRepository, (ProductCatalogLookup) productService);
     }
 
     public BasicWarranty assignBasicWarranty(Product product, Sale sale, LocalDate startDate) {
@@ -148,41 +163,10 @@ public class WarrantyService {
 
     private Warranty toWarranty(WarrantyRecord record) {
         Product product = productService.findById(record.getProductId());
-        Sale sale = resolveSaleById(record.getSaleId(), product);
+        Sale sale = saleRecordResolver.resolveSaleById(record.getSaleId(), product);
         if (product == null || sale == null) {
             return null;
         }
-
-        if ("Garantía Extendida".equals(record.getWarrantyType())) {
-            return new ExtendedWarranty(record.getWarrantyId(), product, sale, record.getStartDate());
-        } else {
-            return new BasicWarranty(record.getWarrantyId(), product, sale, record.getStartDate());
-        }
-    }
-
-    private Sale resolveSaleById(String saleId, Product fallbackProduct) {
-        for (SaleRecord saleRecord : saleRepository.loadAll()) {
-            if (saleRecord.getSaleId().equals(saleId)) {
-                List<Product> products = new ArrayList<>();
-                for (String pid : saleRecord.getProductIds()) {
-                    Product item = productService.findById(pid);
-                    if (item != null) {
-                        products.add(item);
-                    }
-                }
-                if (products.isEmpty() && fallbackProduct != null) {
-                    products.add(fallbackProduct);
-                }
-                if (products.isEmpty()) {
-                    return null;
-                }
-                Sale sale = new Sale(saleRecord.getSaleId(), saleRecord.getDate(), null, null, products);
-                sale.setSubtotal(saleRecord.getSubtotal());
-                sale.setAppliedPromotionName(saleRecord.getAppliedPromotionName());
-                sale.setDiscountAmount(saleRecord.getDiscountAmount());
-                return sale;
-            }
-        }
-        return null;
+        return Warranty.createFromType(record.getWarrantyType(), record.getWarrantyId(), product, sale, record.getStartDate());
     }
 }
