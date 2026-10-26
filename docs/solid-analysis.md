@@ -40,3 +40,32 @@ During consolidation in `docs/solid-audit/consolidated-audit.md`, the Technical 
    - The specific **class and method names** (with line ranges) and a concrete explanation of how the implementation satisfies the principle.
 3. **For a `Not Applicable` verdict:**
    - A clear structural **justification** explaining why the principle has no point of application in the audited class (for example, absence of inheritance hierarchies for LSP).
+
+---
+
+## Guiding Question 3 — Relationship Between the SOLID Audit and the Requirement 7 GRASP Audit
+
+> **Question:** *What relationship did the team find between the findings of this audit and those of the Requirement 7 GRASP audit? Were there SOLID violations in code that had already been corrected by GRASP, or GRASP corrections that simultaneously solved a SOLID problem? Present at least one concrete case of each situation found.*
+>
+> *(Drafted by Developer 1 — `craulgomez`, following team alignment)*
+
+### 1. Conceptual Synergy Between GRASP and SOLID
+
+While **GRASP** focuses on *how responsibilities are assigned to classes and collaborations* (*Information Expert*, *Creator*, *Controller*, *Low Coupling*, *High Cohesion*, *Polymorphism*, *Pure Fabrication*, *Indirection*, *Protected Variations*), **SOLID** evaluates the *structural stability, extensibility, and dependency direction of those classes and abstractions* over time (**SRP**, **OCP**, **LSP**, **ISP**, **DIP**). Comparing our Requirement 7 baseline (`docs/grasp-refactor-log.md`) against our Requirement 8 SOLID audit revealed three concrete relationships:
+
+### 2. Case A — GRASP Corrections That Simultaneously Solved a SOLID Problem (`GRASP Polymorphism` → `SOLID OCP`)
+
+- **Concrete Case:** **`CategoryDiscount.calculateDiscount(Sale)` and the `Product` Hierarchy (`GRASP V-02` solved `SOLID OCP`).**
+- **Before Requirement 7:** `CategoryDiscount.calculateDiscount(Sale)` checked product categories using an explicit chain of type checks (`if ("VIDEOGAME".equals(categoryObjective) && product instanceof VideoGame) ... else if ("CONSOLE".equals(...) && product instanceof Console) ... else if ("ACCESSORY".equals(...) && product instanceof Accessory)`). That design violated both **GRASP Polymorphism** and the **Open/Closed Principle (OCP)**, because introducing a new `Product` category required modifying `CategoryDiscount`.
+- **Impact of the GRASP Correction:** By adding `public abstract String getCategory()` and `public boolean belongsToCategory(String category)` to `Product` (`src/main/java/com/gamezone/model/Product.java`, lines 119–131) and overriding `getCategory()` in `VideoGame`, `Console`, and `Accessory`, `CategoryDiscount.calculateDiscount(Sale)` (`src/main/java/com/gamezone/model/CategoryDiscount.java`, line 60) now simply calls `product.belongsToCategory(categoryObjective)`. Consequently, when audited in Requirement 8 under **OCP**, `Product` and `CategoryDiscount` received a **`Correct`** verdict without needing further modification.
+
+### 3. Case B — SOLID Violations in Code Already Refactored by GRASP (`GRASP V-05` → `SOLID SRP V-01`)
+
+- **Concrete Case:** **`ProductValidator` Accumulating Both Product/Accessory Rules and Promotional Campaign Rules (`GRASP V-05` introduced `SOLID V-01` under SRP).**
+- **What Happened in Requirement 7 (`V-05`):** During the GRASP audit, `AccessoryService` (`registerCable`, `registerMemory`) and `PromotionService` (`validatePromotionBase`, `registerCategoryObjective`, `registerBulkPurchaseDiscount`) contained inline validation checks instead of delegating to the `com.gamezone.validation` package. To restore **GRASP Pure Fabrication** and **High Cohesion** in `PromotionService` without creating new classes during Requirement 7, the team placed `validatePromotionBase`, `validateCategoryObjective`, and `validateMinimumQuantity` inside the existing `ProductValidator` class (`src/main/java/com/gamezone/validation/ProductValidator.java`, lines 124–169).
+- **Why It Failed the SOLID SRP Audit (`V-01`):** Under the **Single Responsibility Principle (SRP)**, a class must have only one reason to change. Placing promotional campaign validation inside `ProductValidator` coupled two independent business domains: (1) physical catalog/inventory rules (`Product`, `Cable`, `Memory`, stock quantities) and (2) marketing discount campaign rules (`Promotion` date windows, discount percentages, target category names, and bulk volume thresholds). In Requirement 8 Phase 2, this is resolved by extracting `PromotionValidator` (`com.gamezone.validation.PromotionValidator`) and updating `PromotionService` to depend on it.
+
+### 4. Case C — Structural Observations Left Out of Scope in GRASP That Directly Manifest as SOLID Violations (`GRASP F-01` & `V-03` → `SOLID DIP / ISP / OCP`)
+
+- **Concrete Case 1 (`AccessoryService.listAccesoriesByType`):** In Requirement 7 (`V-03`), `AccessoryService.findAcessoriesCOmpatibleWith(String)` was refactored to delegate to `accessory.isCompatibleWith(consoleId)` (*Information Expert*), but `AccessoryService.listAccesoriesByType(String)` (lines 74–76) continued using `accessory.getClass().getSimpleName().equalsIgnoreCase(type)`. Under the Requirement 8 **OCP** audit, this reflection-based filtering was flagged as violation `V-03` and is solved by introducing `Accessory.getAccessoryType()` and `matchesAccessoryType(String)`.
+- **Concrete Case 2 (`Service-to-Repository` and `Service-to-Service` Concrete Coupling):** In Requirement 7, the high number of concrete collaborator references in `SaleService`, `ReturnService`, and `WarrantyService` was recorded as Out-of-Scope Observation `F-01` because resolving it required introducing new interfaces across modules. Under Requirement 8, **ISP** and **DIP** directly address this root cause (`V-05` and `V-06`) by having `ProductRepository` and `AccessoryRepository` implement `Repository<T>`, typing service repository references to `Repository<T>`, and introducing segregated lookup interfaces (`ProductCatalogLookup` and `SaleQueryService`).
