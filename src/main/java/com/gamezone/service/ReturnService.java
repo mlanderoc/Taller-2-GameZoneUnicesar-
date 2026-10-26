@@ -26,36 +26,36 @@ import java.util.UUID;
 public class ReturnService {
 
     private final Repository<ReturnRecord> returnRepository;
-    private final SaleService saleService;
+    private final SaleQueryService saleService;
     private final ProductService productService;
     private final AccessoryService accessoryService;
     private final WarrantyService warrantyService;
 
     /**
-     * Creates the return service using the {@link Repository} abstraction without
-     * a warranty service reference (DIP).
+     * Creates the return service using the {@link Repository} and {@link SaleQueryService}
+     * abstractions without a warranty service reference (ISP & DIP).
      *
      * @param returnRepository repository abstraction for return records
-     * @param saleService      service used to look up original sales
+     * @param saleService      segregated query service used to look up original sales
      * @param productService   service used to restore and resolve products
      * @param accessoryService service used to restore and resolve accessories
      */
-    public ReturnService(Repository<ReturnRecord> returnRepository, SaleService saleService,
+    public ReturnService(Repository<ReturnRecord> returnRepository, SaleQueryService saleService,
                           ProductService productService, AccessoryService accessoryService) {
         this(returnRepository, saleService, productService, accessoryService, null);
     }
 
     /**
-     * Creates the return service using the {@link Repository} abstraction with
-     * access to product, accessory, and warranty services (DIP).
+     * Creates the return service using the {@link Repository} and {@link SaleQueryService}
+     * abstractions with access to product, accessory, and warranty services (ISP & DIP).
      *
      * @param returnRepository repository abstraction for return records
-     * @param saleService      service used to look up original sales
+     * @param saleService      segregated query service used to look up original sales
      * @param productService   service used to restore and resolve products
      * @param accessoryService service used to restore and resolve accessories
      * @param warrantyService  service used to cancel warranties of returned consoles
      */
-    public ReturnService(Repository<ReturnRecord> returnRepository, SaleService saleService,
+    public ReturnService(Repository<ReturnRecord> returnRepository, SaleQueryService saleService,
                           ProductService productService, AccessoryService accessoryService,
                           WarrantyService warrantyService) {
         this.returnRepository = returnRepository;
@@ -75,7 +75,7 @@ public class ReturnService {
      */
     public ReturnService(ReturnRepository returnRepository, SaleService saleService,
                           ProductService productService, AccessoryService accessoryService) {
-        this((Repository<ReturnRecord>) returnRepository, saleService, productService, accessoryService, null);
+        this((Repository<ReturnRecord>) returnRepository, (SaleQueryService) saleService, productService, accessoryService, null);
     }
 
     /**
@@ -92,7 +92,7 @@ public class ReturnService {
     public ReturnService(ReturnRepository returnRepository, SaleService saleService,
                           ProductService productService, AccessoryService accessoryService,
                           WarrantyService warrantyService) {
-        this((Repository<ReturnRecord>) returnRepository, saleService, productService, accessoryService, warrantyService);
+        this((Repository<ReturnRecord>) returnRepository, (SaleQueryService) saleService, productService, accessoryService, warrantyService);
     }
 
     /**
