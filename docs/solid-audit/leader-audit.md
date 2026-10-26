@@ -59,3 +59,27 @@ In accordance with Section 4.1 of the Requirement 8 specification, `TEAM.md`, an
 - **`SaleRecord` and `SaleRepository` (`com.gamezone.persistence`):** `SaleRecord` (`SaleRecord.java` lines 13–133) is a pure persistence DTO, and `SaleRepository` (`SaleRepository.java` lines 20–71) handles only binary serialization of `SaleRecord` lists to `data/sales.dat`.
 - **`SaleService` (`com.gamezone.service.SaleService`, lines 28–275):** Coordinates the 8-step sale registration workflow, sale history queries, and `SaleRecord` mapping (`toRecord`, `toSale`), aided by the cohesive private helpers `findCatalogProduct`, `findCatalogProductById`, and `decrementStock` extracted in Requirement 7 (`V-07`).
 - **`ProductService.restoreStock(String, int)` (`com.gamezone.service.ProductService`, lines 141–146):** Validates that the restored quantity is positive and delegates stock increment to `updateStock(productId, quantity)`.
+
+---
+
+### 2.2 Open/Closed Principle (OCP)
+
+- **Overall Verdict for Audited Scope:** **Violation** (1 violation identified in `ConsoleMenu.printPromotion`: `V-03`; `Sale` and `SaleService` promotional evaluation are **Correct**).
+
+#### Identified Violations
+
+| Field | Content |
+| :--- | :--- |
+| **ID** | `V-03` |
+| **Principle** | Open/Closed Principle (OCP) |
+| **Module** | Promotions Integration in Console UI (Requirement 2) |
+| **Evidence** | Class `com.gamezone.ui.ConsoleMenu`, method `printPromotion(Promotion promotion)` (`src/main/java/com/gamezone/ui/ConsoleMenu.java`, lines 677–680):<br>`private void printPromotion(Promotion promotion) {`<br>`    System.out.println("ID: " + promotion.getId() + " | Nombre: " + promotion.getName() + " | Tipo: " + promotion.getClass().getSimpleName());`<br>`    printLine();`<br>`}` |
+| **Explanation** | `ConsoleMenu.printPromotion(Promotion)` obtains the promotion type name via Java runtime reflection (`promotion.getClass().getSimpleName()`) instead of invoking a polymorphic method on `Promotion` (`promotion.getPromotionType()`). If a new `Promotion` subtype is introduced whose display/type identifier differs from its Java class identifier, or if a promotion is wrapped by a decorator, `printPromotion` cannot display its domain type without modifying `ConsoleMenu`. |
+| **Consequence** | The UI layer is coupled to internal Java class identifiers of `Promotion` subclasses rather than an explicit polymorphic contract on `Promotion`. |
+| **Proposed Solution** | Coordinate with Developer 1 (`craulgomez`) to add `public String getPromotionType()` on `Promotion` (defaulting to `getClass().getSimpleName()` and overridden in `PercentageDiscount`, `CategoryDiscount`, and `BulkPurchaseDiscount` to return `"PercentageDiscount"`, `"CategoryDiscount"`, and `"BulkPurchaseDiscount"` so console output remains 100% identical), and update `ConsoleMenu.printPromotion(Promotion)` to call `promotion.getPromotionType()`. |
+| **Other Member's Code** | **Yes — Developer 1 (`craulgomez`):** `Promotion` (`src/main/java/com/gamezone/model/Promotion.java`) and its subclasses define `getPromotionType()`. |
+
+#### Compliant Classes Under OCP (`Correct`)
+
+- **`Sale.generateReceipt()` (`com.gamezone.model.Sale`, lines 135–158):** Iterates through `List<Product>` and invokes `product.getDescription()` polymorphically (`line 145`), remaining closed for modification when new `Product` or `Accessory` subtypes are added.
+- **`SaleService.registerSale(...)` Promotional Calculation (`com.gamezone.service.SaleService`, lines 94–98):** Delegates best-promotion selection to `promotionService.findBestPromotionFor(sale)` and discount computation to the polymorphic `bestPromotion.calculateDiscount(sale)`, supporting any new `Promotion` subclass without modifying `SaleService`.
