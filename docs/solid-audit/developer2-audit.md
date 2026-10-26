@@ -124,3 +124,26 @@ In accordance with Section 4.1 of the Requirement 8 specification, `TEAM.md`, an
 #### Compliant Interfaces Under ISP (`Correct`)
 
 - **`Repository<T>` (`com.gamezone.persistence.Repository`, lines 5–8):** Defines only two cohesive persistence operations (`void saveAll(List<T> items)` and `List<T> loadAll()`), both of which are used by every service that persists a collection of entities or records.
+
+---
+
+### 2.5 Dependency Inversion Principle (DIP)
+
+- **Overall Verdict for Audited Scope:** **Violation** (1 violation identified across Developer 2's repository and service classes: `V-05`; `Person`, `Customer`, `Seller`, `ReturnRecord`, and `WarrantyRecord` are **Not Applicable** as leaf domain/DTO classes).
+
+#### Identified Violations
+
+| Field | Content |
+| :--- | :--- |
+| **ID** | `V-05` |
+| **Principle** | Dependency Inversion Principle (DIP) |
+| **Module** | Accessories, Promotions, Returns & Warranties Persistence and Services (Requirements 1, 2, 3 & 4) |
+| **Evidence** | 1. Class `com.gamezone.persistence.AccessoryRepository` (`src/main/java/com/gamezone/persistence/AccessoryRepository.java`, line 9):<br>`public class AccessoryRepository {` *(does not implement `Repository<Accessory>`)*<br>2. Class `com.gamezone.service.AccessoryService` (`src/main/java/com/gamezone/service/AccessoryService.java`, lines 16, 24–27):<br>`private final AccessoryRepository repository;`<br>`public AccessoryService(AccessoryRepository repository)`<br>3. Class `com.gamezone.service.PromotionService` (`src/main/java/com/gamezone/service/PromotionService.java`, lines 16, 19–22):<br>`private final PromotionRepository repository;`<br>`public PromotionService(PromotionRepository repository)`<br>4. Class `com.gamezone.service.ReturnService` (`src/main/java/com/gamezone/service/ReturnService.java`, lines 28, 42, 58):<br>`private final ReturnRepository returnRepository;`<br>5. Class `com.gamezone.service.WarrantyService` (`src/main/java/com/gamezone/service/WarrantyService.java`, lines 25–26, 37):<br>`private final WarrantyRepository repository;`<br>`private final SaleRepository saleRepository;` |
+| **Explanation** | Although `com.gamezone.persistence.Repository<T>` defines the persistence abstraction (`saveAll(List<T>)`, `loadAll()`) and `PromotionRepository`, `ReturnRepository`, `WarrantyRepository`, and `SaleRepository` already implement `Repository<T>`, `AccessoryRepository` does not implement `Repository<Accessory>`. Furthermore, the high-level service modules (`AccessoryService`, `PromotionService`, `ReturnService`, `WarrantyService`) declare their repository fields and constructor parameters as concrete file-serialization classes (`AccessoryRepository`, `PromotionRepository`, `ReturnRepository`, `WarrantyRepository`, `SaleRepository`) instead of `Repository<T>`. |
+| **Consequence** | High-level business services in `com.gamezone.service` are directly coupled to low-level binary file serialization implementations in `com.gamezone.persistence`, preventing substitution of persistence implementations without modifying service classes. |
+| **Proposed Solution** | Update `AccessoryRepository` to implement `Repository<Accessory>` (adding `@Override` annotations), and refactor `AccessoryService`, `PromotionService`, `ReturnService`, and `WarrantyService` to type their repository fields and constructors to `Repository<Accessory>`, `Repository<Promotion>`, `Repository<ReturnRecord>`, `Repository<WarrantyRecord>`, and `Repository<SaleRecord>`. |
+| **Other Member's Code** | **Yes — Developer 1 (`craulgomez`) & Technical Lead (`mlanderoc`):** The same DIP refactoring applies to `ProductRepository`/`ProductService` (Developer 1) and `SaleService` (Technical Lead). |
+
+#### Not Applicable Classes Under DIP (`Not Applicable`)
+
+- **`Person`, `Customer`, `Seller` (`com.gamezone.model`) and `ReturnRecord`, `WarrantyRecord` (`com.gamezone.persistence`):** These domain entities and persistence value records sit at the base of the dependency graph and do not depend on lower-level infrastructure or service modules.
