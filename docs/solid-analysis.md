@@ -96,3 +96,30 @@ While **GRASP** focuses on *how responsibilities are assigned to classes and col
 
 - **Concrete Case 1 (`AccessoryService.listAccesoriesByType`):** In Requirement 7 (`V-03`), `AccessoryService.findAcessoriesCOmpatibleWith(String)` was refactored to delegate to `accessory.isCompatibleWith(consoleId)` (*Information Expert*), but `AccessoryService.listAccesoriesByType(String)` (lines 74–76) continued using `accessory.getClass().getSimpleName().equalsIgnoreCase(type)`. Under the Requirement 8 **OCP** audit, this reflection-based filtering was flagged as violation `V-03` and is solved by introducing `Accessory.getAccessoryType()` and `matchesAccessoryType(String)`.
 - **Concrete Case 2 (`Service-to-Repository` and `Service-to-Service` Concrete Coupling):** In Requirement 7, the high number of concrete collaborator references in `SaleService`, `ReturnService`, and `WarrantyService` was recorded as Out-of-Scope Observation `F-01` because resolving it required introducing new interfaces across modules. Under Requirement 8, **ISP** and **DIP** directly address this root cause (`V-05` and `V-06`) by having `ProductRepository` and `AccessoryRepository` implement `Repository<T>`, typing service repository references to `Repository<T>`, and introducing segregated lookup interfaces (`ProductCatalogLookup` and `SaleQueryService`).
+
+---
+
+## Guiding Question 4 — Non-Regression Verification Strategy and Evidence
+
+> **Question:** *The refactoring must preserve the external behavior of the system. What strategy does the team follow to guarantee that all menu operations continue working identically? What evidence is shown at the end to demonstrate that nothing was broken?*
+>
+> *(Drafted by Developer 2 — `Hectorguevara22`, following team alignment)*
+
+### 1. Three-Checkpoint Non-Regression Strategy
+
+Because Requirement 8 reorganizes internal responsibilities, extracts cohesive validators and helpers (`PromotionValidator`, `SaleRecordResolver`, `DataInitializer`), introduces segregated abstractions (`Repository<T>`, `ProductCatalogLookup`, `SaleQueryService`), and replaces runtime reflection/conditionals with polymorphism (`Accessory.matchesAccessoryType`, `Warranty.createFromType`) **without adding or altering any user-facing functionality**, the team enforces a strict three-checkpoint verification protocol documented in `docs/solid-refactor-log.md`:
+
+1. **Checkpoint 1 — Baseline Reference Execution on `develop` (`1bfc5f6`, Before First Refactoring Commit):**
+   - Before applying any code change on `feature/solid-refactor`, the team executes all Console Menu flows across all seven main submenus (`[1] Gestion de productos`, `[2] Gestion de personas`, `[3] Gestion de ventas`, `[4] Gestion de promociones`, `[5] Gestion de accesorios`, `[6] Gestion de devoluciones` including `[5] Generar balance mensual`, and `[7] Gestion de garantias`) as well as the Swing GUI (`MainFrame`) and the four differentiated exception categories (`ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, `PersistenceException`).
+   - For each operation, the exact test input data, expected Spanish output/receipt format, and persisted `.dat` file effects (`products.dat`, `Accessory.dat`, `customers.dat`, `sellers.dat`, `sales.dat`, `promotion.dat`, `returns.dat`, `warranties.dat`) are recorded in the **Baseline Reference Table** in Section 2 of `docs/solid-refactor-log.md`.
+2. **Checkpoint 2 — Per-Pull-RequestIncremental Verification:**
+   - Before opening each of the three Phase 2 Pull Requests (`craulgomez`, `Hectorguevara22`, `mlanderoc`), the responsible member compiles the entire project cleanly (`mvn clean compile` / `javac` with zero errors), preserves all existing public constructor signatures via constructor overloading where interfaces are introduced (`Repository<T>`, `ProductCatalogLookup`, `SaleQueryService`), preserves `serialVersionUID` and field layouts on all `Serializable` classes so existing `.dat` files load without `InvalidClassException`, and tests every menu operation affected by their corrected violations (`V-01` through `V-07`).
+3. **Checkpoint 3 — Final End-to-End Verification After Integrating All Corrections:**
+   - Once all three Pull Requests are integrated on `feature/solid-refactor`, the Technical Lead re-executes the complete baseline verification suite from start to finish and records the post-refactoring results side-by-side against the baseline reference in Section 4 of `docs/solid-refactor-log.md`.
+
+### 2. Concrete Evidence Presented at Completion and Oral Defense
+
+To demonstrate conclusively that zero regressions were introduced, the team provides:
+- **Compilation & Binary Compatibility Evidence:** Clean compilation of all source files (`mvn clean compile` / `javac` exit code `0`) and verified deserialization of all eight `.dat` persistence files.
+- **Baseline vs. Final Comparison Table in `docs/solid-refactor-log.md`:** A complete scenario-by-scenario matrix covering all 24 menu operations and error-handling paths, mapping each scenario to the specific SOLID violations (`V-01`–`V-07`) that touched its underlying classes and confirming 100% identical outputs, Spanish messages, receipt layouts, proportional refund amounts, monthly financial balances, and warranty certificates.
+- **Pull Request Traceability:** Each of the three Phase 2 Pull Requests explicitly lists the corrected violation IDs (`V-XX`) and the verified menu operations in its PR description.
