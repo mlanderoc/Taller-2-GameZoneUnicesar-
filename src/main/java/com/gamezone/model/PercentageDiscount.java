@@ -1,5 +1,5 @@
-
 package com.gamezone.model;
+
 import java.time.LocalDate;
 
 /**
@@ -7,9 +7,9 @@ import java.time.LocalDate;
  * to the subtotal of a sale.
  */
 public class PercentageDiscount extends Promotion {
-    
+
     private double discountPercentage;
-    
+
     /**
      * Creates a percentage-based promotion.
      *
@@ -19,7 +19,7 @@ public class PercentageDiscount extends Promotion {
      * @param endDate the date when the promotion expires
      * @param discountPercentage the percentage discount to apply
      */
-    public PercentageDiscount(String id, String name, LocalDate startDate, LocalDate      endDate, double discountPercentage ) {
+    public PercentageDiscount(String id, String name, LocalDate startDate, LocalDate endDate, double discountPercentage) {
         super(id, name, startDate, endDate);
         this.discountPercentage = discountPercentage;
     }
@@ -41,7 +41,17 @@ public class PercentageDiscount extends Promotion {
     public void setDiscountPercentage(double discountPercentage) {
         this.discountPercentage = discountPercentage;
     }
-    
+
+    /**
+     * Returns the promotion type identifier for percentage discounts.
+     *
+     * @return {@code "PercentageDiscount"}
+     */
+    @Override
+    public String getPromotionType() {
+        return "PercentageDiscount";
+    }
+
     /**
      * Calculates the monetary discount by applying the configured percentage
      * to the subtotal of the given sale.
@@ -49,12 +59,8 @@ public class PercentageDiscount extends Promotion {
      * @param sale the sale used to calculate the discount
      * @return the calculated discount amount
      */
-   @Override
-   public double calculateDiscount(Sale sale){
-       
+    @Override
+    public double calculateDiscount(Sale sale) {
         return sale.calculateTotal() * discountPercentage / 100;
-   }
-
-   
-    
+    }
 }
