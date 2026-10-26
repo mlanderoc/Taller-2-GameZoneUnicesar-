@@ -1,4 +1,3 @@
-
 package com.gamezone.service;
 
 import com.gamezone.exceptions.InvalidDataException;
@@ -6,43 +5,54 @@ import com.gamezone.model.Product;
 import com.gamezone.model.VideoGame;
 import com.gamezone.model.Console;
 import com.gamezone.persistence.ProductRepository;
+import com.gamezone.persistence.Repository;
 import com.gamezone.validation.ProductValidator;
 import java.util.List;
 
 /**
- * Manages business operations related to products.
+ * Manages business operations related to products, depending on the
+ * {@link Repository} abstraction (DIP) and implementing {@link ProductCatalogLookup} (ISP).
  */
-public class ProductService {
-    
-    private final ProductRepository repository;
+public class ProductService implements ProductCatalogLookup {
+
+    private final Repository<Product> repository;
     private final List<Product> products;
-    
+
     /**
-     * Creates a product service using the given repository.
+     * Creates a product service using the given repository abstraction.
      *
      * @param repository the repository used to load and save products
      */
-    public ProductService(ProductRepository repository) {
-    this.repository = repository;
-    this.products = repository.loadAll();
+    public ProductService(Repository<Product> repository) {
+        this.repository = repository;
+        this.products = repository.loadAll();
     }
-    
+
     /**
- * Finds a product by its identifier.
- *
- * @param id the identifier of the product to find
- * @return the matching product, or null if no product is found
- */
-    public Product findById(String id){
-        for (Product product : products){
-            if (product.getId().equals(id)){
+     * Creates a product service using a concrete {@link ProductRepository}.
+     *
+     * @param repository the product repository
+     */
+    public ProductService(ProductRepository repository) {
+        this((Repository<Product>) repository);
+    }
+
+    /**
+     * Finds a product by its identifier.
+     *
+     * @param id the identifier of the product to find
+     * @return the matching product, or null if no product is found
+     */
+    @Override
+    public Product findById(String id) {
+        for (Product product : products) {
+            if (product.getId().equals(id)) {
                 return product;
             }
         }
-        
-        return null; 
+        return null;
     }
-    
+
     /**
      * Registers a new video game after validating product data and unique identifier.
      *
@@ -56,21 +66,21 @@ public class ProductService {
      */
     public void registerVideoGame(String id, String title, double price, int stock,
                 String platform, String genre, String ageRating) {
-        
+
         ProductValidator.validateProductData(id, title, price, stock);
         ProductValidator.validateUniqueProduct(findById(id), id);
-        
+
         VideoGame videoGame = new VideoGame(
                 id, title,
                 price, stock,
                 platform, genre,
                 ageRating
         );
-        
-        products.add(videoGame); 
+
+        products.add(videoGame);
         repository.saveAll(products);
     }
-    
+
     /**
      * Registers a new console after validating product data and unique identifier.
      *
@@ -83,56 +93,50 @@ public class ProductService {
      * @param generation the generation of the console
      */
     public void registerConsole(String id, String title, double price, int stock,
-                String brand, String model, String generation){
-      
+                String brand, String model, String generation) {
+
         ProductValidator.validateProductData(id, title, price, stock);
         ProductValidator.validateUniqueProduct(findById(id), id);
-        
+
         Console console = new Console(
                 id, title,
                 price, stock,
                 brand, model,
-                generation  
+                generation
         );
-        
-        products.add(console); 
+
+        products.add(console);
         repository.saveAll(products);
     }
-    
+
     /**
      * Returns all registered products.
      *
      * @return a list containing all products
      */
-    public List<Product> listAllProducts(){
-        return products; 
+    public List<Product> listAllProducts() {
+        return products;
     }
-    
+
     /**
-     * Updates the stock of a product after validating existence and available stock.
+     * Updates the stock of a product after validating existence and available stock,
+     * persisting the in-memory catalog directly (SRP).
      *
      * @param productId the identifier of the product to update
      * @param quantity the quantity to add to or subtract from the stock
      */
-    public void updateStock(String productId, int quantity){
+    public void updateStock(String productId, int quantity) {
         Product product = findById(productId);
         ProductValidator.validateProductExists(product, productId);
-        
-        if(quantity < 0){
+
+        if (quantity < 0) {
             ProductValidator.validateStockAvailability(product, -quantity);
         }
-        
+
         product.updateStock(quantity);
-        
-        List<Product> products = repository.loadAll();
-        for (int i = 0; i < products.size(); i++) {
-            if (products.get(i).getId().equals(productId)) {
-                products.set(i, product);
-                break;
-            }
-        }
         repository.saveAll(products);
     }
+
     /**
      * Increases the stock of a product by the given quantity. Used when a
      * return is processed and the product goes back to inventory.
@@ -147,4 +151,3 @@ public class ProductService {
         updateStock(productId, quantity);
     }
 }
-
