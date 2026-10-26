@@ -87,3 +87,40 @@ In accordance with Section 4.1 of the Requirement 8 specification, `TEAM.md`, an
 
 - **`Person`, `Customer`, `Seller` (`com.gamezone.model`):** `Person` (`Person.java` line 137) declares `public abstract String getSummary();`, which `Customer` (`Customer.java` lines 74–77) and `Seller` (`Seller.java` lines 92–96) override polymorphically. Any new `Person` subtype can be added without modifying callers of `getSummary()`.
 - **`PromotionService.findBestPromotionFor(Sale)` (`com.gamezone.service.PromotionService`, lines 85–98):** Iterates over `List<Promotion>` and invokes the polymorphic `p.calculateDiscount(sale)` method without any `instanceof` or type-switching conditionals. New `Promotion` subclasses are evaluated automatically.
+
+---
+
+### 2.3 Liskov Substitution Principle (LSP)
+
+- **Overall Verdict for Audited Scope:** **Correct** (All inheritance and interface implementations under Developer 2's responsibility satisfy their supertype behavioral contracts).
+
+#### Evidence of Compliance (`Correct`)
+
+1. **`Person` Hierarchy (`Person` ← `Customer`, `Seller`):**
+   - `Person` (`src/main/java/com/gamezone/model/Person.java`, lines 10–139) defines `getId()`, `getFirstName()`, `getLastName()`, `getPhone()`, `getFullName()`, and abstract `getSummary()`.
+   - `Customer` (`Customer.java` lines 11–79) and `Seller` (`Seller.java` lines 11–98) extend `Person` and implement `getSummary()` returning a non-null formatted string without weakening postconditions or throwing unexpected exceptions. Both subclasses are substituted as `Person` instances seamlessly inside `PersonValidator.validateUniquePerson(List<? extends Person>, String)` (`PersonValidator.java` lines 95–104) and `PersonValidator.validatePersonExists(Person, String)` (`PersonValidator.java` lines 82–86).
+2. **`Repository<T>` Implementations (`PromotionRepository`, `ReturnRepository`, `WarrantyRepository`):**
+   - `PromotionRepository` (`PromotionRepository.java` lines 15–52), `ReturnRepository` (`ReturnRepository.java` lines 14–51), and `WarrantyRepository` (`WarrantyRepository.java` lines 13–50) implement `Repository<T>` (`saveAll(List<T>)` and `loadAll()`), returning an empty `ArrayList<>()` when the backing `.dat` file does not yet exist and throwing `PersistenceException` on I/O failure, honoring the interface contract uniformly.
+
+---
+
+### 2.4 Interface Segregation Principle (ISP)
+
+- **Overall Verdict for Audited Scope:** **Violation** (1 boundary violation identified across service collaborators: `V-04`; `Repository<T>` is **Correct**).
+
+#### Identified Violations
+
+| Field | Content |
+| :--- | :--- |
+| **ID** | `V-04` |
+| **Principle** | Interface Segregation Principle (ISP) |
+| **Module** | Warranties & Returns Services (Requirements 3, 4 & 5) |
+| **Evidence** | 1. Class `com.gamezone.service.WarrantyService` (`src/main/java/com/gamezone/service/WarrantyService.java`, lines 27, 37–41, 150, 168):<br>`private final ProductService productService;`<br>`public WarrantyService(WarrantyRepository repository, SaleRepository saleRepository, ProductService productService)`<br>*(only invokes `productService.findById(...)` at lines 150 and 168)*<br>2. Class `com.gamezone.service.ReturnService` (`src/main/java/com/gamezone/service/ReturnService.java`, lines 29, 42–66, 80, 166, 231):<br>`private final SaleService saleService;`<br>`public ReturnService(ReturnRepository returnRepository, SaleService saleService, ProductService productService, AccessoryService accessoryService, WarrantyService warrantyService)`<br>*(only invokes `saleService.findSaleById(...)` at lines 80, 231 and `saleService.viewAllSales()` at line 166)* |
+| **Explanation** | `WarrantyService` only needs a single read-only operation (`findById(String)`) to resolve `Product` references, yet it is forced to depend on the entire concrete `ProductService` class (which also exposes `registerVideoGame`, `registerConsole`, `listAllProducts`, `updateStock`, and `restoreStock`). Likewise, `ReturnService` only needs read-only sale queries (`findSaleById(String)` and `viewAllSales()`) from `SaleService`, yet it depends on the full concrete `SaleService` class (which also exposes `registerSale`, `viewSalesByCustomer`, `viewSalesBySeller`, and `setWarrantyService`). |
+| **Consequence** | Clients are coupled to broad service contracts containing write and registration operations they never call, violating ISP and increasing ripple effects when unrelated methods in `ProductService` or `SaleService` change. |
+| **Proposed Solution** | Introduce segregated interfaces `ProductCatalogLookup` (`Product findById(String id);`, created by Developer 1 and implemented by `ProductService` and `AccessoryService`) and `SaleQueryService` (`Sale findSaleById(String saleId); List<Sale> viewAllSales();`, created by the Technical Lead and implemented by `SaleService`), and update `WarrantyService` and `ReturnService` to depend on those narrow interfaces while preserving overloaded constructors for backward compatibility. |
+| **Other Member's Code** | **Yes — Developer 1 (`craulgomez`) & Technical Lead (`mlanderoc`):** `ProductService` (Developer 1) must implement `ProductCatalogLookup`, and `SaleService` (Technical Lead) must implement `SaleQueryService`. |
+
+#### Compliant Interfaces Under ISP (`Correct`)
+
+- **`Repository<T>` (`com.gamezone.persistence.Repository`, lines 5–8):** Defines only two cohesive persistence operations (`void saveAll(List<T> items)` and `List<T> loadAll()`), both of which are used by every service that persists a collection of entities or records.
