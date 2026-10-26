@@ -134,3 +134,22 @@ I used Artificial Intelligence as a support tool during the development of the p
 - **Consultation:** I asked for a review of my proposed `getCategory()` and `belongsToCategory(String category)` methods in `Product` to make sure existing serialized `.dat` files remain compatible (`serialVersionUID = 1L`).
 - **What I learned:** Adding methods without modifying serialized instance fields preserves binary serialization compatibility with `products.dat` and `Accessory.dat` while eliminating the `instanceof` branches in `CategoryDiscount.calculateDiscount(Sale)`.
 - **How I applied it:** I implemented `getCategory()` and `belongsToCategory(String)` in `Product`, overrode `getCategory()` in `VideoGame`, `Console`, and `Accessory`, and refactored `CategoryDiscount.calculateDiscount(Sale)` (`V-02`), `Return.getDiscountRatio()` (`V-01`), `Accessory.isCompatibleWith` (`V-03`), and `ProductValidator` (`V-05`).
+
+
+---
+
+## Requirement 8 — SOLID Audit and Refactoring
+
+### Phase 1 - Audit
+
+#### Conceptual relationship between GRASP Pure Fabrication and SOLID Single Responsibility Principle (SRP)
+- **Topic:** Object-oriented design concepts (SOLID principles vs. GRASP patterns)
+- **Consultation:** I asked for a conceptual explanation of how a helper class created under GRASP *Pure Fabrication* can still violate the SOLID *Single Responsibility Principle (SRP)*.
+- **What I learned:** *Pure Fabrication* extracts non-domain responsibilities out of domain or controller classes into a synthetic class, whereas *SRP* requires that synthetic class itself to have only one reason (or actor/domain axis) to change. If a single fabrication class accumulates validation rules for two unrelated functional domains, it satisfies *Pure Fabrication* relative to the domain model but violates *SRP* internally.
+- **How I applied it:** When I audited `ProductValidator` in `docs/solid-audit/developer1-audit.md`, I identified that housing both product/accessory inventory validations and promotional campaign validations in `ProductValidator` (`V-01`) violates *SRP*, and I documented this connection in Question 3 of `docs/solid-analysis.md`.
+
+#### English terminology for SOLID audit verdicts
+- **Topic:** English technical phrasing for SOLID principles
+- **Consultation:** I asked for standard English terms to describe *"razón para cambiar"* (*axis of change* / *reason to change*) and *"inversión de dependencias"* (*dependency inversion*).
+- **What I learned:** Using precise terminology clarifies why a class either satisfies or violates SRP, OCP, LSP, ISP, and DIP.
+- **How I applied it:** I used these terms when drafting my individual audit report (`docs/solid-audit/developer1-audit.md`) and Question 1 of `docs/solid-analysis.md`.
