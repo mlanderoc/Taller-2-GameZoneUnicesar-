@@ -14,12 +14,12 @@ The codebase is organized into distinct layers under the root package `com.gamez
 
 - `model`: Domain entities, business value objects, and inheritance hierarchies. Depends on nothing else.
 - `exceptions`: Cross-cutting custom exception hierarchy rooted at `GameZoneException` (`RuntimeException`), with specialized subclasses `ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, and `PersistenceException`.
-- `validation`: Dedicated static validators per functional module (`ProductValidator`, `PersonValidator`, `SaleValidator`) invoked by the service layer before executing business logic. Depends only on `model` and `exceptions`.
-- `persistence`: Repositories and DTO records responsible for saving and loading data files, wrapping low-level `IOException` errors into `PersistenceException` with file and operation context. Depends only on `model` and `exceptions`.
-- `service`: Business rules, transaction coordination, stock updates, discount algorithms, and reporting. Delegates validations to `validation` and depends on `model`, `persistence`, `validation`, and `exceptions`.
+- `validation`: Dedicated static validators per functional module (`ProductValidator`, `PromotionValidator`, `PersonValidator`, `SaleValidator`) invoked by the service layer before executing business logic. Depends only on `model` and `exceptions`.
+- `persistence`: Repositories (`Repository<T>`) and DTO records responsible for saving and loading data files, wrapping low-level `IOException` errors into `PersistenceException` with file and operation context. Depends only on `model` and `exceptions`.
+- `service`: Business rules, transaction coordination, stock updates, discount algorithms, and reporting, decoupled via segregated service interfaces (`ProductCatalogLookup`, `SaleQueryService`) and `Repository<T>`. Depends on `model`, `persistence`, `validation`, and `exceptions`.
 - `ui`: Presentation layer including the Swing graphical interface (`MainFrame`, sub-panels, dialogs) and `ConsoleMenu`, featuring differentiated exception catching to provide clear Spanish error messages by category. Depends on `service`, `model`, and `exceptions`.
 
-See the full architectural diagram and rationale in [docs/layers-diagram.md](docs/layers-diagram.md) and the exception layer diagram in [docs/exception-class-diagram.md](docs/exception-class-diagram.md).
+See the full architectural diagram and rationale in [docs/layers-diagram.md](docs/layers-diagram.md), the exception layer diagram in [docs/exception-class-diagram.md](docs/exception-class-diagram.md), the GRASP comparative diagram in [docs/grasp-class-diagram.md](docs/grasp-class-diagram.md), and the SOLID comparative diagram in [docs/solid-class-diagram.md](docs/solid-class-diagram.md).
 
 ```mermaid
 flowchart TD
@@ -42,7 +42,7 @@ To preserve the strict separation of layers without circular dependencies or for
 - `ReturnRecord`: Stores the original sale ID, returned product IDs, return date, reason, and refund amount.
 - `WarrantyRecord`: Stores warranty details linked to product and sale IDs with start and expiration dates.
 
-Entity resolutions and object-graph reconstructions are executed cleanly within the service layer (`SaleService`, `ReturnService`, `WarrantyService`), preventing desynchronization across files.
+Entity resolutions and object-graph reconstructions are executed cleanly within the service layer (`SaleService`, `ReturnService`, `WarrantyService`, and `SaleRecordResolver`), preventing desynchronization across files.
 
 ## Features & Modules
 
@@ -57,7 +57,7 @@ Entity resolutions and object-graph reconstructions are executed cleanly within 
   - **Cables:** Length in meters and connector types (HDMI, USB, Optical, etc.).
   - **Memories:** Storage capacity in GB and format (SD, MicroSD, Internal).
 - Query accessories by category and verify real-time compatibility with specific console models.
-- Preloaded default accessories (`A001`, `A002`, `A003`) on first initialization.
+- Preloaded default accessories (`A001`, `A002`, `A003`) on first initialization via `DataInitializer`.
 
 ### 3. Promotions & Discounts (RE2 & RE5-A1)
 - Dynamic promotional rules evaluated at checkout over the product subtotal:
@@ -65,7 +65,7 @@ Entity resolutions and object-graph reconstructions are executed cleanly within 
   - **Category Discount:** Targeted discount applying to `"VIDEOGAME"`, `"CONSOLE"`, or `"ACCESSORY"` (`instanceof Accessory` covering `Controller`, `Cable`, and `Memory`).
   - **Bulk Purchase Discount:** Tiered discount triggered when purchasing a minimum volume of items.
 - Automated selection algorithm in `PromotionService.findBestPromotionFor` to grant the highest customer savings.
-- Preloaded default promotions (`PROMO001` through `PROMO004`) on first initialization.
+- Preloaded default promotions (`PROMO001` through `PROMO004`) on first initialization via `DataInitializer`.
 
 ### 4. Returns, Proportional Refunds & Warranty Cancellation (RE3, RE5-A4, RE5-A5, RE5-A7)
 - Formal return processing linked to historical sales within the **30-day return window**.
@@ -81,7 +81,7 @@ Entity resolutions and object-graph reconstructions are executed cleanly within 
 ### 6. People Management
 - **Customers:** Personal details, contact information, email, and purchase history.
 - **Sellers:** Employee code, work shifts, and attended sales history.
-- Preloaded staff data (`V001`, `V002`, `V003`) on first initialization.
+- Preloaded staff data (`V001`, `V002`, `V003`) on first initialization via `DataInitializer`.
 
 ### 7. Reports & Monthly Financial Balance (RE5-A6)
 - Complete sales, returns, and warranty audit history.
@@ -98,7 +98,7 @@ Entity resolutions and object-graph reconstructions are executed cleanly within 
   - `BusinessRuleException` (`ERR-BUSINESS-RULE`): Thrown when a domain rule is violated (insufficient stock, duplicate ID, empty sale cart, expired 30-day return window).
   - `InvalidDataException` (`ERR-INVALID-DATA`): Thrown when input parameters fail format or range checks (blank strings, negative prices/quantities, invalid email format).
   - `PersistenceException` (`ERR-PERSISTENCE`): Wraps `IOException` and `ClassNotFoundException` in repositories with file path and read/write operation context.
-- **Dedicated Validators (`com.gamezone.validation`):** `ProductValidator`, `PersonValidator`, and `SaleValidator` centralize input and domain verification before service operations execute.
+- **Dedicated Validators (`com.gamezone.validation`):** `ProductValidator`, `PromotionValidator`, `PersonValidator`, and `SaleValidator` centralize input and domain verification before service operations execute.
 - **Differentiated User Messaging:** `ConsoleMenu` and Swing dialogs catch each specific exception subtype to display clear, category-specific messages in Spanish without exposing technical stack traces.
 
 ### 10. GRASP Patterns Audit & Refactoring (RE7)
@@ -108,6 +108,13 @@ Entity resolutions and object-graph reconstructions are executed cleanly within 
   - *Information Expert (`V-01`, `V-03`, `V-04`):* Delegated discount ratio calculation to `Sale.getDiscountRatio()`, console compatibility checks to `Accessory.isCompatibleWith(String)`, and sale item lookups to `Sale.findProductById(String)`.
   - *Pure Fabrication & High Cohesion (`V-05`, `V-07`):* Centralized subtype and promotion validations in `ProductValidator`, extracted catalog lookup and stock helpers in `SaleService`, and enforced positive quantity checks in `ProductService.restoreStock`.
   - *Low Coupling (`V-06`):* Added `AccessoryService(AccessoryRepository)` constructor so `Main` no longer invokes `accessoryRepository.loadAll()` directly.
+
+### 11. SOLID Principles Audit & Refactoring (RE8)
+- **Phase 1 — Individual & Consolidated Audits (`docs/solid-audit/`):** Systematic evaluation of all 47 project classes across the 5 SOLID principles (**SRP**, **OCP**, **LSP**, **ISP**, **DIP**), identifying 8 consolidated in-scope violations (`V-01`–`V-08`), boundary findings across services, and 2 out-of-scope observations (`OS-01`, `OS-02`).
+- **Phase 2 — Behavior-Preserving Refactoring (`docs/solid-refactor-log.md`):**
+  - *Single Responsibility Principle (`V-01`, `V-02`, `V-05`, `V-08a`, `V-08b`):* Extracted `PromotionValidator` from `ProductValidator`, simplified `ProductService.updateStock` to persist directly via `repository.saveAll(products)`, extracted `SaleRecordResolver` from `WarrantyService`, extracted `DataInitializer` from `Main`, and centralized `ConsoleMenu.handleGameZoneException(GameZoneException)`.
+  - *Open/Closed Principle (`V-03`, `V-04`, `V-08c`):* Added polymorphic `Accessory.getAccessoryType()` / `matchesAccessoryType(String)`, centralized `Warranty.createFromType(...)` with `BasicWarranty.TYPE` and `ExtendedWarranty.TYPE`, and added polymorphic `Promotion.getPromotionType()`.
+  - *Interface Segregation & Dependency Inversion Principles (`V-06`, `V-07`):* Implemented `Repository<Product>` in `ProductRepository` and `Repository<Accessory>` in `AccessoryRepository`, inverted all 6 repository-backed services (`ProductService`, `AccessoryService`, `PromotionService`, `SaleService`, `ReturnService`, `WarrantyService`) to depend on `Repository<T>`, and introduced segregated interfaces `ProductCatalogLookup` and `SaleQueryService`.
 
 ## Requirements
 
@@ -168,17 +175,25 @@ GameZoneUnicesar/
 │   ├── exception-analysis.md
 │   ├── grasp-analysis.md
 │   ├── grasp-refactor-log.md
+│   ├── solid-analysis.md
+│   ├── solid-refactor-log.md
 │   ├── hierarchy-diagram.md
 │   ├── class-diagram.md
 │   ├── integrated-class-diagram.md
 │   ├── exception-class-diagram.md
 │   ├── grasp-class-diagram.md
+│   ├── solid-class-diagram.md
 │   ├── accessory-class-diagram.md
 │   ├── promotion-class-diagram.md
 │   ├── return-class-diagram.md
 │   ├── warranty-class-diagram.md
 │   ├── layers-diagram.md
 │   ├── grasp-audit/
+│   │   ├── developer1-audit.md
+│   │   ├── developer2-audit.md
+│   │   ├── leader-audit.md
+│   │   └── consolidated-audit.md
+│   ├── solid-audit/
 │   │   ├── developer1-audit.md
 │   │   ├── developer2-audit.md
 │   │   ├── leader-audit.md
@@ -193,6 +208,7 @@ GameZoneUnicesar/
     │   │   └── com/
     │   │       └── gamezone/
     │   │           ├── Main.java
+    │   │           ├── DataInitializer.java
     │   │           ├── exceptions/
     │   │           ├── model/
     │   │           ├── persistence/
@@ -215,11 +231,10 @@ See [TEAM.md](TEAM.md) for detailed role allocations, module ownership, class di
 ## Documentation & Diagrams
 
 - [TEAM Documentation](TEAM.md)
-- [System Analysis](docs/analysis.md) | [Integration Analysis (RE5)](docs/integration-analysis.md) | [Exception Analysis (RE6)](docs/exception-analysis.md) | [GRASP Analysis (RE7)](docs/grasp-analysis.md)
-- [Consolidated GRASP Audit](docs/grasp-audit/consolidated-audit.md) | [GRASP Refactoring Log](docs/grasp-refactor-log.md)
-- [Integrated Class Diagram](docs/integrated-class-diagram.md) | [Exception Class Diagram (RE6)](docs/exception-class-diagram.md) | [GRASP Class Diagram (RE7)](docs/grasp-class-diagram.md) | [Class Diagram](docs/class-diagram.md)
+- [System Analysis](docs/analysis.md) | [Integration Analysis (RE5)](docs/integration-analysis.md) | [Exception Analysis (RE6)](docs/exception-analysis.md) | [GRASP Analysis (RE7)](docs/grasp-analysis.md) | [SOLID Analysis (RE8)](docs/solid-analysis.md)
+- [Consolidated GRASP Audit](docs/grasp-audit/consolidated-audit.md) | [GRASP Refactoring Log](docs/grasp-refactor-log.md) | [Consolidated SOLID Audit](docs/solid-audit/consolidated-audit.md) | [SOLID Refactoring Log](docs/solid-refactor-log.md)
+- [Integrated Class Diagram](docs/integrated-class-diagram.md) | [Exception Class Diagram (RE6)](docs/exception-class-diagram.md) | [GRASP Class Diagram (RE7)](docs/grasp-class-diagram.md) | [SOLID Class Diagram (RE8)](docs/solid-class-diagram.md) | [Class Diagram](docs/class-diagram.md)
 - [Hierarchy Diagram](docs/hierarchy-diagram.md) | [Layers Diagram](docs/layers-diagram.md)
 - Module Analyses: [Accessories](docs/accessory-analysis.md), [Promotions](docs/promotion-analysis.md), [Returns](docs/return-analysis.md), [Warranties](docs/warranty-analysis.md)
 - Module Diagrams: [Accessories](docs/accessory-class-diagram.md), [Promotions](docs/promotion-class-diagram.md), [Returns](docs/return-class-diagram.md), [Warranties](docs/warranty-class-diagram.md)
 - AI Usage Logs: [Technical Lead](docs/ai-usage/leader-ai-log.md), [Developer 1](docs/ai-usage/developer1-ai-log.md), [Developer 2](docs/ai-usage/developer2-ai-log.md)
-

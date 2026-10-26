@@ -1,17 +1,16 @@
-
 package com.gamezone.service;
 
+import com.gamezone.model.Accessory;
+import com.gamezone.model.Console;
 import com.gamezone.model.Customer;
+import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Product;
 import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
-import com.gamezone.model.Accessory;
-import com.gamezone.model.Warranty;
+import com.gamezone.persistence.Repository;
 import com.gamezone.persistence.SaleRecord;
 import com.gamezone.persistence.SaleRepository;
-import com.gamezone.model.Console;
-import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.validation.ProductValidator;
 import com.gamezone.validation.SaleValidator;
 
@@ -25,19 +24,41 @@ import java.util.UUID;
  * coordinating stock validation and updates through ProductService,
  * and resolving persisted SaleRecords back into full Sale objects.
  */
-public class SaleService {
-    private SaleRepository saleRepository;
-    private ProductService productService;
-    private PersonService personService;
-    private PromotionService promotionService;
-    private AccessoryService accessoryService;
+public class SaleService implements SaleQueryService {
+    private final Repository<SaleRecord> saleRepository;
+    private final ProductService productService;
+    private final PersonService personService;
+    private final PromotionService promotionService;
+    private final AccessoryService accessoryService;
     private WarrantyService warrantyService;
 
-    public SaleService(SaleRepository saleRepository, ProductService productService, PersonService personService, PromotionService promotionService, AccessoryService accessoryService) {
+    /**
+     * Creates the sale service using the {@link Repository} abstraction without
+     * a warranty service reference (DIP).
+     *
+     * @param saleRepository   repository abstraction for sale records
+     * @param productService   service used to look up and update products
+     * @param personService    service used to look up customers and sellers
+     * @param promotionService service used to evaluate active promotions
+     * @param accessoryService service used to look up and update accessories
+     */
+    public SaleService(Repository<SaleRecord> saleRepository, ProductService productService, PersonService personService,
+                       PromotionService promotionService, AccessoryService accessoryService) {
         this(saleRepository, productService, personService, promotionService, accessoryService, null);
     }
 
-    public SaleService(SaleRepository saleRepository, ProductService productService, PersonService personService,
+    /**
+     * Creates the sale service using the {@link Repository} abstraction with
+     * full access to collaborating services (DIP).
+     *
+     * @param saleRepository   repository abstraction for sale records
+     * @param productService   service used to look up and update products
+     * @param personService    service used to look up customers and sellers
+     * @param promotionService service used to evaluate active promotions
+     * @param accessoryService service used to look up and update accessories
+     * @param warrantyService  service used to assign console warranties
+     */
+    public SaleService(Repository<SaleRecord> saleRepository, ProductService productService, PersonService personService,
                        PromotionService promotionService, AccessoryService accessoryService, WarrantyService warrantyService) {
         this.saleRepository = saleRepository;
         this.productService = productService;
@@ -47,9 +68,20 @@ public class SaleService {
         this.warrantyService = warrantyService;
     }
 
+    public SaleService(SaleRepository saleRepository, ProductService productService, PersonService personService,
+                       PromotionService promotionService, AccessoryService accessoryService) {
+        this((Repository<SaleRecord>) saleRepository, productService, personService, promotionService, accessoryService, null);
+    }
+
+    public SaleService(SaleRepository saleRepository, ProductService productService, PersonService personService,
+                       PromotionService promotionService, AccessoryService accessoryService, WarrantyService warrantyService) {
+        this((Repository<SaleRecord>) saleRepository, productService, personService, promotionService, accessoryService, warrantyService);
+    }
+
     public void setWarrantyService(WarrantyService warrantyService) {
         this.warrantyService = warrantyService;
     }
+
     /**
      * Registers a new sale following the unified 8-step registration flow:
      * 1. Validate that the sale has a customer, seller, and at least one item.
@@ -119,13 +151,13 @@ public class SaleService {
 
         return sale;
     }
-    
+
     /**
      * Returns the full history of sales, resolving each SaleRecord into a Sale object.
      *
      * @return the list of all sales
      */
-    
+    @Override
     public List<Sale> viewAllSales() {
         List<Sale> sales = new ArrayList<>();
         for (SaleRecord record : saleRepository.loadAll()) {
@@ -133,14 +165,13 @@ public class SaleService {
         }
         return sales;
     }
-    
+
     /**
      * Returns the purchase history of a specific customer.
      *
      * @param customer the customer to filter by
      * @return the list of sales made by that customer
      */
-
     public List<Sale> viewSalesByCustomer(Customer customer) {
         List<Sale> result = new ArrayList<>();
         for (Sale sale : viewAllSales()) {
@@ -150,14 +181,13 @@ public class SaleService {
         }
         return result;
     }
-    
-     /**
+
+    /**
      * Returns the sales attended by a specific seller.
      *
      * @param seller the seller to filter by
      * @return the list of sales attended by that seller
      */
-    
     public List<Sale> viewSalesBySeller(Seller seller) {
         List<Sale> result = new ArrayList<>();
         for (Sale sale : viewAllSales()) {
@@ -167,12 +197,14 @@ public class SaleService {
         }
         return result;
     }
+
     /**
      * Finds a sale by its id.
      *
      * @param saleId the id of the sale to find
      * @return the sale, or null if not found
      */
+    @Override
     public Sale findSaleById(String saleId) {
         for (Sale sale : viewAllSales()) {
             if (sale.getId().equals(saleId)) {
@@ -181,11 +213,10 @@ public class SaleService {
         }
         return null;
     }
-    
+
     /**
      * Converts a full Sale object into its persisted record form (raw ids).
      */
-    
     private SaleRecord toRecord(Sale sale) {
         List<String> productIds = new ArrayList<>();
         for (Product product : sale.getProducts()) {
@@ -203,18 +234,17 @@ public class SaleService {
                 sale.getExtendedWarrantyCost()
         );
     }
-    
+
     /**
      * Resolves a persisted SaleRecord back into a full Sale object,
      * looking up the referenced customer, seller, and products.
      */
-    
     private Sale toSale(SaleRecord record) {
         Customer customer = personService.findCustomerById(record.getCustomerId());
         Seller seller = personService.findSellerById(record.getSellerId());
 
         List<Product> products = new ArrayList<>();
-        
+
         for (String productId : record.getProductIds()) {
             Product item = findCatalogProductById(productId);
             if (item != null) {
@@ -227,7 +257,7 @@ public class SaleService {
         sale.setAppliedPromotionName(record.getAppliedPromotionName());
         sale.setDiscountAmount(record.getDiscountAmount());
         sale.setExtendedWarrantyCost(record.getExtendedWarrantyCost());
-        
+
         return sale;
     }
 
