@@ -160,3 +160,15 @@ I used Artificial Intelligence as a support tool during the development of the p
 - **What I learned:** Under *Information Expert*, the class that owns a collection (`Accessory` for `compatibleConsoleIds`, `Sale` for `products`) should expose the query method (`isCompatibleWith(String)`, `findProductById(String)`), while the service simply delegates to it. Furthermore, overloading `AccessoryService(AccessoryRepository)` so the service loads its own initial list from the repository eliminates unnecessary coupling in `Main` (*Low Coupling*), and delegating inline input checks to `ProductValidator` restores *High Cohesion* in `AccessoryService` and `PromotionService`.
 - **How I applied it:** I refactored `AccessoryService.findCompatibleWithConsole` (`V-03`), added `Sale.findProductById` and delegated `ReturnService.findInSale` (`V-04`), replaced inline subtype and promotion validations in `AccessoryService` and `PromotionService` with calls to `ProductValidator` (`V-05`), and added the single-argument constructor `AccessoryService(AccessoryRepository)` (`V-06`).
 
+
+---
+
+## Requirement 8 — SOLID Audit and Refactoring
+
+### Phase 1 - Audit
+
+#### Conceptual distinction between Interface Segregation (ISP) and Dependency Inversion (DIP) in service collaborations
+- **Topic:** Object-oriented design concepts (SOLID ISP and DIP)
+- **Consultation:** I asked for a conceptual explanation of how the *Interface Segregation Principle (ISP)* and the *Dependency Inversion Principle (DIP)* complement each other when one service class collaborates with another service or repository.
+- **What I learned:** *DIP* states that high-level services should depend on abstractions (`Repository<T>` or service interfaces) rather than concrete low-level classes (`AccessoryRepository`, `ProductService`, `SaleService`), whereas *ISP* states that those abstractions should be narrow and tailored to the specific operations required by each client rather than exposing every registration and mutation method of a concrete service.
+- **How I applied it:** I used this conceptual distinction to evaluate my repositories and services (`AccessoryRepository`, `AccessoryService`, `PromotionService`, `ReturnService`, `WarrantyService`) in `docs/solid-audit/developer2-audit.md` and to document the boundary findings in Question 2 of `docs/solid-analysis.md`.

@@ -43,6 +43,33 @@ During consolidation in `docs/solid-audit/consolidated-audit.md`, the Technical 
 
 ---
 
+## Guiding Question 2 — Boundary SOLID Findings Across Team Members' Code
+
+> **Question:** *Some violations manifest at the boundary between two team members' code, for example, when a class owned by one member depends inadequately on a class owned by another. What findings of this type did the team identify? How were they recorded during consolidation, and to whom was their correction assigned? Present at least one concrete case or, if there were none, explain how you verified they did not exist.*
+>
+> *(Drafted by Developer 2 — `Hectorguevara22`, following team alignment)*
+
+### 1. Identification and Consolidation Protocol for Boundary Findings
+
+Because GameZone Unicesar is organized into horizontal layers (`model`, `validation`, `persistence`, `service`, `ui`) owned by different team members (Developer 1 owning `model` hierarchies and `validation`, Developer 2 owning most `persistence` and `service` modules, and the Technical Lead owning `Sale`, `SaleRepository`, `SaleService`, `ConsoleMenu`, and `Main`), several SOLID violations naturally span the boundary between two or all three members.
+
+During consolidation in `docs/solid-audit/consolidated-audit.md`, the Technical Lead applied three rules to every boundary finding:
+1. **Single Unified Identifier (`V-XX`):** When two or three individual audit reports flag the provider side and the consumer side of the same design problem, they are merged into a single consolidated violation ID (`V-01`, `V-03`, `V-04`, `V-05`, `V-06`), referencing each origin report (`developer1-audit`, `developer2-audit`, `leader-audit`).
+2. **Strict Ownership Assignment:** Each member modifies **only** the classes under their responsibility as defined in Section 4.1 and `TEAM.md`. Any new abstraction (`PromotionValidator`, `ProductCatalogLookup`, `SaleQueryService`) is created by the owner of the provider module.
+3. **Provider-First Commit Sequencing:** In Phase 2 (`feature/solid-refactor`), the provider side (e.g., new interfaces or polymorphic methods in `model`, `validation`, or `persistence`) is committed and merged first so that the consumer side (`service`) can delegate to it without compilation conflicts.
+
+### 2. Concrete Boundary Cases Identified by the Team
+
+| Consolidated ID & Principle | Provider Side (Class & Owner) | Consumer Side (Class & Owner) | How Correction Was Split |
+| :--- | :--- | :--- | :--- |
+| **`V-01` (SRP)** | `ProductValidator` (`com.gamezone.validation`) — **Developer 1 (`craulgomez`)** | `PromotionService` (`com.gamezone.service`) — **Developer 2 (`Hectorguevara22`)** | **Developer 1** extracts promotion validation rules into `PromotionValidator` (`com.gamezone.validation.PromotionValidator`); **Developer 2** updates `PromotionService` (`validatePromotionBase`, `registerCategoryDiscount`, `registerBulkPurchaseDiscount`) to invoke `PromotionValidator`. |
+| **`V-03` (OCP)** | `Accessory`, `Controller`, `Cable`, `Memory` (`com.gamezone.model`) — **Developer 1 (`craulgomez`)** | `AccessoryService.listAccesoriesByType(String)` (`com.gamezone.service`) — **Developer 2 (`Hectorguevara22`)** | **Developer 1** adds abstract `getAccessoryType()` and `matchesAccessoryType(String)` to `Accessory` and overrides `getAccessoryType()` in `Controller`, `Cable`, and `Memory`; **Developer 2** replaces `accessory.getClass().getSimpleName().equalsIgnoreCase(type)` in `AccessoryService` with `accessory.matchesAccessoryType(type)`. |
+| **`V-04` (OCP)** | `Warranty`, `BasicWarranty`, `ExtendedWarranty` (`com.gamezone.model`) — **Developer 1 (`craulgomez`)** | `WarrantyService.toWarranty(WarrantyRecord)` (`com.gamezone.service`) — **Developer 2 (`Hectorguevara22`)** | **Developer 1** adds `TYPE` constants on `BasicWarranty` and `ExtendedWarranty` and static factory `Warranty.createFromType(...)` in `Warranty`; **Developer 2** replaces the hardcoded `"Garantía Extendida".equals(...)` branch in `WarrantyService.toWarranty` with `Warranty.createFromType(...)`. |
+| **`V-05` (DIP)** | `ProductRepository` (**Developer 1**) & `AccessoryRepository` (**Developer 2**) in `com.gamezone.persistence` | `ProductService` (**Developer 1**), `AccessoryService`, `PromotionService`, `ReturnService`, `WarrantyService` (**Developer 2**), and `SaleService` (**Technical Lead**) in `com.gamezone.service` | **Developer 1** makes `ProductRepository` implement `Repository<Product>` and types `ProductService.repository` as `Repository<Product>`; **Developer 2** makes `AccessoryRepository` implement `Repository<Accessory>` and types repository fields in `AccessoryService`, `PromotionService`, `ReturnService`, and `WarrantyService` as `Repository<T>`; **Technical Lead** types `SaleService.saleRepository` as `Repository<SaleRecord>`. |
+| **`V-06` (ISP & DIP)** | `ProductService` (**Developer 1**), `AccessoryService` (**Developer 2**), and `SaleService` (**Technical Lead**) in `com.gamezone.service` | `WarrantyService` and `ReturnService` (**Developer 2**) in `com.gamezone.service` | **Developer 1** creates `ProductCatalogLookup` (`findById(String)`) and implements it in `ProductService`; **Developer 2** implements `ProductCatalogLookup` in `AccessoryService` and updates `WarrantyService` to depend on `ProductCatalogLookup` and `ReturnService` to depend on `SaleQueryService`; **Technical Lead** creates `SaleQueryService` (`findSaleById`, `viewAllSales`) and implements it in `SaleService`. |
+
+---
+
 ## Guiding Question 3 — Relationship Between the SOLID Audit and the Requirement 7 GRASP Audit
 
 > **Question:** *What relationship did the team find between the findings of this audit and those of the Requirement 7 GRASP audit? Were there SOLID violations in code that had already been corrected by GRASP, or GRASP corrections that simultaneously solved a SOLID problem? Present at least one concrete case of each situation found.*
@@ -69,3 +96,30 @@ While **GRASP** focuses on *how responsibilities are assigned to classes and col
 
 - **Concrete Case 1 (`AccessoryService.listAccesoriesByType`):** In Requirement 7 (`V-03`), `AccessoryService.findAcessoriesCOmpatibleWith(String)` was refactored to delegate to `accessory.isCompatibleWith(consoleId)` (*Information Expert*), but `AccessoryService.listAccesoriesByType(String)` (lines 74–76) continued using `accessory.getClass().getSimpleName().equalsIgnoreCase(type)`. Under the Requirement 8 **OCP** audit, this reflection-based filtering was flagged as violation `V-03` and is solved by introducing `Accessory.getAccessoryType()` and `matchesAccessoryType(String)`.
 - **Concrete Case 2 (`Service-to-Repository` and `Service-to-Service` Concrete Coupling):** In Requirement 7, the high number of concrete collaborator references in `SaleService`, `ReturnService`, and `WarrantyService` was recorded as Out-of-Scope Observation `F-01` because resolving it required introducing new interfaces across modules. Under Requirement 8, **ISP** and **DIP** directly address this root cause (`V-05` and `V-06`) by having `ProductRepository` and `AccessoryRepository` implement `Repository<T>`, typing service repository references to `Repository<T>`, and introducing segregated lookup interfaces (`ProductCatalogLookup` and `SaleQueryService`).
+
+---
+
+## Guiding Question 4 — Non-Regression Verification Strategy and Evidence
+
+> **Question:** *The refactoring must preserve the external behavior of the system. What strategy does the team follow to guarantee that all menu operations continue working identically? What evidence is shown at the end to demonstrate that nothing was broken?*
+>
+> *(Drafted by Developer 2 — `Hectorguevara22`, following team alignment)*
+
+### 1. Three-Checkpoint Non-Regression Strategy
+
+Because Requirement 8 reorganizes internal responsibilities, extracts cohesive validators and helpers (`PromotionValidator`, `SaleRecordResolver`, `DataInitializer`), introduces segregated abstractions (`Repository<T>`, `ProductCatalogLookup`, `SaleQueryService`), and replaces runtime reflection/conditionals with polymorphism (`Accessory.matchesAccessoryType`, `Warranty.createFromType`) **without adding or altering any user-facing functionality**, the team enforces a strict three-checkpoint verification protocol documented in `docs/solid-refactor-log.md`:
+
+1. **Checkpoint 1 — Baseline Reference Execution on `develop` (`1bfc5f6`, Before First Refactoring Commit):**
+   - Before applying any code change on `feature/solid-refactor`, the team executes all Console Menu flows across all seven main submenus (`[1] Gestion de productos`, `[2] Gestion de personas`, `[3] Gestion de ventas`, `[4] Gestion de promociones`, `[5] Gestion de accesorios`, `[6] Gestion de devoluciones` including `[5] Generar balance mensual`, and `[7] Gestion de garantias`) as well as the Swing GUI (`MainFrame`) and the four differentiated exception categories (`ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, `PersistenceException`).
+   - For each operation, the exact test input data, expected Spanish output/receipt format, and persisted `.dat` file effects (`products.dat`, `Accessory.dat`, `customers.dat`, `sellers.dat`, `sales.dat`, `promotion.dat`, `returns.dat`, `warranties.dat`) are recorded in the **Baseline Reference Table** in Section 2 of `docs/solid-refactor-log.md`.
+2. **Checkpoint 2 — Per-Pull-RequestIncremental Verification:**
+   - Before opening each of the three Phase 2 Pull Requests (`craulgomez`, `Hectorguevara22`, `mlanderoc`), the responsible member compiles the entire project cleanly (`mvn clean compile` / `javac` with zero errors), preserves all existing public constructor signatures via constructor overloading where interfaces are introduced (`Repository<T>`, `ProductCatalogLookup`, `SaleQueryService`), preserves `serialVersionUID` and field layouts on all `Serializable` classes so existing `.dat` files load without `InvalidClassException`, and tests every menu operation affected by their corrected violations (`V-01` through `V-07`).
+3. **Checkpoint 3 — Final End-to-End Verification After Integrating All Corrections:**
+   - Once all three Pull Requests are integrated on `feature/solid-refactor`, the Technical Lead re-executes the complete baseline verification suite from start to finish and records the post-refactoring results side-by-side against the baseline reference in Section 4 of `docs/solid-refactor-log.md`.
+
+### 2. Concrete Evidence Presented at Completion and Oral Defense
+
+To demonstrate conclusively that zero regressions were introduced, the team provides:
+- **Compilation & Binary Compatibility Evidence:** Clean compilation of all source files (`mvn clean compile` / `javac` exit code `0`) and verified deserialization of all eight `.dat` persistence files.
+- **Baseline vs. Final Comparison Table in `docs/solid-refactor-log.md`:** A complete scenario-by-scenario matrix covering all 24 menu operations and error-handling paths, mapping each scenario to the specific SOLID violations (`V-01`–`V-07`) that touched its underlying classes and confirming 100% identical outputs, Spanish messages, receipt layouts, proportional refund amounts, monthly financial balances, and warranty certificates.
+- **Pull Request Traceability:** Each of the three Phase 2 Pull Requests explicitly lists the corrected violation IDs (`V-XX`) and the verified menu operations in its PR description.
