@@ -83,3 +83,52 @@ In accordance with Section 4.1 of the Requirement 8 specification, `TEAM.md`, an
 
 - **`Sale.generateReceipt()` (`com.gamezone.model.Sale`, lines 135–158):** Iterates through `List<Product>` and invokes `product.getDescription()` polymorphically (`line 145`), remaining closed for modification when new `Product` or `Accessory` subtypes are added.
 - **`SaleService.registerSale(...)` Promotional Calculation (`com.gamezone.service.SaleService`, lines 94–98):** Delegates best-promotion selection to `promotionService.findBestPromotionFor(sale)` and discount computation to the polymorphic `bestPromotion.calculateDiscount(sale)`, supporting any new `Promotion` subclass without modifying `SaleService`.
+
+---
+
+### 2.3 Liskov Substitution Principle (LSP)
+
+- **Overall Verdict for Audited Scope:** **Correct** (`SaleRepository` honors the `Repository<SaleRecord>` behavioral contract; `Sale`, `SaleRecord`, `SaleService`, `ConsoleMenu`, and `Main` do not participate in domain inheritance hierarchies).
+
+#### Evidence of Compliance (`Correct`)
+
+1. **`SaleRepository implements Repository<SaleRecord>` (`src/main/java/com/gamezone/persistence/SaleRepository.java`, lines 20–71):**
+   - Implements `saveAll(List<SaleRecord>)` and `loadAll()` from `Repository<SaleRecord>` (`src/main/java/com/gamezone/persistence/Repository.java`, lines 5–8), returning a non-null `ArrayList<>()` when `data/sales.dat` does not exist and throwing `PersistenceException` on I/O failure. It can be substituted wherever a `Repository<SaleRecord>` reference is expected.
+
+---
+
+### 2.4 Interface Segregation Principle (ISP)
+
+- **Overall Verdict for Audited Scope:** **Violation** (1 boundary violation identified in `SaleService`: `V-04`; `Repository<SaleRecord>` is **Correct**).
+
+#### Identified Violations
+
+| Field | Content |
+| :--- | :--- |
+| **ID** | `V-04` |
+| **Principle** | Interface Segregation Principle (ISP) |
+| **Module** | Sales Module & Returns Integration (Taller 1 & Requirements 3 & 5) |
+| **Evidence** | Class `com.gamezone.service.SaleService` (`src/main/java/com/gamezone/service/SaleService.java`, lines 28–275) and its consumer `ReturnService` (`src/main/java/com/gamezone/service/ReturnService.java`, lines 29, 80, 166, 231):<br>`public class SaleService { ... public Sale registerSale(...) ... public List<Sale> viewAllSales() ... public List<Sale> viewSalesByCustomer(...) ... public List<Sale> viewSalesBySeller(...) ... public Sale findSaleById(String saleId) ... }`<br>In `ReturnService`:<br>`private final SaleService saleService;`<br>`Sale originalSale = saleService.findSaleById(saleId);`<br>`for (Sale sale : saleService.viewAllSales()) { ... }` |
+| **Explanation** | `SaleService` exposes both sale registration (`registerSale`), filtered queries (`viewSalesByCustomer`, `viewSalesBySeller`), collaborator wiring (`setWarrantyService`), and general sale lookup (`findSaleById`, `viewAllSales`) without implementing a narrow query interface. As a result, `ReturnService` (owned by Developer 2) is forced to depend on the entire concrete `SaleService` class even though it only invokes `findSaleById(String)` and `viewAllSales()`. |
+| **Consequence** | Collaborators that only need read-only sale queries are coupled to the full `SaleService` class and its write operations, violating ISP. |
+| **Proposed Solution** | Define a segregated interface `SaleQueryService` (`Sale findSaleById(String saleId); List<Sale> viewAllSales();`) in `com.gamezone.service`, implement `SaleQueryService` in `SaleService`, and allow `ReturnService` to depend on `SaleQueryService`. |
+| **Other Member's Code** | **Yes — Developer 2 (`Hectorguevara22`):** `ReturnService` (`src/main/java/com/gamezone/service/ReturnService.java`, line 29) consumes `SaleQueryService`. |
+
+---
+
+### 2.5 Dependency Inversion Principle (DIP)
+
+- **Overall Verdict for Audited Scope:** **Violation** (1 violation identified in `SaleService`: `V-05`; `Sale` and `SaleRecord` are **Not Applicable** as leaf domain/DTO classes).
+
+#### Identified Violations
+
+| Field | Content |
+| :--- | :--- |
+| **ID** | `V-05` |
+| **Principle** | Dependency Inversion Principle (DIP) |
+| **Module** | Sales Module (Taller 1) |
+| **Evidence** | Class `com.gamezone.service.SaleService` (`src/main/java/com/gamezone/service/SaleService.java`, lines 29, 36–48):<br>`private SaleRepository saleRepository;`<br>`public SaleService(SaleRepository saleRepository, ProductService productService, PersonService personService, PromotionService promotionService, AccessoryService accessoryService)`<br>`public SaleService(SaleRepository saleRepository, ProductService productService, PersonService personService, PromotionService promotionService, AccessoryService accessoryService, WarrantyService warrantyService)` |
+| **Explanation** | Even though `SaleRepository` already implements `Repository<SaleRecord>` (`SaleRepository.java` line 20), `SaleService` declares its `saleRepository` attribute and constructor parameters using the concrete class `SaleRepository` instead of the interface `Repository<SaleRecord>`. |
+| **Consequence** | `SaleService` depends directly on the low-level binary file persistence class `SaleRepository` rather than the `Repository<SaleRecord>` abstraction, violating DIP. |
+| **Proposed Solution** | Change the `saleRepository` field and constructor parameters in `SaleService` to `Repository<SaleRecord>` (preserving constructor compatibility since `SaleRepository` implements `Repository<SaleRecord>`). |
+| **Other Member's Code** | **Yes — Developer 1 (`craulgomez`) & Developer 2 (`Hectorguevara22`):** Part of the system-wide persistence DIP alignment across `ProductService`, `AccessoryService`, `PromotionService`, `ReturnService`, `WarrantyService`, and `SaleService`. |
