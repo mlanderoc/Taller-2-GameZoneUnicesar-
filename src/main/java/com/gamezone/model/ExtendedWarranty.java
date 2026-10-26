@@ -1,4 +1,3 @@
-
 package com.gamezone.model;
 
 import java.time.LocalDate;
@@ -10,6 +9,11 @@ import java.time.LocalDate;
 public class ExtendedWarranty extends Warranty {
 
     /**
+     * Canonical type identifier for an extended warranty.
+     */
+    public static final String TYPE = "Garantía Extendida";
+
+    /**
      * Creates a new extended warranty.
      *
      * @param id unique identifier of the warranty
@@ -17,10 +21,10 @@ public class ExtendedWarranty extends Warranty {
      * @param sale sale associated with the warranty
      * @param startDate start date of the warranty
      */
-    public ExtendedWarranty(String id,Product product,Sale sale,LocalDate startDate) {
+    public ExtendedWarranty(String id, Product product, Sale sale, LocalDate startDate) {
         super(id, product, sale, startDate);
     }
-    
+
     /**
      * Returns the duration of an extended warranty in months.
      *
@@ -38,7 +42,7 @@ public class ExtendedWarranty extends Warranty {
      */
     @Override
     public String getWarrantyType() {
-        return "Garantía Extendida";
+        return TYPE;
     }
 
     /**

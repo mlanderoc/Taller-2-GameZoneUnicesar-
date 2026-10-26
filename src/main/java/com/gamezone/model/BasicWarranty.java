@@ -1,4 +1,3 @@
-
 package com.gamezone.model;
 
 import java.time.LocalDate;
@@ -10,6 +9,11 @@ import java.time.LocalDate;
 public class BasicWarranty extends Warranty {
 
     /**
+     * Canonical type identifier for a basic warranty.
+     */
+    public static final String TYPE = "Garantía Básica";
+
+    /**
      * Creates a new basic warranty.
      *
      * @param id unique identifier of the warranty
@@ -17,10 +21,10 @@ public class BasicWarranty extends Warranty {
      * @param sale sale associated with the warranty
      * @param startDate start date of the warranty
      */
-    public BasicWarranty(String id, Product product, Sale sale, LocalDate startDate){
+    public BasicWarranty(String id, Product product, Sale sale, LocalDate startDate) {
         super(id, product, sale, startDate);
     }
-    
+
     /**
      * Returns the duration of a basic warranty in months.
      *
@@ -38,7 +42,7 @@ public class BasicWarranty extends Warranty {
      */
     @Override
     public String getWarrantyType() {
-        return "Garantía Básica";
+        return TYPE;
     }
 
     /**
@@ -50,6 +54,4 @@ public class BasicWarranty extends Warranty {
     public double getAdditionalCost() {
         return 0.0;
     }
-    
-    
 }
