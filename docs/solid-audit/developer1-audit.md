@@ -97,3 +97,61 @@ In accordance with Section 4.1 of the Requirement 8 specification, `TEAM.md`, an
 - **`Product` and `CategoryDiscount` (`com.gamezone.model`):** Following Requirement 7 (`V-02`), `Product` defines `public abstract String getCategory()` and `public boolean belongsToCategory(String category)` (`Product.java` lines 119–131), overridden in `VideoGame` (`"VIDEOGAME"`), `Console` (`"CONSOLE"`), and `Accessory` (`"ACCESSORY"`). `CategoryDiscount.calculateDiscount(Sale)` (`CategoryDiscount.java` lines 55–66) is closed for modification and open for extension when new `Product` subclasses are added.
 - **`Promotion` Hierarchy (`com.gamezone.model`):** `Promotion` (`Promotion.java` line 96) declares `public abstract double calculateDiscount(Sale sale)`, allowing `PercentageDiscount`, `CategoryDiscount`, and `BulkPurchaseDiscount` (and any future promotional strategy) to be evaluated polymorphically by `PromotionService.findBestPromotionFor(Sale)` without modifying the service.
 - **`GameZoneException` Hierarchy (`com.gamezone.exceptions`):** `GameZoneException` (`GameZoneException.java` lines 10–57) provides an extensible base class for domain, validation, lookup, and persistence exceptions.
+
+---
+
+### 2.3 Liskov Substitution Principle (LSP)
+
+- **Overall Verdict for Audited Scope:** **Correct** (All inheritance hierarchies under Developer 1's responsibility honor their base-class behavioral contracts without strengthening preconditions, weakening postconditions, or throwing unexpected unsupported-operation exceptions).
+
+#### Evidence of Compliance (`Correct`)
+
+1. **`Product` Hierarchy (`Product` ← `VideoGame`, `Console`, `Accessory` ← `Controller`, `Cable`, `Memory`):**
+   - `Product` (`src/main/java/com/gamezone/model/Product.java`, lines 111–142) defines the behavioral contract for `getDescription()`, `getCategory()`, `belongsToCategory(String)`, `getPrice()`, `getStock()`, and `updateStock(int)`.
+   - Every concrete subclass (`VideoGame.java` lines 95–107, `Console.java` lines 95–107, `Accessory.java` lines 74–87, `Controller.java` lines 55–58, `Cable.java` lines 76–82, `Memory.java` lines 76–81) implements `getDescription()` and `getCategory()` returning non-null strings and inherits `updateStock(int)` without altering its state invariant. Any `Product` reference in `Sale.calculateTotal()`, `CategoryDiscount.calculateDiscount(Sale)`, or `ConsoleMenu.listAllProducts()` can be substituted with any concrete subclass transparently.
+2. **`Promotion` Hierarchy (`Promotion` ← `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount`):**
+   - `Promotion` (`src/main/java/com/gamezone/model/Promotion.java`, lines 84–96) defines `isActive(LocalDate)` and `calculateDiscount(Sale)`.
+   - `PercentageDiscount.calculateDiscount(Sale)` (`PercentageDiscount.java` lines 42–45), `CategoryDiscount.calculateDiscount(Sale)` (`CategoryDiscount.java` lines 55–66), and `BulkPurchaseDiscount.calculateDiscount(Sale)` (`BulkPurchaseDiscount.java` lines 59–66) all return a non-negative monetary discount (`>= 0.0` and `<= sale.getSubtotal()`) for any valid `Sale` without mutating the `Sale` object, honoring the base contract expected by `PromotionService.findBestPromotionFor(Sale)`.
+3. **`Warranty` Hierarchy (`Warranty` ← `BasicWarranty`, `ExtendedWarranty`):**
+   - `Warranty` (`src/main/java/com/gamezone/model/Warranty.java`, lines 27–33, 85–129) computes `endDate = startDate.plusMonths(getDurationInMonths())` and formats certificates using `getWarrantyType()` and `getAdditionalCost()`.
+   - `BasicWarranty` (`BasicWarranty.java` lines 30–52: `6` months, `"Garantía Básica"`, `0.0`) and `ExtendedWarranty` (`ExtendedWarranty.java` lines 30–52: `12` months, `"Garantía Extendida"`, `getProduct().getPrice() * 0.10`) fulfill the positive duration and non-negative cost postconditions seamlessly.
+4. **`GameZoneException` Hierarchy (`GameZoneException` ← `ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, `PersistenceException`):**
+   - Every subclass provides a valid non-null `errorCode` (`ERR-NOT-FOUND`, `ERR-BUSINESS-RULE`, `ERR-INVALID-DATA`, `ERR-PERSISTENCE`) and descriptive Spanish message, allowing any caller catching `GameZoneException` to inspect `getMessage()` and `getErrorCode()` uniformly.
+
+---
+
+### 2.4 Interface Segregation Principle (ISP)
+
+- **Overall Verdict for Audited Scope:** **Violation** (1 boundary violation identified in `ProductService`: `V-06` in Developer 1's report; `Repository<T>` and domain/validation classes are **Correct** or **Not Applicable**).
+
+#### Identified Violations
+
+| Field | Content |
+| :--- | :--- |
+| **ID** | `V-06` *(Reported to Technical Lead for boundary consolidation)* |
+| **Principle** | Interface Segregation Principle (ISP) |
+| **Module** | Products Module (Taller 1) & Service Layer Integration (Requirements 4 & 5) |
+| **Evidence** | Class `com.gamezone.service.ProductService` (`src/main/java/com/gamezone/service/ProductService.java`, lines 14–149) and its consumer `WarrantyService` (`src/main/java/com/gamezone/service/WarrantyService.java`, lines 27, 37–41, 150, 168):<br>`public class ProductService { ... public Product findById(String id) ... public void registerVideoGame(...) ... public void registerConsole(...) ... public List<Product> listAllProducts() ... public void updateStock(...) ... public void restoreStock(...) }`<br>In `WarrantyService`:<br>`private final ProductService productService;`<br>`Product product = productService.findById(record.getProductId());` |
+| **Explanation** | `ProductService` exposes a broad set of product management operations (registration of video games and consoles, full listing, stock updates, and stock restoration) without implementing a narrow read-only lookup interface. Clients such as `WarrantyService` only require `findById(String)` to resolve product references when reconstructing `WarrantyRecord` and `SaleRecord` instances, yet they are forced to depend on the entire concrete `ProductService` class and all its registration and stock-mutation methods. |
+| **Consequence** | Collaborating services that only need catalog lookup by ID are coupled to write and stock-management operations they do not use, making it harder to substitute lightweight lookup stubs or unified catalog lookups across `ProductService` and `AccessoryService`. |
+| **Proposed Solution** | Define a segregated read-only interface `ProductCatalogLookup` (`Product findById(String id);`) in `com.gamezone.service`, have `ProductService` (and `AccessoryService`) implement `ProductCatalogLookup`, and allow read-only clients such as `WarrantyService` to depend on `ProductCatalogLookup`. |
+| **Other Member's Code** | **Yes — Developer 2 (`Hectorguevara22`):** `WarrantyService` (`src/main/java/com/gamezone/service/WarrantyService.java`, lines 27, 37) and `AccessoryService` (`src/main/java/com/gamezone/service/AccessoryService.java`, line 14). |
+
+---
+
+### 2.5 Dependency Inversion Principle (DIP)
+
+- **Overall Verdict for Audited Scope:** **Violation** (1 violation identified in `ProductRepository` and `ProductService`: `V-05`).
+
+#### Identified Violations
+
+| Field | Content |
+| :--- | :--- |
+| **ID** | `V-05` |
+| **Principle** | Dependency Inversion Principle (DIP) |
+| **Module** | Products Module (Taller 1) |
+| **Evidence** | 1. Class `com.gamezone.persistence.ProductRepository` (`src/main/java/com/gamezone/persistence/ProductRepository.java`, line 20):<br>`public class ProductRepository {` *(does not implement `Repository<Product>`)*<br>2. Class `com.gamezone.service.ProductService` (`src/main/java/com/gamezone/service/ProductService.java`, lines 17, 25–28):<br>`private final ProductRepository repository;`<br>`public ProductService(ProductRepository repository) { this.repository = repository; this.products = repository.loadAll(); }` |
+| **Explanation** | Even though the persistence layer defines the generic abstraction `Repository<T>` (`src/main/java/com/gamezone/persistence/Repository.java`, lines 5–8) with `void saveAll(List<T> items)` and `List<T> loadAll()`, `ProductRepository` does not implement `Repository<Product>`, and the high-level module `ProductService` depends directly on the low-level concrete binary-file class `ProductRepository` rather than on `Repository<Product>`. |
+| **Consequence** | `ProductService` is tightly coupled to binary file serialization (`data/products.dat`) in `ProductRepository`; it cannot be instantiated with an alternative `Repository<Product>` implementation (such as an in-memory or database repository) without modifying `ProductService` and `ProductRepository`. |
+| **Proposed Solution** | Update `ProductRepository` to declare `public class ProductRepository implements Repository<Product>` with `@Override` annotations on `saveAll` and `loadAll`, and update `ProductService` so its field and primary constructor depend on the abstraction `Repository<Product>`. |
+| **Other Member's Code** | **Yes — Developer 2 (`Hectorguevara22`) & Technical Lead (`mlanderoc`):** The same DIP pattern affects `AccessoryRepository`/`AccessoryService`, `PromotionService`, `ReturnService`, `WarrantyService`, and `SaleService` across the persistence-to-service boundary. |
