@@ -61,3 +61,39 @@ In accordance with Section 4.1 of the Requirement 8 specification, `TEAM.md`, an
 - **`ProductRepository` (`com.gamezone.persistence`):** Solely responsible for binary serialization (`saveAll`) and deserialization (`loadAll`) of `Product` lists in `data/products.dat` (`ProductRepository.java` lines 20–68).
 - **`PersonValidator` and `SaleValidator` (`com.gamezone.validation`):** `PersonValidator` (`PersonValidator.java` lines 14–105) validates only `Person`/`Customer`/`Seller` data, and `SaleValidator` (`SaleValidator.java` lines 18–81) validates only `Sale` and `Return` preconditions.
 - **`GameZoneException` Hierarchy (`com.gamezone.exceptions`):** Each exception class (`GameZoneException`, `ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, `PersistenceException`) represents a single semantic error category with its error code.
+
+---
+
+### 2.2 Open/Closed Principle (OCP)
+
+- **Overall Verdict for Audited Scope:** **Violation** (2 boundary violations identified in hierarchies owned by Developer 1: `V-03` in the `Accessory` hierarchy and `V-04` in the `Warranty` hierarchy; `Product` category dispatch and `Promotion` discount calculation are **Correct**).
+
+#### Identified Violations
+
+| Field | Content |
+| :--- | :--- |
+| **ID** | `V-03` |
+| **Principle** | Open/Closed Principle (OCP) |
+| **Module** | Accessories Hierarchy (Requirement 1) |
+| **Evidence** | Class `com.gamezone.model.Accessory` (`src/main/java/com/gamezone/model/Accessory.java`, lines 11–88) and subclasses `Controller` (`Controller.java`, lines 11–60), `Cable` (`Cable.java`, lines 10–83), and `Memory` (`Memory.java`, lines 10–82), in conjunction with `AccessoryService.listAccesoriesByType(String type)` (`src/main/java/com/gamezone/service/AccessoryService.java`, lines 74–76):<br>`public List<Accessory> listAccesoriesByType(String type) {`<br>`    return accessories.stream().filter(accessory -> accessory.getClass().getSimpleName().equalsIgnoreCase(type)).collect(Collectors.toList());`<br>`}` |
+| **Explanation** | While `Product` was refactored in Requirement 7 (`V-02`) to expose `getCategory()` and `belongsToCategory(String)`, the `Accessory` hierarchy does not expose a polymorphic method (`getAccessoryType()` / `matchesAccessoryType(String)`) for identifying specific accessory subtypes (`Controller`, `Cable`, `Memory`). As a result, `AccessoryService.listAccesoriesByType(String)` relies on Java reflection (`accessory.getClass().getSimpleName()`) over concrete class names. This violates OCP because introducing an accessory subtype whose domain type identifier differs from its Java class identifier, or wrapping/subclassing an accessory, requires modifying the filtering logic instead of extending `Accessory`. |
+| **Consequence** | Coupling accessory type filtering to `getClass().getSimpleName()` makes the service fragile to class renames (for example, `Memory` vs. `ExternalMemory`) and prevents polymorphic extension of accessory types without modifying client filtering code. |
+| **Proposed Solution** | Add `public abstract String getAccessoryType();` and `public boolean matchesAccessoryType(String type)` in `Accessory`, implement `@Override public String getAccessoryType()` in `Controller` (`"Controller"`), `Cable` (`"Cable"`), and `Memory` (`"Memory"`), and delegate `AccessoryService.listAccesoriesByType(String)` to `accessory.matchesAccessoryType(type)`. |
+| **Other Member's Code** | **Yes — Developer 2 (`Hectorguevara22`):** `AccessoryService.listAccesoriesByType(String)` (`src/main/java/com/gamezone/service/AccessoryService.java`, lines 74–76) consumes the new polymorphic contract. |
+
+| Field | Content |
+| :--- | :--- |
+| **ID** | `V-04` |
+| **Principle** | Open/Closed Principle (OCP) |
+| **Module** | Warranties Hierarchy (Requirement 4) |
+| **Evidence** | Class `com.gamezone.model.Warranty` (`src/main/java/com/gamezone/model/Warranty.java`, lines 10–131), `BasicWarranty` (`BasicWarranty.java`, lines 40–42), and `ExtendedWarranty` (`ExtendedWarranty.java`, lines 40–42), in conjunction with `WarrantyService.toWarranty(WarrantyRecord)` (`src/main/java/com/gamezone/service/WarrantyService.java`, lines 156–160):<br>`if ("Garantía Extendida".equals(record.getWarrantyType())) {`<br>`    return new ExtendedWarranty(record.getWarrantyId(), product, sale, record.getStartDate());`<br>`} else {`<br>`    return new BasicWarranty(record.getWarrantyId(), product, sale, record.getStartDate());`<br>`}` |
+| **Explanation** | `BasicWarranty` and `ExtendedWarranty` return hardcoded string literals (`"Garantía Básica"` and `"Garantía Extendida"`) in `getWarrantyType()`, but the `Warranty` hierarchy provides no centralized factory method or type constants for reconstructing a `Warranty` subtype from its persisted type name. Consequently, `WarrantyService.toWarranty` hardcodes an `if/else` check on `"Garantía Extendida"`. Adding a new warranty subtype requires modifying `WarrantyService.toWarranty`. |
+| **Consequence** | Every new `Warranty` subclass forces modifications in `WarrantyService` to add another `else if` branch, and any discrepancy in the Spanish literal `"Garantía Extendida"` silently defaults to `BasicWarranty`. |
+| **Proposed Solution** | Define `public static final String TYPE = "Garantía Básica";` in `BasicWarranty` and `public static final String TYPE = "Garantía Extendida";` in `ExtendedWarranty`, and add a static factory method `Warranty.createFromType(String warrantyType, String warrantyId, Product product, Sale sale, LocalDate startDate)` in `Warranty` so `WarrantyService.toWarranty` delegates subtype instantiation without hardcoded conditionals. |
+| **Other Member's Code** | **Yes — Developer 2 (`Hectorguevara22`):** `WarrantyService.toWarranty(WarrantyRecord)` (`src/main/java/com/gamezone/service/WarrantyService.java`, lines 156–160) will delegate to `Warranty.createFromType(...)`. |
+
+#### Compliant Classes Under OCP (`Correct`)
+
+- **`Product` and `CategoryDiscount` (`com.gamezone.model`):** Following Requirement 7 (`V-02`), `Product` defines `public abstract String getCategory()` and `public boolean belongsToCategory(String category)` (`Product.java` lines 119–131), overridden in `VideoGame` (`"VIDEOGAME"`), `Console` (`"CONSOLE"`), and `Accessory` (`"ACCESSORY"`). `CategoryDiscount.calculateDiscount(Sale)` (`CategoryDiscount.java` lines 55–66) is closed for modification and open for extension when new `Product` subclasses are added.
+- **`Promotion` Hierarchy (`com.gamezone.model`):** `Promotion` (`Promotion.java` line 96) declares `public abstract double calculateDiscount(Sale sale)`, allowing `PercentageDiscount`, `CategoryDiscount`, and `BulkPurchaseDiscount` (and any future promotional strategy) to be evaluated polymorphically by `PromotionService.findBestPromotionFor(Sale)` without modifying the service.
+- **`GameZoneException` Hierarchy (`com.gamezone.exceptions`):** `GameZoneException` (`GameZoneException.java` lines 10–57) provides an extensible base class for domain, validation, lookup, and persistence exceptions.
