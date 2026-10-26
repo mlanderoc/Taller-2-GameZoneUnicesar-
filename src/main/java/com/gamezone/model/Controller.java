@@ -1,4 +1,3 @@
-
 package com.gamezone.model;
 
 import java.util.List;
@@ -9,8 +8,8 @@ import java.util.List;
  * with one or more consoles.
  */
 public class Controller extends Accessory {
-    
-    private String connectionType; 
+
+    private String connectionType;
 
     /**
      * Creates a new controller with its product information,
@@ -27,7 +26,7 @@ public class Controller extends Accessory {
         super(compatibleConsoleIds, id, title, price, stock);
         this.connectionType = connectionType;
     }
-    
+
     /**
      * Returns the connection type of the controller.
      *
@@ -36,7 +35,7 @@ public class Controller extends Accessory {
     public String getConnectionType() {
         return connectionType;
     }
-    
+
     /**
      * Updates the connection type of the controller.
      *
@@ -45,8 +44,8 @@ public class Controller extends Accessory {
     public void setConnectionType(String connectionType) {
         this.connectionType = connectionType;
     }
-    
-     /**
+
+    /**
      * Returns a description of the controller including its connection type.
      *
      * @return formatted controller description
@@ -56,5 +55,14 @@ public class Controller extends Accessory {
         return super.getDescription()
                 + ", Conection type: " + connectionType;
     }
-    
+
+    /**
+     * Returns the accessory subtype identifier for controllers.
+     *
+     * @return {@code "Controller"}
+     */
+    @Override
+    public String getAccessoryType() {
+        return "Controller";
+    }
 }
