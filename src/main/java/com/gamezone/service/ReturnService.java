@@ -6,12 +6,12 @@ import com.gamezone.model.Console;
 import com.gamezone.model.Product;
 import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
+import com.gamezone.persistence.Repository;
 import com.gamezone.persistence.ReturnRecord;
 import com.gamezone.persistence.ReturnRepository;
 import com.gamezone.validation.SaleValidator;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -25,11 +25,45 @@ import java.util.UUID;
  */
 public class ReturnService {
 
-    private final ReturnRepository returnRepository;
+    private final Repository<ReturnRecord> returnRepository;
     private final SaleService saleService;
     private final ProductService productService;
     private final AccessoryService accessoryService;
     private final WarrantyService warrantyService;
+
+    /**
+     * Creates the return service using the {@link Repository} abstraction without
+     * a warranty service reference (DIP).
+     *
+     * @param returnRepository repository abstraction for return records
+     * @param saleService      service used to look up original sales
+     * @param productService   service used to restore and resolve products
+     * @param accessoryService service used to restore and resolve accessories
+     */
+    public ReturnService(Repository<ReturnRecord> returnRepository, SaleService saleService,
+                          ProductService productService, AccessoryService accessoryService) {
+        this(returnRepository, saleService, productService, accessoryService, null);
+    }
+
+    /**
+     * Creates the return service using the {@link Repository} abstraction with
+     * access to product, accessory, and warranty services (DIP).
+     *
+     * @param returnRepository repository abstraction for return records
+     * @param saleService      service used to look up original sales
+     * @param productService   service used to restore and resolve products
+     * @param accessoryService service used to restore and resolve accessories
+     * @param warrantyService  service used to cancel warranties of returned consoles
+     */
+    public ReturnService(Repository<ReturnRecord> returnRepository, SaleService saleService,
+                          ProductService productService, AccessoryService accessoryService,
+                          WarrantyService warrantyService) {
+        this.returnRepository = returnRepository;
+        this.saleService = saleService;
+        this.productService = productService;
+        this.accessoryService = accessoryService;
+        this.warrantyService = warrantyService;
+    }
 
     /**
      * Creates the return service without a warranty service reference.
@@ -41,7 +75,7 @@ public class ReturnService {
      */
     public ReturnService(ReturnRepository returnRepository, SaleService saleService,
                           ProductService productService, AccessoryService accessoryService) {
-        this(returnRepository, saleService, productService, accessoryService, null);
+        this((Repository<ReturnRecord>) returnRepository, saleService, productService, accessoryService, null);
     }
 
     /**
@@ -58,11 +92,7 @@ public class ReturnService {
     public ReturnService(ReturnRepository returnRepository, SaleService saleService,
                           ProductService productService, AccessoryService accessoryService,
                           WarrantyService warrantyService) {
-        this.returnRepository = returnRepository;
-        this.saleService = saleService;
-        this.productService = productService;
-        this.accessoryService = accessoryService;
-        this.warrantyService = warrantyService;
+        this((Repository<ReturnRecord>) returnRepository, saleService, productService, accessoryService, warrantyService);
     }
 
     /**

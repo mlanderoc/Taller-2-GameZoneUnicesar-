@@ -2,36 +2,49 @@ package com.gamezone.service;
 
 import com.gamezone.exceptions.InvalidDataException;
 import com.gamezone.persistence.AccessoryRepository;
+import com.gamezone.persistence.Repository;
 import com.gamezone.model.Accessory;
 import com.gamezone.model.Cable;
 import com.gamezone.model.Memory;
 import com.gamezone.model.Controller;
 import com.gamezone.validation.ProductValidator;
-import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.List;
 
-public class AccessoryService {
+/**
+ * Manages business operations for accessories, depending on the {@link Repository}
+ * abstraction (DIP), implementing {@link ProductCatalogLookup} (ISP), and filtering
+ * accessory subtypes polymorphically (OCP).
+ */
+public class AccessoryService implements ProductCatalogLookup {
 
-    private final AccessoryRepository repository;
+    private final Repository<Accessory> repository;
     private final List<Accessory> accessories;
 
     /**
-     * Creates the accessory service loading the initial catalog from the repository.
+     * Creates the accessory service loading the initial catalog from the repository abstraction.
      *
-     * @param repository the accessory repository
+     * @param repository the accessory repository abstraction
      */
-    public AccessoryService(AccessoryRepository repository) {
+    public AccessoryService(Repository<Accessory> repository) {
         this.repository = repository;
         this.accessories = repository.loadAll();
     }
 
-    public AccessoryService(AccessoryRepository repository, List<Accessory> accessories) {
-        this(repository);
+    /**
+     * Creates the accessory service loading the initial catalog from a concrete {@link AccessoryRepository}.
+     *
+     * @param repository the accessory repository
+     */
+    public AccessoryService(AccessoryRepository repository) {
+        this((Repository<Accessory>) repository);
     }
-    
-    
 
+    public AccessoryService(AccessoryRepository repository, List<Accessory> accessories) {
+        this((Repository<Accessory>) repository);
+    }
+
+    @Override
     public Accessory findById(String id) {
         for (Accessory accessory : accessories) {
             if (accessory.getId().equals(id)) {
@@ -65,20 +78,31 @@ public class AccessoryService {
         Memory memory = new Memory(storageCapacityGb, memoryType, compatibleConsoleIds, id, title, price, stock);
         accessories.add(memory);
         repository.saveAll(accessories);
-
     }
-        public List<Accessory> listAllaccessories() {
+
+    public List<Accessory> listAllaccessories() {
         return accessories;
     }
-        
+
+    /**
+     * Filters registered accessories by their subtype using the polymorphic
+     * {@link Accessory#matchesAccessoryType(String)} contract (OCP).
+     *
+     * @param type the accessory subtype name ("Controller", "Cable", or "Memory")
+     * @return list of matching accessories
+     */
     public List<Accessory> listAccesoriesByType(String type) {
-        return accessories.stream().filter(accessory ->accessory.getClass().getSimpleName().equalsIgnoreCase(type)).collect(Collectors.toList());
+        return accessories.stream()
+                .filter(accessory -> accessory != null && accessory.matchesAccessoryType(type))
+                .collect(Collectors.toList());
     }
+
     public List<Accessory> findAcessoriesCOmpatibleWith(String consoleId) {
         return accessories.stream()
                 .filter(accessory -> accessory != null && accessory.isCompatibleWith(consoleId))
                 .collect(Collectors.toList());
     }
+
     /**
      * Updates the stock of an accessory by the given delta.
      *
